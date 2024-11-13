@@ -969,6 +969,14 @@ LorawanMacEndDevice::SetGwAddress(Mac48Address gwAddress)
 }
 
 void
+LorawanMacEndDevice::SetSatAddress(Mac48Address satAddress)
+{
+    NS_LOG_FUNCTION(this << satAddress);
+
+    m_gwAddress = satAddress; // TODO create attribute m_satAddress and bool to tell if regenerative
+}
+
+void
 LorawanMacEndDevice::SetRaChannel(uint32_t raChannel)
 {
     m_raChannel = raChannel;

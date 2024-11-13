@@ -370,6 +370,13 @@ class LorawanMacEndDevice : public LorawanMac
     void SetGwAddress(Mac48Address gwAddress);
 
     /**
+     * Set address of the Lorawan GW (or its MAC) serving this UT.
+     *
+     * \param satAddress Address of the GW.
+     */
+    void SetSatAddress(Mac48Address satAddress);
+
+    /**
      * Set RA channel assigned for this UT.
      *
      * \param raChannel RA channel assigned to this UT.

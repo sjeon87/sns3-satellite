@@ -26,6 +26,7 @@
 #include "lorawan-mac-header.h"
 #include "satellite-bbframe-conf.h"
 #include "satellite-lorawan-net-device.h"
+#include "satellite-orbiter-net-device-lora.h"
 
 #include <ns3/log.h>
 
@@ -180,7 +181,20 @@ LorawanMacGateway::Receive(SatPhy::PacketContainer_t packets, Ptr<SatSignalParam
 
         if (macHdr.IsUplink())
         {
-            m_device->GetObject<SatLorawanNetDevice>()->Receive(packetCopy);
+            Ptr<SatLorawanNetDevice> lorawanNetDevice = m_device->GetObject<SatLorawanNetDevice>();
+            if (lorawanNetDevice != nullptr)
+            {
+                lorawanNetDevice->Receive(packetCopy);
+            }
+            else
+            {
+                Ptr<SatOrbiterNetDeviceLora> orbiterNetDevice =
+                    m_device->GetObject<SatOrbiterNetDeviceLora>();
+                if (orbiterNetDevice != nullptr)
+                {
+                    orbiterNetDevice->ReceivePacketUser(packetCopy, m_nodeInfo->GetMacAddress());
+                }
+            }
 
             NS_LOG_DEBUG("Received packet: " << packet);
 

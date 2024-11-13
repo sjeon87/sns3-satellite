@@ -210,6 +210,11 @@ SatUtHelperLora::Install(Ptr<Node> n,
     mac->SetRoutingUpdateCallback(cbRouting);
     mac->SetGwAddress(gwAddr);
 
+    if (forwardLinkRegenerationMode == SatEnums::REGENERATION_NETWORK)
+    {
+        mac->SetSatAddress(Mac48Address::ConvertFrom(satUserAddress));
+    }
+
     // Add UT to NCC
     ncc->AddUt(m_llsConf,
                dev->GetAddress(),

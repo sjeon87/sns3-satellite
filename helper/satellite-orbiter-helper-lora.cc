@@ -232,6 +232,7 @@ SatOrbiterHelperLora::AttachChannelsUser(Ptr<SatOrbiterNetDevice> dev,
             CreateObject<LorawanMacGateway>(satId, userBeamId);
 
         dev->AddUserMac(uRegenerationMac, userBeamId);
+        uRegenerationMac->SetDevice(dev);
 
         uRegenerationMac->SetReadCtrlCallback(m_rtnReadCtrlCb);
 
