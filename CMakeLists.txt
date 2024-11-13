@@ -112,6 +112,8 @@ set(source_files
     model/satellite-orbiter-llc.cc
     model/satellite-orbiter-mac.cc
     model/satellite-orbiter-net-device.cc
+    model/satellite-orbiter-net-device-dvb.cc
+    model/satellite-orbiter-net-device-lora.cc
     model/satellite-orbiter-user-llc.cc
     model/satellite-orbiter-user-mac.cc
     model/satellite-orbiter-user-phy.cc
@@ -199,6 +201,7 @@ set(source_files
     helper/satellite-on-off-helper.cc
     helper/satellite-orbiter-helper.cc
     helper/satellite-orbiter-helper-dvb.cc
+    helper/satellite-orbiter-helper-lora.cc
     helper/satellite-point-to-point-isl-helper.cc
     helper/satellite-traffic-helper.cc
     helper/satellite-user-helper.cc
@@ -359,6 +362,8 @@ set(header_files
     model/satellite-orbiter-llc.h
     model/satellite-orbiter-mac.h
     model/satellite-orbiter-net-device.h
+    model/satellite-orbiter-net-device-dvb.h
+    model/satellite-orbiter-net-device-lora.h
     model/satellite-orbiter-user-llc.h
     model/satellite-orbiter-user-mac.h
     model/satellite-orbiter-user-phy.h
@@ -448,6 +453,7 @@ set(header_files
     helper/satellite-on-off-helper.h
     helper/satellite-orbiter-helper.h
     helper/satellite-orbiter-helper-dvb.h
+    helper/satellite-orbiter-helper-lora.h
     helper/satellite-point-to-point-isl-helper.h
     helper/satellite-traffic-helper.h
     helper/satellite-user-helper.h

@@ -20,15 +20,17 @@
  * Author: Mathias Ettinger <mettinger@viveris.toulouse.fr>
  */
 
-#include "satellite-orbiter-helper-dvb.h"
+#include "satellite-orbiter-helper-lora.h"
 
 #include "satellite-helper.h"
 #include "satellite-isl-arbiter-unicast-helper.h"
+#include "satellite-lora-conf.h"
 
 #include "ns3/config.h"
 #include "ns3/double.h"
 #include "ns3/enum.h"
 #include "ns3/log.h"
+#include "ns3/lorawan-mac-gateway.h"
 #include "ns3/names.h"
 #include "ns3/packet.h"
 #include "ns3/pointer.h"
@@ -38,7 +40,7 @@
 #include "ns3/satellite-orbiter-feeder-llc.h"
 #include "ns3/satellite-orbiter-feeder-mac.h"
 #include "ns3/satellite-orbiter-feeder-phy.h"
-#include "ns3/satellite-orbiter-net-device-dvb.h"
+#include "ns3/satellite-orbiter-net-device-lora.h"
 #include "ns3/satellite-orbiter-user-llc.h"
 #include "ns3/satellite-orbiter-user-mac.h"
 #include "ns3/satellite-orbiter-user-phy.h"
@@ -56,31 +58,31 @@
 #include <utility>
 #include <vector>
 
-NS_LOG_COMPONENT_DEFINE("SatOrbiterHelperDvb");
+NS_LOG_COMPONENT_DEFINE("SatOrbiterHelperLora");
 
 namespace ns3
 {
 
-NS_OBJECT_ENSURE_REGISTERED(SatOrbiterHelperDvb);
+NS_OBJECT_ENSURE_REGISTERED(SatOrbiterHelperLora);
 
 TypeId
-SatOrbiterHelperDvb::GetTypeId(void)
+SatOrbiterHelperLora::GetTypeId(void)
 {
-    static TypeId tid = TypeId("ns3::SatOrbiterHelperDvb")
+    static TypeId tid = TypeId("ns3::SatOrbiterHelperLora")
                             .SetParent<SatOrbiterHelper>()
-                            .AddConstructor<SatOrbiterHelperDvb>();
+                            .AddConstructor<SatOrbiterHelperLora>();
     return tid;
 }
 
 TypeId
-SatOrbiterHelperDvb::GetInstanceTypeId(void) const
+SatOrbiterHelperLora::GetInstanceTypeId(void) const
 {
     NS_LOG_FUNCTION(this);
 
     return GetTypeId();
 }
 
-SatOrbiterHelperDvb::SatOrbiterHelperDvb()
+SatOrbiterHelperLora::SatOrbiterHelperLora()
     : SatOrbiterHelper()
 {
     NS_LOG_FUNCTION(this);
@@ -89,7 +91,7 @@ SatOrbiterHelperDvb::SatOrbiterHelperDvb()
     NS_ASSERT(false);
 }
 
-SatOrbiterHelperDvb::SatOrbiterHelperDvb(
+SatOrbiterHelperLora::SatOrbiterHelperLora(
     SatTypedefs::CarrierBandwidthConverter_t bandwidthConverterCb,
     uint32_t rtnLinkCarrierCount,
     uint32_t fwdLinkCarrierCount,
@@ -107,36 +109,43 @@ SatOrbiterHelperDvb::SatOrbiterHelperDvb(
 {
     NS_LOG_FUNCTION(this << rtnLinkCarrierCount << fwdLinkCarrierCount);
 
-    m_deviceFactory.SetTypeId("ns3::SatOrbiterNetDeviceDvb");
+    m_deviceFactory.SetTypeId("ns3::SatOrbiterNetDeviceLora");
 }
 
 Ptr<SatOrbiterNetDevice>
-SatOrbiterHelperDvb::CreateOrbiterNetDevice()
+SatOrbiterHelperLora::CreateOrbiterNetDevice()
 {
     NS_LOG_FUNCTION(this);
 
-    return m_deviceFactory.Create<SatOrbiterNetDeviceDvb>();
+    return m_deviceFactory.Create<SatOrbiterNetDeviceLora>();
 }
 
 void
-SatOrbiterHelperDvb::AttachChannelsUser(Ptr<SatOrbiterNetDevice> dev,
-                                        Ptr<SatChannel> uf,
-                                        Ptr<SatChannel> ur,
-                                        Ptr<SatAntennaGainPattern> userAgp,
-                                        Ptr<SatNcc> ncc,
-                                        uint32_t satId,
-                                        uint32_t userBeamId,
-                                        SatEnums::RegenerationMode_t forwardLinkRegenerationMode,
-                                        SatEnums::RegenerationMode_t returnLinkRegenerationMode)
+SatOrbiterHelperLora::AttachChannelsUser(Ptr<SatOrbiterNetDevice> dev,
+                                         Ptr<SatChannel> uf,
+                                         Ptr<SatChannel> ur,
+                                         Ptr<SatAntennaGainPattern> userAgp,
+                                         Ptr<SatNcc> ncc,
+                                         uint32_t satId,
+                                         uint32_t userBeamId,
+                                         SatEnums::RegenerationMode_t forwardLinkRegenerationMode,
+                                         SatEnums::RegenerationMode_t returnLinkRegenerationMode)
 {
     NS_LOG_FUNCTION(this << dev << uf << ur << userAgp << satId << userBeamId
                          << forwardLinkRegenerationMode << returnLinkRegenerationMode);
+
+    NS_ASSERT_MSG(forwardLinkRegenerationMode == forwardLinkRegenerationMode,
+                  "Regenration level must be the same on forward and return in Lora configuration");
+    NS_ASSERT_MSG(
+        forwardLinkRegenerationMode == SatEnums::TRANSPARENT ||
+            returnLinkRegenerationMode == SatEnums::REGENERATION_NETWORK,
+        "Satellite can only be transparent or with network regenration in Lora configuration");
 
     SatPhy::CreateParam_t params;
     params.m_satId = satId;
     params.m_beamId = userBeamId;
     params.m_device = dev;
-    params.m_standard = SatEnums::DVB_ORBITER;
+    params.m_standard = SatEnums::LORA_ORBITER;
 
     /**
      * Simple channel estimation, which does not do actually anything
@@ -179,144 +188,75 @@ SatOrbiterHelperDvb::AttachChannelsUser(Ptr<SatOrbiterNetDevice> dev,
 
     uPhy->Initialize();
 
-    Ptr<SatOrbiterUserMac> uMac;
-    Ptr<SatOrbiterUserLlc> uLlc;
-
-    uMac = CreateObject<SatOrbiterUserMac>(satId,
-                                           userBeamId,
-                                           forwardLinkRegenerationMode,
-                                           returnLinkRegenerationMode);
+    ncc->SetUseLora(true);
 
     Mac48Address userAddress;
 
-    // Create layers needed depending on max regeneration mode
-    switch (std::max(forwardLinkRegenerationMode, returnLinkRegenerationMode))
+    // Connect callbacks on forward link
+    switch (forwardLinkRegenerationMode)
     {
-    case SatEnums::TRANSPARENT:
-    case SatEnums::REGENERATION_PHY: {
-        // Create a node info to PHY layers
+    case SatEnums::TRANSPARENT: {
+        // Create layers
+        Ptr<SatOrbiterUserMac> uTransparentMac =
+            CreateObject<SatOrbiterUserMac>(satId,
+                                            userBeamId,
+                                            forwardLinkRegenerationMode,
+                                            returnLinkRegenerationMode);
+
         Ptr<SatNodeInfo> niPhyUser =
             Create<SatNodeInfo>(SatEnums::NT_SAT,
                                 m_nodeIds[satId],
                                 Mac48Address::ConvertFrom(dev->GetAddress()));
         uPhy->SetNodeInfo(niPhyUser);
-        uMac->SetNodeInfo(niPhyUser);
+        uTransparentMac->SetNodeInfo(niPhyUser);
 
-        break;
-    }
-    case SatEnums::REGENERATION_LINK: {
-        // Create LLC layer
-        uLlc = CreateObject<SatOrbiterUserLlc>(forwardLinkRegenerationMode,
-                                               returnLinkRegenerationMode);
-
-        dev->AddUserMac(uMac, userBeamId);
-
-        uMac->SetReadCtrlCallback(m_rtnReadCtrlCb);
-        uLlc->SetReadCtrlCallback(m_rtnReadCtrlCb);
-
-        // Create a node info to PHY and MAC layers
-        userAddress = Mac48Address::Allocate();
-        Ptr<SatNodeInfo> niUser =
-            Create<SatNodeInfo>(SatEnums::NT_SAT, m_nodeIds[satId], userAddress);
-        uPhy->SetNodeInfo(niUser);
-        uMac->SetNodeInfo(niUser);
-        uLlc->SetNodeInfo(niUser);
-
-        dev->AddUserPair(userBeamId, userAddress);
-
-        break;
-    }
-    case SatEnums::REGENERATION_NETWORK: {
-        // Create LLC layer
-        uLlc = CreateObject<SatOrbiterUserLlc>(forwardLinkRegenerationMode,
-                                               returnLinkRegenerationMode);
-
-        dev->AddUserMac(uMac, userBeamId);
-
-        uMac->SetReadCtrlCallback(m_rtnReadCtrlCb);
-        uLlc->SetReadCtrlCallback(m_rtnReadCtrlCb);
-
-        // Create a node info to PHY and MAC layers
-        userAddress = Mac48Address::Allocate();
-        Ptr<SatNodeInfo> niUser =
-            Create<SatNodeInfo>(SatEnums::NT_SAT, m_nodeIds[satId], userAddress);
-        uPhy->SetNodeInfo(niUser);
-        uMac->SetNodeInfo(niUser);
-        uLlc->SetNodeInfo(niUser);
-
-        dev->AddUserPair(userBeamId, userAddress);
-
-        break;
-    }
-    default:
-        NS_FATAL_ERROR("Forward or return link regeneration mode unknown");
-    }
-
-    // Connect callbacks on forward link
-    switch (forwardLinkRegenerationMode)
-    {
-    case SatEnums::TRANSPARENT:
-    case SatEnums::REGENERATION_PHY: {
-        // Nothing to do on user side
-        break;
-    }
-    case SatEnums::REGENERATION_NETWORK: {
-        uMac->SetTransmitCallback(MakeCallback(&SatOrbiterUserPhy::SendPduWithParams, uPhy));
-
-        double carrierBandwidth = m_carrierBandwidthConverter(SatEnums::FORWARD_USER_CH,
-                                                              0,
-                                                              SatEnums::EFFECTIVE_BANDWIDTH);
-        Ptr<SatFwdLinkScheduler> fwdScheduler =
-            CreateObject<SatScpcScheduler>(m_bbFrameConfFwd, userAddress, carrierBandwidth);
-        uMac->SetFwdScheduler(fwdScheduler);
-        uMac->SetLlc(uLlc);
-        uMac->StartPeriodicTransmissions();
-
-        // Attach the LLC Tx opportunity and scheduling context getter callbacks to
-        // SatFwdLinkScheduler
-        fwdScheduler->SetTxOpportunityCallback(
-            MakeCallback(&SatOrbiterLlc::NotifyTxOpportunity, uLlc));
-        fwdScheduler->SetSchedContextCallback(MakeCallback(&SatLlc::GetSchedulingContexts, uLlc));
-
-        break;
-    }
-    default:
-        NS_FATAL_ERROR("Forward link regeneration mode unknown");
-    }
-
-    // Connect callbacks on return link
-    switch (returnLinkRegenerationMode)
-    {
-    case SatEnums::TRANSPARENT:
-    case SatEnums::REGENERATION_PHY: {
+        // Return link
         SatPhy::ReceiveCallback uCb = MakeCallback(&SatOrbiterNetDevice::ReceiveUser, dev);
         uPhy->SetAttribute("ReceiveCb", CallbackValue(uCb));
 
-        uMac->SetReceiveNetDeviceCallback(MakeCallback(&SatOrbiterNetDevice::ReceiveUser, dev));
+        uTransparentMac->SetReceiveNetDeviceCallback(
+            MakeCallback(&SatOrbiterNetDevice::ReceiveUser, dev));
 
-        break;
-    }
-    case SatEnums::REGENERATION_LINK: {
-        SatPhy::ReceiveCallback uCb = MakeCallback(&SatOrbiterUserMac::Receive, uMac);
-        uPhy->SetAttribute("ReceiveCb", CallbackValue(uCb));
-
-        uMac->SetReceiveNetDeviceCallback(MakeCallback(&SatOrbiterNetDevice::ReceiveUser, dev));
-
+        Singleton<SatTopology>::Get()->AddOrbiterUserLayers(dev->GetNode(),
+                                                            satId,
+                                                            userBeamId,
+                                                            dev,
+                                                            nullptr,
+                                                            uTransparentMac,
+                                                            uPhy);
         break;
     }
     case SatEnums::REGENERATION_NETWORK: {
-        SatPhy::ReceiveCallback uCb = MakeCallback(&SatOrbiterUserMac::Receive, uMac);
-        uPhy->SetAttribute("ReceiveCb", CallbackValue(uCb));
+        // Create layers
+        Ptr<LorawanMacGateway> uRegenerationMac =
+            CreateObject<LorawanMacGateway>(satId, userBeamId);
 
-        uMac->SetReceiveCallback(MakeCallback(&SatOrbiterUserLlc::Receive, uLlc));
+        dev->AddUserMac(uRegenerationMac, userBeamId);
 
-        uLlc->SetReceiveSatelliteCallback(
-            MakeCallback(&SatOrbiterNetDevice::ReceivePacketUser, dev));
+        uRegenerationMac->SetReadCtrlCallback(m_rtnReadCtrlCb);
+
+        SatLoraConf satLoraConf;
+        satLoraConf.SetConf(uRegenerationMac);
+
+        // Attach the Mac layer receiver to Phy
+        SatPhy::ReceiveCallback recCb = MakeCallback(&LorawanMac::Receive, uRegenerationMac);
+        uPhy->SetAttribute("ReceiveCb", CallbackValue(recCb));
+
+        // Create a node info to PHY and MAC layers
+        userAddress = Mac48Address::Allocate();
+        Ptr<SatNodeInfo> niUser =
+            Create<SatNodeInfo>(SatEnums::NT_SAT, m_nodeIds[satId], userAddress);
+        uPhy->SetNodeInfo(niUser);
+        uRegenerationMac->SetNodeInfo(niUser);
+
+        dev->AddUserPair(userBeamId, userAddress);
+
+        uRegenerationMac->SetPhy(uPhy);
 
         break;
     }
     default:
-        NS_FATAL_ERROR("Return link regeneration mode unknown");
+        NS_FATAL_ERROR("Regeneration mode unknown");
     }
 
     if (returnLinkRegenerationMode != SatEnums::TRANSPARENT)
@@ -325,9 +265,6 @@ SatOrbiterHelperDvb::AttachChannelsUser(Ptr<SatOrbiterNetDevice> dev,
         uPhy->SetSendControlMsgToFeederCallback(
             MakeCallback(&SatOrbiterNetDevice::SendControlMsgToFeeder, dev));
     }
-
-    Singleton<SatTopology>::Get()
-        ->AddOrbiterUserLayers(dev->GetNode(), satId, userBeamId, dev, uLlc, uMac, uPhy);
 }
 
 } // namespace ns3

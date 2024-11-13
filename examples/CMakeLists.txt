@@ -28,6 +28,7 @@ set(base_examples
     sat-logon-example
     sat-loo-example
     sat-lora-example
+    sat-lora-regenerative-example
     sat-markov-fading-trace-example
     sat-markov-logic-example
     sat-mobility-beam-tracer

@@ -167,6 +167,13 @@ class SatOrbiterHelper : public Object
      */
     Ptr<NetDevice> Install(std::string aName);
 
+    /**
+     * Create a SatOrbiterNetDevice instance, with correct type infered from child classes.
+     *
+     * \return SatOrbiterNetDevice instance
+     */
+    virtual Ptr<SatOrbiterNetDevice> CreateOrbiterNetDevice() = 0;
+
     /*
      * Attach the SatChannels for the beam to NetDevice
      * \param dev NetDevice to attach channels

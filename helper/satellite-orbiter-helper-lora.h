@@ -20,8 +20,8 @@
  * Author: Mathias Ettinger <mettinger@viveris.toulouse.fr>
  */
 
-#ifndef SAT_ORBITER_HELPER_DVB_H
-#define SAT_ORBITER_HELPER_DVB_H
+#ifndef SAT_ORBITER_HELPER_LORA_H
+#define SAT_ORBITER_HELPER_LORA_H
 
 #include "satellite-orbiter-helper.h"
 
@@ -56,7 +56,7 @@ namespace ns3
  *        Handles needed configuration for the Satellite node.
  *
  */
-class SatOrbiterHelperDvb : public SatOrbiterHelper
+class SatOrbiterHelperLora : public SatOrbiterHelper
 {
   public:
     /**
@@ -69,21 +69,21 @@ class SatOrbiterHelperDvb : public SatOrbiterHelper
     /**
      * Default constructor.
      */
-    SatOrbiterHelperDvb();
+    SatOrbiterHelperLora();
 
     /**
-     * Create a SatOrbiterHelperDvb to make life easier when creating Satellite point to
+     * Create a SatOrbiterHelperLora to make life easier when creating Satellite point to
      * point network connections.
      */
-    SatOrbiterHelperDvb(SatTypedefs::CarrierBandwidthConverter_t bandwidthConverterCb,
-                        uint32_t rtnLinkCarrierCount,
-                        uint32_t fwdLinkCarrierCount,
-                        Ptr<SatSuperframeSeq> seq,
-                        SatMac::ReadCtrlMsgCallback fwdReadCb,
-                        SatMac::ReadCtrlMsgCallback rtnReadCb,
-                        RandomAccessSettings_s randomAccessSettings);
+    SatOrbiterHelperLora(SatTypedefs::CarrierBandwidthConverter_t bandwidthConverterCb,
+                         uint32_t rtnLinkCarrierCount,
+                         uint32_t fwdLinkCarrierCount,
+                         Ptr<SatSuperframeSeq> seq,
+                         SatMac::ReadCtrlMsgCallback fwdReadCb,
+                         SatMac::ReadCtrlMsgCallback rtnReadCb,
+                         RandomAccessSettings_s randomAccessSettings);
 
-    virtual ~SatOrbiterHelperDvb()
+    virtual ~SatOrbiterHelperLora()
     {
     }
 
@@ -119,4 +119,4 @@ class SatOrbiterHelperDvb : public SatOrbiterHelper
 
 } // namespace ns3
 
-#endif /* SAT_ORBITER_HELPER_DVB_H */
+#endif /* SAT_ORBITER_HELPER_LORA_H */

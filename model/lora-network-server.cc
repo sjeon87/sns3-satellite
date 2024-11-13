@@ -97,19 +97,25 @@ LoraNetworkServer::AddGateway(Ptr<Node> gateway, Ptr<NetDevice> netDevice)
         }
     }
 
-    // Get the gateway's LoRa MAC layer (assumes gateway's MAC is configured as first device)
-    Ptr<SatLorawanNetDevice> satLoraNetDevice =
-        DynamicCast<SatLorawanNetDevice>(gateway->GetDevice(1));
-    Ptr<LorawanMacGateway> gwMac = DynamicCast<LorawanMacGateway>(satLoraNetDevice->GetMac());
-    NS_ASSERT(gwMac != nullptr);
-
     // Get the Address
     Address gatewayAddress = p2pNetDevice->GetAddress();
 
-    // Create new gatewayStatus
-    Ptr<LoraGatewayStatus> gwStatus = Create<LoraGatewayStatus>(gatewayAddress, netDevice, gwMac);
-
-    m_status->AddGateway(gatewayAddress, gwStatus);
+    // Get the gateway's LoRa MAC layer (assumes gateway's MAC is configured as first device)
+    // TODO change if regenerative -> DVB_GW or LORA_GW ???
+    Ptr<SatLorawanNetDevice> satLoraNetDevice =
+        DynamicCast<SatLorawanNetDevice>(gateway->GetDevice(1));
+    if (satLoraNetDevice != nullptr)
+    {
+        Ptr<LorawanMacGateway> gwMac = DynamicCast<LorawanMacGateway>(satLoraNetDevice->GetMac());
+        // Create new gatewayStatus
+        Ptr<LoraGatewayStatus> gwStatus =
+            Create<LoraGatewayStatus>(gatewayAddress, netDevice, gwMac);
+        m_status->AddGateway(gatewayAddress, gwStatus);
+    }
+    else
+    {
+        // TODO
+    }
 }
 
 void

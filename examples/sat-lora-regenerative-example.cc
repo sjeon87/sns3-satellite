@@ -30,13 +30,13 @@
 using namespace ns3;
 
 /**
- * \file sat-lora-example.cc
+ * \file sat-lora-regenerative-example.cc
  * \ingroup satellite
  *
  * \brief This file allows to create a scenario with Lora configuration
  */
 
-NS_LOG_COMPONENT_DEFINE("sat-lora-example");
+NS_LOG_COMPONENT_DEFINE("sat-lora-regenerative-example");
 
 int
 main(int argc, char* argv[])
@@ -71,7 +71,8 @@ main(int argc, char* argv[])
     Time firstWindowAnswerDelay = Seconds(1);
     Time secondWindowAnswerDelay = Seconds(2);
 
-    Ptr<SimulationHelper> simulationHelper = CreateObject<SimulationHelper>("example-lora");
+    Ptr<SimulationHelper> simulationHelper =
+        CreateObject<SimulationHelper>("example-lora-regenerative");
 
     // read command line parameters given by user
     CommandLine cmd;
@@ -114,9 +115,9 @@ main(int argc, char* argv[])
 
     /// Set regeneration mode
     Config::SetDefault("ns3::SatConf::ForwardLinkRegenerationMode",
-                       EnumValue(SatEnums::TRANSPARENT));
+                       EnumValue(SatEnums::REGENERATION_NETWORK));
     Config::SetDefault("ns3::SatConf::ReturnLinkRegenerationMode",
-                       EnumValue(SatEnums::TRANSPARENT));
+                       EnumValue(SatEnums::REGENERATION_NETWORK));
 
     // Enable Lora
     Config::SetDefault("ns3::LorawanMacEndDevice::DataRate", UintegerValue(5));
@@ -274,13 +275,16 @@ main(int argc, char* argv[])
     simulationHelper->EnableProgressLogs();
 
     std::string outputPath = Singleton<SatEnvVariables>::Get()->LocateDirectory(
-        "contrib/satellite/data/sims/example-lora");
+        "contrib/satellite/data/sims/example-lora-regenerative");
     Config::SetDefault("ns3::ConfigStore::Filename",
                        StringValue(outputPath + "/output-attributes.xml"));
     Config::SetDefault("ns3::ConfigStore::FileFormat", StringValue("Xml"));
     Config::SetDefault("ns3::ConfigStore::Mode", StringValue("Save"));
     ConfigStore outputConfig;
     outputConfig.ConfigureDefaults();
+
+    Packet::EnablePrinting();
+    Packet::EnableChecking();
 
     if (displayTraces)
     {

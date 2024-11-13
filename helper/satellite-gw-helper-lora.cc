@@ -105,6 +105,8 @@ SatGwHelperLora::Install(Ptr<Node> n,
     NS_LOG_FUNCTION(this << n << gwId << satId << beamId << fCh << rCh << ncc << llsConf
                          << forwardLinkRegenerationMode << returnLinkRegenerationMode);
 
+    std::cout << "SatGwHelperLora" << std::endl;
+
     NetDeviceContainer container;
 
     // Create SatNetDevice
@@ -169,7 +171,7 @@ SatGwHelperLora::Install(Ptr<Node> n,
         m_superframeSeq->GetSuperframeConf(SatConstVariables::SUPERFRAME_SEQUENCE),
         returnLinkRegenerationMode);
 
-    ncc->SetUseLora(true);
+    // ncc->SetUseLora(true);
 
     // Set fading
     phy->SetTxFadingContainer(n->GetObject<SatBaseFading>());

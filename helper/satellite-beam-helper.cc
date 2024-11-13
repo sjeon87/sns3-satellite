@@ -25,6 +25,7 @@
 #include "satellite-gw-helper-dvb.h"
 #include "satellite-gw-helper-lora.h"
 #include "satellite-orbiter-helper-dvb.h"
+#include "satellite-orbiter-helper-lora.h"
 #include "satellite-point-to-point-isl-helper.h"
 #include "satellite-ut-helper-dvb.h"
 #include "satellite-ut-helper-lora.h"
@@ -347,14 +348,6 @@ SatBeamHelper::SatBeamHelper(SatEnums::Standard_t standard,
     }
 
     // create needed low level satellite helpers
-    m_orbiterHelper = CreateObject<SatOrbiterHelperDvb>(bandwidthConverterCb,
-                                                        rtnLinkCarrierCount,
-                                                        fwdLinkCarrierCount,
-                                                        seq,
-                                                        fwdReadCtrlCb,
-                                                        rtnReadCtrlCb,
-                                                        orbiterRaSettings);
-
     switch (m_standard)
     {
     case SatEnums::DVB: {
@@ -372,16 +365,37 @@ SatBeamHelper::SatBeamHelper(SatEnums::Standard_t standard,
                                                   rtnReserveCtrlCb,
                                                   rtnSendCtrlCb,
                                                   utRaSettings);
+        m_orbiterHelper = CreateObject<SatOrbiterHelperDvb>(bandwidthConverterCb,
+                                                            rtnLinkCarrierCount,
+                                                            fwdLinkCarrierCount,
+                                                            seq,
+                                                            fwdReadCtrlCb,
+                                                            rtnReadCtrlCb,
+                                                            orbiterRaSettings);
         break;
     }
     case SatEnums::LORA: {
-        m_gwHelper = CreateObject<SatGwHelperLora>(bandwidthConverterCb,
-                                                   rtnLinkCarrierCount,
-                                                   seq,
-                                                   rtnReadCtrlCb,
-                                                   fwdReserveCtrlCb,
-                                                   fwdSendCtrlCb,
-                                                   gwRaSettings);
+        if (m_forwardLinkRegenerationMode == SatEnums::TRANSPARENT)
+        {
+            m_gwHelper = CreateObject<SatGwHelperLora>(bandwidthConverterCb,
+                                                       rtnLinkCarrierCount,
+                                                       seq,
+                                                       rtnReadCtrlCb,
+                                                       fwdReserveCtrlCb,
+                                                       fwdSendCtrlCb,
+                                                       gwRaSettings);
+        }
+        else
+        {
+            Config::SetDefault("ns3::SatGwMac::SendNcrBroadcast", BooleanValue(false));
+            m_gwHelper = CreateObject<SatGwHelperDvb>(bandwidthConverterCb,
+                                                      rtnLinkCarrierCount,
+                                                      seq,
+                                                      rtnReadCtrlCb,
+                                                      fwdReserveCtrlCb,
+                                                      fwdSendCtrlCb,
+                                                      gwRaSettings);
+        }
         m_utHelper = CreateObject<SatUtHelperLora>(bandwidthConverterCb,
                                                    fwdLinkCarrierCount,
                                                    seq,
@@ -389,6 +403,13 @@ SatBeamHelper::SatBeamHelper(SatEnums::Standard_t standard,
                                                    rtnReserveCtrlCb,
                                                    rtnSendCtrlCb,
                                                    utRaSettings);
+        m_orbiterHelper = CreateObject<SatOrbiterHelperLora>(bandwidthConverterCb,
+                                                             rtnLinkCarrierCount,
+                                                             fwdLinkCarrierCount,
+                                                             seq,
+                                                             fwdReadCtrlCb,
+                                                             rtnReadCtrlCb,
+                                                             orbiterRaSettings);
         break;
     }
     default:
@@ -459,6 +480,11 @@ SatBeamHelper::SatBeamHelper(SatEnums::Standard_t standard,
     m_orbiterHelper->InstallAllOrbiters();
 
     m_ncc = CreateObject<SatNcc>();
+
+    if (m_standard == SatEnums::LORA)
+    {
+        m_ncc->SetUseLora(true);
+    }
 
     if (m_randomAccessModel != SatEnums::RA_MODEL_OFF)
     {
@@ -800,19 +826,39 @@ SatBeamHelper::InstallFeeder(Ptr<SatOrbiterNetDevice> orbiterNetDevice,
             satelliteUserAddress,
             gwNd->GetAddress());
         break;
-    case SatEnums::LORA:
-        m_ncc->AddBeam(satId,
-                       beamId,
-                       DynamicCast<SatNetDevice>(gwNd),
-                       orbiterNetDevice,
-                       MakeCallback(&SatLorawanNetDevice::SendControlMsg,
-                                    DynamicCast<SatLorawanNetDevice>(gwNd)),
-                       MakeNullCallback<void, Ptr<SatTbtpMessage>>(),
-                       m_superframeSeq,
-                       maxBbFrameDataSizeInBytes,
-                       satelliteUserAddress,
-                       gwNd->GetAddress());
-        break;
+    case SatEnums::LORA: {
+        if (m_forwardLinkRegenerationMode == SatEnums::TRANSPARENT)
+        {
+            m_ncc->AddBeam(satId,
+                           beamId,
+                           DynamicCast<SatNetDevice>(gwNd),
+                           orbiterNetDevice,
+                           MakeCallback(&SatLorawanNetDevice::SendControlMsg,
+                                        DynamicCast<SatLorawanNetDevice>(gwNd)),
+                           MakeNullCallback<void, Ptr<SatTbtpMessage>>(),
+                           m_superframeSeq,
+                           maxBbFrameDataSizeInBytes,
+                           satelliteUserAddress,
+                           gwNd->GetAddress());
+        }
+        else
+        {
+            m_ncc->AddBeam(
+                satId,
+                beamId,
+                DynamicCast<SatNetDevice>(gwNd),
+                orbiterNetDevice,
+                MakeCallback(&SatNetDevice::SendControlMsg, DynamicCast<SatNetDevice>(gwNd)),
+                MakeCallback(&SatGwMac::TbtpSent,
+                             DynamicCast<SatGwMac>(DynamicCast<SatNetDevice>(gwNd)->GetMac())),
+                m_superframeSeq,
+                maxBbFrameDataSizeInBytes,
+                satelliteUserAddress,
+                gwNd->GetAddress());
+        }
+    }
+
+    break;
     default:
         NS_FATAL_ERROR("Incorrect standard chosen");
     }
@@ -886,8 +932,16 @@ SatBeamHelper::InstallUser(Ptr<SatOrbiterNetDevice> orbiterNetDevice,
     {
         for (NetDeviceContainer::Iterator i = utNd.Begin(); i != utNd.End(); i++)
         {
-            DynamicCast<SatUtMac>(DynamicCast<SatNetDevice>(*i)->GetMac())
-                ->SetSatelliteAddress(satUserAddress);
+            Ptr<SatMac> mac = DynamicCast<SatNetDevice>(*i)->GetMac();
+            Ptr<SatUtMac> utMac = DynamicCast<SatUtMac>(mac);
+            if (utMac != nullptr)
+            {
+                utMac->SetSatelliteAddress(satUserAddress);
+            }
+            else
+            {
+                mac->SetSatelliteAddress(satUserAddress);
+            }
         }
     }
 
@@ -896,8 +950,11 @@ SatBeamHelper::InstallUser(Ptr<SatOrbiterNetDevice> orbiterNetDevice,
     {
         for (NetDeviceContainer::Iterator i = utNd.Begin(); i != utNd.End(); i++)
         {
-            DynamicCast<SatUtLlc>(DynamicCast<SatNetDevice>(*i)->GetLlc())
-                ->SetSatelliteAddress(Mac48Address::ConvertFrom(satUserAddress));
+            Ptr<SatUtLlc> utLlc = DynamicCast<SatUtLlc>(DynamicCast<SatNetDevice>(*i)->GetLlc());
+            if (utLlc != nullptr)
+            {
+                utLlc->SetSatelliteAddress(Mac48Address::ConvertFrom(satUserAddress));
+            }
         }
     }
 

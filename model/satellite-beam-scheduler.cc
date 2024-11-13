@@ -632,7 +632,7 @@ SatBeamScheduler::Schedule()
     uint32_t offeredKbpsSum(0);
 
     // check that there is UTs to schedule
-    if (m_utInfos.size() > 0)
+    if (m_utInfos.size() > 0 && !m_useLora)
     {
         requestedKbpsSum = UpdateDamaEntriesWithReqs();
 
@@ -1094,6 +1094,14 @@ SatBeamScheduler::ReserveLogonChannel(uint32_t logonChannelId)
         // channel for UTs without entering in an infinite loop in AddUt
         m_logonChannelIndex = logonChannelId;
     }
+}
+
+void
+SatBeamScheduler::SetUseLora(bool useLora)
+{
+    NS_LOG_FUNCTION(this << useLora);
+
+    m_useLora = useLora;
 }
 
 } // namespace ns3

@@ -190,8 +190,6 @@ SatOrbiterHelper::SatOrbiterHelper(SatTypedefs::CarrierBandwidthConverter_t band
       m_rtnReadCtrlCb(rtnReadCb)
 {
     NS_LOG_FUNCTION(this << rtnLinkCarrierCount << fwdLinkCarrierCount);
-
-    m_deviceFactory.SetTypeId("ns3::SatOrbiterNetDevice");
 }
 
 void
@@ -278,7 +276,7 @@ SatOrbiterHelper::Install(Ptr<Node> n)
     NS_ASSERT(m_deviceCount[n->GetId()] == 0);
 
     // Create SatOrbiterNetDevice
-    Ptr<SatOrbiterNetDevice> satDev = m_deviceFactory.Create<SatOrbiterNetDevice>();
+    Ptr<SatOrbiterNetDevice> satDev = CreateOrbiterNetDevice();
 
     satDev->SetAddress(Mac48Address::Allocate());
     n->AddDevice(satDev);
@@ -365,7 +363,7 @@ SatOrbiterHelper::AttachChannelsFeeder(Ptr<SatOrbiterNetDevice> dev,
     params.m_satId = satId;
     params.m_beamId = userBeamId;
     params.m_device = dev;
-    params.m_standard = SatEnums::ORBITER;
+    params.m_standard = SatEnums::DVB_ORBITER;
 
     /**
      * Simple channel estimation, which does not do actually anything
