@@ -20,12 +20,14 @@ set(source_files
     model/lora-periodic-sender.cc
     model/lora-sub-band.cc
     model/lora-tag.cc
+    model/lorawan-ground-mac-gateway.cc
     model/lorawan-mac.cc
     model/lorawan-mac-command.cc
     model/lorawan-mac-end-device.cc
     model/lorawan-mac-end-device-class-a.cc
     model/lorawan-mac-gateway.cc
     model/lorawan-mac-header.cc
+    model/lorawan-orbiter-mac-gateway.cc
     model/satellite-address-tag.cc
     model/satellite-antenna-gain-pattern.cc
     model/satellite-antenna-gain-pattern-container.cc
@@ -268,12 +270,14 @@ set(header_files
     model/lora-periodic-sender.h
     model/lora-sub-band.h
     model/lora-tag.h
+    model/lorawan-ground-mac-gateway.h
     model/lorawan-mac-command.h
     model/lorawan-mac-end-device-class-a.h
     model/lorawan-mac-end-device.h
     model/lorawan-mac-gateway.h
     model/lorawan-mac.h
     model/lorawan-mac-header.h
+    model/lorawan-orbiter-mac-gateway.h
     model/satellite-address-tag.h
     model/satellite-antenna-gain-pattern-container.h
     model/satellite-antenna-gain-pattern.h

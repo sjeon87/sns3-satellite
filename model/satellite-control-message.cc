@@ -152,8 +152,6 @@ SatTbtpMessage::SatTbtpMessage()
     NS_LOG_FUNCTION(this);
 
     std::cout << "SatTbtpMessage" << std::endl;
-
-    NS_FATAL_ERROR("STOP 1");
 }
 
 SatTbtpMessage::SatTbtpMessage(uint8_t seqId)
@@ -164,8 +162,6 @@ SatTbtpMessage::SatTbtpMessage(uint8_t seqId)
     NS_LOG_FUNCTION(this << (uint32_t)seqId);
 
     std::cout << "SatTbtpMessage" << std::endl;
-
-    NS_FATAL_ERROR("STOP 2");
 }
 
 SatTbtpMessage::~SatTbtpMessage()

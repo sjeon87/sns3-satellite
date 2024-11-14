@@ -24,6 +24,7 @@
 #include "satellite-lora-conf.h"
 
 #include <ns3/log.h>
+#include <ns3/lorawan-ground-mac-gateway.h>
 #include <ns3/lorawan-mac-gateway.h>
 #include <ns3/pointer.h>
 #include <ns3/satellite-channel-estimation-error-container.h>
@@ -177,7 +178,7 @@ SatGwHelperLora::Install(Ptr<Node> n,
     phy->SetTxFadingContainer(n->GetObject<SatBaseFading>());
     phy->SetRxFadingContainer(n->GetObject<SatBaseFading>());
 
-    Ptr<LorawanMacGateway> mac = CreateObject<LorawanMacGateway>(satId, beamId);
+    Ptr<LorawanMacGateway> mac = CreateObject<LorawanGroundMacGateway>(satId, beamId);
 
     SatLoraConf satLoraConf;
     satLoraConf.SetConf(mac);

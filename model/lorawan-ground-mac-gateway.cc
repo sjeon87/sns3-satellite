@@ -20,7 +20,7 @@
  * Modified by: Bastien Tauran <bastien.tauran@viveris.fr>
  */
 
-#include "lorawan-mac-gateway.h"
+#include "lorawan-ground-mac-gateway.h"
 
 #include "lora-frame-header.h"
 #include "lorawan-mac-header.h"
@@ -33,35 +33,37 @@
 namespace ns3
 {
 
-NS_LOG_COMPONENT_DEFINE("LorawanMacGateway");
+NS_LOG_COMPONENT_DEFINE("LorawanGroundMacGateway");
 
-NS_OBJECT_ENSURE_REGISTERED(LorawanMacGateway);
+NS_OBJECT_ENSURE_REGISTERED(LorawanGroundMacGateway);
 
 TypeId
-LorawanMacGateway::GetTypeId(void)
+LorawanGroundMacGateway::GetTypeId(void)
 {
-    static TypeId tid = TypeId("ns3::LorawanMacGateway").SetParent<LorawanMac>();
+    static TypeId tid = TypeId("ns3::LorawanGroundMacGateway")
+                            .SetParent<LorawanMacGateway>()
+                            .AddConstructor<LorawanGroundMacGateway>();
     return tid;
 }
 
-LorawanMacGateway::LorawanMacGateway()
+LorawanGroundMacGateway::LorawanGroundMacGateway()
 {
     NS_FATAL_ERROR("Default constructor not in use");
 }
 
-LorawanMacGateway::LorawanMacGateway(uint32_t satId, uint32_t beamId)
-    : LorawanMac(satId, beamId)
+LorawanGroundMacGateway::LorawanGroundMacGateway(uint32_t satId, uint32_t beamId)
+    : LorawanMacGateway(satId, beamId)
 {
     NS_LOG_FUNCTION(this);
 }
 
-LorawanMacGateway::~LorawanMacGateway()
+LorawanGroundMacGateway::~LorawanGroundMacGateway()
 {
     NS_LOG_FUNCTION(this);
 }
 
 void
-LorawanMacGateway::Send(Ptr<Packet> packet)
+LorawanGroundMacGateway::Send(Ptr<Packet> packet)
 {
     NS_LOG_FUNCTION(this << packet);
 
@@ -149,14 +151,9 @@ LorawanMacGateway::Send(Ptr<Packet> packet)
     m_sentNewPacket(packet);
 }
 
-bool
-LorawanMacGateway::IsTransmitting(void)
-{
-    return DynamicCast<SatLoraPhyTx>(m_phy->GetPhyTx())->IsTransmitting();
-}
-
 void
-LorawanMacGateway::Receive(SatPhy::PacketContainer_t packets, Ptr<SatSignalParameters> /*rxParams*/)
+LorawanGroundMacGateway::Receive(SatPhy::PacketContainer_t packets,
+                                 Ptr<SatSignalParameters> /*rxParams*/)
 {
     NS_LOG_FUNCTION(this << packets);
 
@@ -191,25 +188,5 @@ LorawanMacGateway::Receive(SatPhy::PacketContainer_t packets, Ptr<SatSignalParam
             NS_LOG_DEBUG("Not forwarding downlink message to NetDevice");
         }
     }
-}
-
-void
-LorawanMacGateway::FailedReception(Ptr<const Packet> packet)
-{
-    NS_LOG_FUNCTION(this << packet);
-}
-
-void
-LorawanMacGateway::TxFinished()
-{
-    NS_LOG_FUNCTION_NOARGS();
-}
-
-Time
-LorawanMacGateway::GetWaitingTime(double frequency)
-{
-    NS_LOG_FUNCTION(this << frequency);
-
-    return m_channelHelper.GetWaitingTime(CreateObject<LoraLogicalChannel>(frequency));
 }
 } // namespace ns3

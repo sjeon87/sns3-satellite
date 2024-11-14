@@ -146,6 +146,7 @@ SatGwMac::SatGwMac(Ptr<Node> node,
       m_useCmt(false),
       m_lastCmtSent(),
       m_cmtPeriodMin(MilliSeconds(550)),
+      m_broadcastNcr(true),
       m_disableSchedulingIfNoDeviceConnected(false),
       m_periodicTransmissionEnabled(false)
 {

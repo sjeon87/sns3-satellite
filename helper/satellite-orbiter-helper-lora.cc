@@ -31,6 +31,7 @@
 #include "ns3/enum.h"
 #include "ns3/log.h"
 #include "ns3/lorawan-mac-gateway.h"
+#include "ns3/lorawan-orbiter-mac-gateway.h"
 #include "ns3/names.h"
 #include "ns3/packet.h"
 #include "ns3/pointer.h"
@@ -145,7 +146,9 @@ SatOrbiterHelperLora::AttachChannelsUser(Ptr<SatOrbiterNetDevice> dev,
     params.m_satId = satId;
     params.m_beamId = userBeamId;
     params.m_device = dev;
-    params.m_standard = SatEnums::LORA_ORBITER;
+    params.m_standard = forwardLinkRegenerationMode == SatEnums::TRANSPARENT
+                            ? SatEnums::DVB_ORBITER
+                            : SatEnums::LORA_ORBITER;
 
     /**
      * Simple channel estimation, which does not do actually anything
@@ -229,7 +232,7 @@ SatOrbiterHelperLora::AttachChannelsUser(Ptr<SatOrbiterNetDevice> dev,
     case SatEnums::REGENERATION_NETWORK: {
         // Create layers
         Ptr<LorawanMacGateway> uRegenerationMac =
-            CreateObject<LorawanMacGateway>(satId, userBeamId);
+            CreateObject<LorawanOrbiterMacGateway>(satId, userBeamId);
 
         dev->AddUserMac(uRegenerationMac, userBeamId);
         uRegenerationMac->SetDevice(dev);

@@ -20,48 +20,32 @@
  * Modified by: Bastien Tauran <bastien.tauran@viveris.fr>
  */
 
-#ifndef LORAWAN_MAC_GATEWAY_H
-#define LORAWAN_MAC_GATEWAY_H
+#ifndef LORAWAN_GROUND_MAC_GATEWAY_H
+#define LORAWAN_GROUND_MAC_GATEWAY_H
 
 #include "lora-tag.h"
+#include "lorawan-mac-gateway.h"
 #include "lorawan-mac.h"
 #include "satellite-bbframe-container.h"
 
 namespace ns3
 {
 
-class LorawanMacGateway : public LorawanMac
+class LorawanGroundMacGateway : public LorawanMacGateway
 {
   public:
     static TypeId GetTypeId(void);
 
-    LorawanMacGateway();
-    LorawanMacGateway(uint32_t satId, uint32_t beamId);
-    virtual ~LorawanMacGateway();
+    LorawanGroundMacGateway();
+    LorawanGroundMacGateway(uint32_t satId, uint32_t beamId);
+    virtual ~LorawanGroundMacGateway();
 
     // Implementation of the LorawanMac interface
-    virtual void Send(Ptr<Packet> packet) = 0;
-
-    // Implementation of the LorawanMac interface
-    bool IsTransmitting(void);
+    virtual void Send(Ptr<Packet> packet);
 
     // Implementation of the LorawanMac interface
     // virtual void Receive (Ptr<Packet const> packet);
-    virtual void Receive(SatPhy::PacketContainer_t packets,
-                         Ptr<SatSignalParameters> /*rxParams*/) = 0;
-
-    // Implementation of the LorawanMac interface
-    virtual void FailedReception(Ptr<const Packet> packet);
-
-    // Implementation of the LorawanMac interface
-    virtual void TxFinished();
-
-    /**
-     * Return the next time at which we will be able to transmit.
-     *
-     * \return The next transmission time.
-     */
-    Time GetWaitingTime(double frequency);
+    virtual void Receive(SatPhy::PacketContainer_t packets, Ptr<SatSignalParameters> /*rxParams*/);
 
   private:
     // BB Frame configuration.
@@ -70,4 +54,4 @@ class LorawanMacGateway : public LorawanMac
 
 } /* namespace ns3 */
 
-#endif /* LORAWAN_MAC_GATEWAY_H */
+#endif /* LORAWAN_GROUND_MAC_GATEWAY_H */
