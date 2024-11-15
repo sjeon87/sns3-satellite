@@ -377,6 +377,13 @@ class LorawanMacEndDevice : public LorawanMac
     void SetSatAddress(Mac48Address satAddress);
 
     /**
+     * Set if associated satellite is regenerative.
+     *
+     * \param isRegenerative Set to true if satellite is regenerative.
+     */
+    void SetRegenerative(bool isRegenerative);
+
+    /**
      * Set RA channel assigned for this UT.
      *
      * \param raChannel RA channel assigned to this UT.
@@ -492,7 +499,15 @@ class LorawanMacEndDevice : public LorawanMac
      */
     LorawanMacEndDevice::GatewayUpdateCallback m_gatewayUpdateCallback;
 
+    /**
+     * Gateway address used in case of transparent satellite
+     */
     Mac48Address m_gwAddress;
+
+    /**
+     * Satellite address, used in case of regenerative satellite
+     */
+    Mac48Address m_satAddress;
 
     /**
      * RA channel assigned to the UT.
@@ -503,6 +518,11 @@ class LorawanMacEndDevice : public LorawanMac
      * Reception phy layer for Lora operations
      */
     Ptr<SatLoraPhyRx> m_phyRx;
+
+    /**
+     * Tell if satellite is regenerative
+     */
+    bool m_isRegenerative;
 
   private:
     /**

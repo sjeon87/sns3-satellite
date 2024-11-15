@@ -350,9 +350,6 @@ SatPhyRxCarrier::GetReceiveParams(Ptr<SatSignalParameters> rxParams)
             params.finalDestAddress = addressE2ETag.GetE2EDestAddress();
             params.finalSourceAddress = addressE2ETag.GetE2ESourceAddress();
 
-            std::cout << "SatPhyRxCarrier::GetReceiveParams " << params.destAddress << " "
-                      << GetOwnAddress() << std::endl;
-
             if ((params.destAddress == GetOwnAddress()))
             {
                 NS_LOG_INFO("Packet intended for this specific receiver: " << params.destAddress);
@@ -413,9 +410,6 @@ SatPhyRxCarrier::StartRx(Ptr<SatSignalParameters> rxParams)
         {
             isGoodBeam = true;
         }
-
-        std::cout << "SatPhyRxCarrier::StartRx receivePacket " << receivePacket << " " << isGoodBeam
-                  << std::endl;
 
         if (receivePacket && isGoodBeam)
         {

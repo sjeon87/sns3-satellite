@@ -27,6 +27,7 @@
 
 #include "lora-tag.h"
 #include "lorawan-mac-end-device.h"
+#include "satellite-ground-station-address-tag.h"
 #include "satellite-lorawan-net-device.h"
 #include "satellite-phy.h"
 
@@ -191,7 +192,14 @@ LorawanMacEndDeviceClassA::SendToPhy(Ptr<Packet> packetToSend)
 
     SatMacTag mTag;
     packetToSend->RemovePacketTag(mTag);
-    mTag.SetDestAddress(m_gwAddress);
+    if (m_isRegenerative)
+    {
+        mTag.SetDestAddress(m_satAddress);
+    }
+    else
+    {
+        mTag.SetDestAddress(m_gwAddress);
+    }
     mTag.SetSourceAddress(Mac48Address::ConvertFrom(m_device->GetAddress()));
     packetToSend->AddPacketTag(mTag);
 
@@ -200,6 +208,13 @@ LorawanMacEndDeviceClassA::SendToPhy(Ptr<Packet> packetToSend)
     addressE2ETag.SetE2EDestAddress(Mac48Address::GetBroadcast());
     addressE2ETag.SetE2ESourceAddress(Mac48Address::ConvertFrom(m_device->GetAddress()));
     packetToSend->AddPacketTag(addressE2ETag);
+
+    if (m_isRegenerative)
+    {
+        SatGroundStationAddressTag groundStationAddressTag =
+            SatGroundStationAddressTag(m_satAddress);
+        packetToSend->AddPacketTag(groundStationAddressTag);
+    }
 
     SatPhy::PacketContainer_t packets;
     packets.push_back(packetToSend);

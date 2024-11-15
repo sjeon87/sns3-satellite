@@ -130,6 +130,7 @@ LorawanMacEndDevice::LorawanMacEndDevice(uint32_t satId, uint32_t beamId)
       // LoraWAN default
       m_receiveWindowDurationInSymbols(8),
       m_gatewayUpdateCallback(),
+      m_isRegenerative(false),
       // LoraWAN default
       m_controlDataRate(false),
       m_lastKnownLinkMargin(0),
@@ -973,7 +974,15 @@ LorawanMacEndDevice::SetSatAddress(Mac48Address satAddress)
 {
     NS_LOG_FUNCTION(this << satAddress);
 
-    m_gwAddress = satAddress; // TODO create attribute m_satAddress and bool to tell if regenerative
+    m_satAddress = satAddress;
+}
+
+void
+LorawanMacEndDevice::SetRegenerative(bool isRegenerative)
+{
+    NS_LOG_FUNCTION(this << isRegenerative);
+
+    m_isRegenerative = isRegenerative;
 }
 
 void
