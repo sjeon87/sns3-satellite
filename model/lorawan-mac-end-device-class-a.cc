@@ -212,7 +212,7 @@ LorawanMacEndDeviceClassA::SendToPhy(Ptr<Packet> packetToSend)
     if (m_isRegenerative)
     {
         SatGroundStationAddressTag groundStationAddressTag =
-            SatGroundStationAddressTag(m_satAddress);
+            SatGroundStationAddressTag(m_gwAddress);
         packetToSend->AddPacketTag(groundStationAddressTag);
     }
 

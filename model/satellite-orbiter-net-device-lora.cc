@@ -220,6 +220,7 @@ SatOrbiterNetDeviceLora::ReceivePacketFeeder(Ptr<Packet> packet, const Address& 
             packet->AddPacketTag(SatDevLinkTimeTag(Simulator::Now()));
         }
 
+        // TODO for debug purposes
         packet->Print(std::cout);
         std::cout << std::endl;
 

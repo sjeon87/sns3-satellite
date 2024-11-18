@@ -213,6 +213,7 @@ SatUtHelperLora::Install(Ptr<Node> n,
     if (forwardLinkRegenerationMode == SatEnums::REGENERATION_NETWORK)
     {
         mac->SetSatAddress(Mac48Address::ConvertFrom(satUserAddress));
+        mac->SetRegenerative(true);
     }
 
     // Add UT to NCC
