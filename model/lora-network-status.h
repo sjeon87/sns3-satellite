@@ -120,6 +120,8 @@ class LoraNetworkStatus : public Object
   public:
     std::map<LoraDeviceAddress, Ptr<LoraEndDeviceStatus>> m_endDeviceStatuses;
     std::map<Address, Ptr<LoraGatewayStatus>> m_gatewayStatuses;
+
+    SatEnums::RegenerationMode_t m_forwardLinkRegenerationMode;
 };
 
 } // namespace ns3

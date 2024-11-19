@@ -171,10 +171,10 @@ LorawanMacEndDevice::Send(Ptr<Packet> packet)
 
     // If it is not possible to transmit now because of the duty cycle,
     // or because we are receiving, schedule a tx/retx later
-    Time netxTxDelay = GetNextTransmissionDelay();
-    if (netxTxDelay != Seconds(0))
+    Time nextTxDelay = GetNextTransmissionDelay();
+    if (nextTxDelay != Seconds(0))
     {
-        postponeTransmission(netxTxDelay, packet);
+        postponeTransmission(nextTxDelay, packet);
         return;
     }
 
@@ -205,15 +205,15 @@ LorawanMacEndDevice::Send(Ptr<Packet> packet)
 }
 
 void
-LorawanMacEndDevice::postponeTransmission(Time netxTxDelay, Ptr<Packet> packet)
+LorawanMacEndDevice::postponeTransmission(Time nextTxDelay, Ptr<Packet> packet)
 {
     NS_LOG_FUNCTION(this);
     // Delete previously scheduled transmissions if any.
     Simulator::Cancel(m_nextTx);
-    m_nextTx = Simulator::Schedule(netxTxDelay, &LorawanMacEndDevice::DoSend, this, packet);
+    m_nextTx = Simulator::Schedule(nextTxDelay, &LorawanMacEndDevice::DoSend, this, packet);
     NS_LOG_WARN("Attempting to send, but the aggregate duty cycle won't allow it. Scheduling a tx "
                 "at a delay "
-                << netxTxDelay.GetSeconds() << ".");
+                << nextTxDelay.GetSeconds() << ".");
 }
 
 void

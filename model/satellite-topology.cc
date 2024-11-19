@@ -102,35 +102,36 @@ SatTopology::GetStandard()
 }
 
 void
-SatTopology::SetForwardRegenerationMode(SatEnums::RegenerationMode_t forwardRegenerationMode)
+SatTopology::SetForwardLinkRegenerationMode(
+    SatEnums::RegenerationMode_t forwardLinkRegenerationMode)
 {
-    NS_LOG_FUNCTION(this << forwardRegenerationMode);
+    NS_LOG_FUNCTION(this << forwardLinkRegenerationMode);
 
-    m_forwardRegenerationMode = forwardRegenerationMode;
+    m_forwardLinkRegenerationMode = forwardLinkRegenerationMode;
 }
 
 SatEnums::RegenerationMode_t
-SatTopology::GetForwardRegenerationMode()
+SatTopology::GetForwardLinkRegenerationMode()
 {
     NS_LOG_FUNCTION(this);
 
-    return m_forwardRegenerationMode;
+    return m_forwardLinkRegenerationMode;
 }
 
 void
-SatTopology::SetReturnRegenerationMode(SatEnums::RegenerationMode_t returnRegenerationMode)
+SatTopology::SetReturnLinkRegenerationMode(SatEnums::RegenerationMode_t returnLinkRegenerationMode)
 {
-    NS_LOG_FUNCTION(this << returnRegenerationMode);
+    NS_LOG_FUNCTION(this << returnLinkRegenerationMode);
 
-    m_returnRegenerationMode = returnRegenerationMode;
+    m_returnLinkRegenerationMode = returnLinkRegenerationMode;
 }
 
 SatEnums::RegenerationMode_t
-SatTopology::GetReturnRegenerationMode()
+SatTopology::GetReturnLinkRegenerationMode()
 {
     NS_LOG_FUNCTION(this);
 
-    return m_returnRegenerationMode;
+    return m_returnLinkRegenerationMode;
 }
 
 void
@@ -1071,8 +1072,15 @@ SatTopology::PrintTopology(std::ostream& os) const
         {
             uint32_t satId = mac.first.first;
             uint32_t beamId = mac.first.second;
-            os << "    " << mac.second->GetAddress() << ", sat: " << satId << ", beam: " << beamId
-               << std::endl;
+            if (mac.second != nullptr)
+            {
+                os << "    " << mac.second->GetAddress() << ", sat: " << satId
+                   << ", beam: " << beamId << std::endl;
+            }
+            else
+            {
+                os << "    LORA GW, sat: " << satId << ", beam: " << beamId << std::endl;
+            }
         }
     }
 
@@ -1090,10 +1098,17 @@ SatTopology::PrintTopology(std::ostream& os) const
         uint32_t utSatId = utLayers.m_satId;
         uint32_t utBeamId = utLayers.m_beamId;
         uint32_t gwSatId = gwLayers.m_satId;
-        os << "    " << utLayers.m_mac->GetAddress() << ", sat: " << utSatId
-           << ", beam: " << utBeamId;
-        os << ". Linked to GW "
-           << gwLayers.m_mac.at(std::make_pair(gwSatId, utBeamId))->GetAddress() << std::endl;
+        if (utLayers.m_mac != nullptr)
+        {
+            os << "    " << utLayers.m_mac->GetAddress() << ", sat: " << utSatId
+               << ", beam: " << utBeamId;
+            os << ". Linked to GW "
+               << gwLayers.m_mac.at(std::make_pair(gwSatId, utBeamId))->GetAddress() << std::endl;
+        }
+        else
+        {
+            os << "    LORA DEVICE, sat: " << utSatId << ", beam: " << utBeamId << std::endl;
+        }
     }
 
     os << "GW users" << std::endl;

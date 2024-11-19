@@ -346,6 +346,7 @@ class LoraEndDeviceStatus : public Object
     // Receive window data
     uint8_t m_modcod;
     uint8_t m_beamId;
+    Address m_utAddress;
     uint8_t m_firstReceiveWindowSpreadingFactor = 0;
     double m_firstReceiveWindowFrequency = 0;
     uint8_t m_secondReceiveWindowOffset = 0;

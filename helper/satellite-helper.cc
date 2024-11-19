@@ -690,9 +690,9 @@ SatHelper::DoCreateScenario(BeamUserInfoMap_t& beamInfos, uint32_t gwUsers)
     else
     {
         Singleton<SatTopology>::Get()->SetStandard(m_standard);
-        Singleton<SatTopology>::Get()->SetForwardRegenerationMode(
+        Singleton<SatTopology>::Get()->SetForwardLinkRegenerationMode(
             m_satConf->GetForwardLinkRegenerationMode());
-        Singleton<SatTopology>::Get()->SetReturnRegenerationMode(
+        Singleton<SatTopology>::Get()->SetReturnLinkRegenerationMode(
             m_satConf->GetReturnLinkRegenerationMode());
 
         SetNetworkAddresses(beamInfos, gwUsers);

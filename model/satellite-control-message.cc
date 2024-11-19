@@ -150,8 +150,6 @@ SatTbtpMessage::SatTbtpMessage()
       m_assignmentFormat(0)
 {
     NS_LOG_FUNCTION(this);
-
-    std::cout << "SatTbtpMessage" << std::endl;
 }
 
 SatTbtpMessage::SatTbtpMessage(uint8_t seqId)
@@ -160,8 +158,6 @@ SatTbtpMessage::SatTbtpMessage(uint8_t seqId)
       m_assignmentFormat(0)
 {
     NS_LOG_FUNCTION(this << (uint32_t)seqId);
-
-    std::cout << "SatTbtpMessage" << std::endl;
 }
 
 SatTbtpMessage::~SatTbtpMessage()
@@ -413,8 +409,6 @@ SatCrMessage::SatCrMessage()
       m_forwardLinkCNo(NAN)
 {
     NS_LOG_FUNCTION(this);
-
-    std::cout << "SatCrMessage" << std::endl;
 }
 
 SatCrMessage::~SatCrMessage()
@@ -504,8 +498,6 @@ SatCnoReportMessage::SatCnoReportMessage()
     : m_linkCNo(NAN)
 {
     NS_LOG_FUNCTION(this);
-
-    std::cout << "SatCnoReportMessage" << std::endl;
 }
 
 SatCnoReportMessage::~SatCnoReportMessage()
@@ -558,8 +550,6 @@ SatRaMessage::SatRaMessage()
       m_backoffTime(0)
 {
     NS_LOG_FUNCTION(this);
-
-    std::cout << "SatRaMessage" << std::endl;
 }
 
 SatRaMessage::~SatRaMessage()
@@ -643,8 +633,6 @@ SatArqAckMessage::SatArqAckMessage()
       m_flowId(0)
 {
     NS_LOG_FUNCTION(this);
-
-    std::cout << "SatArqAckMessage" << std::endl;
 }
 
 SatArqAckMessage::~SatArqAckMessage()
@@ -710,8 +698,6 @@ SatTimuMessage::SatTimuMessage()
     : m_beamId(0)
 {
     NS_LOG_FUNCTION(this);
-
-    std::cout << "SatTimuMessage" << std::endl;
 }
 
 SatTimuMessage::~SatTimuMessage()
@@ -808,8 +794,6 @@ SatHandoverRecommendationMessage::SatHandoverRecommendationMessage()
       m_satId(0)
 {
     NS_LOG_FUNCTION(this);
-
-    std::cout << "SatHandoverRecommendationMessage" << std::endl;
 }
 
 SatHandoverRecommendationMessage::~SatHandoverRecommendationMessage()
@@ -875,8 +859,6 @@ SatSliceSubscriptionMessage::SatSliceSubscriptionMessage()
     : m_sliceId(0)
 {
     NS_LOG_FUNCTION(this);
-
-    std::cout << "SatSliceSubscriptionMessage" << std::endl;
 }
 
 SatSliceSubscriptionMessage::~SatSliceSubscriptionMessage()
@@ -940,8 +922,6 @@ SatLogonMessage::GetInstanceTypeId(void) const
 SatLogonMessage::SatLogonMessage()
 {
     NS_LOG_FUNCTION(this);
-
-    std::cout << "SatLogonMessage" << std::endl;
 }
 
 SatLogonMessage::~SatLogonMessage()
@@ -980,8 +960,6 @@ SatLogonResponseMessage::GetInstanceTypeId(void) const
 SatLogonResponseMessage::SatLogonResponseMessage()
 {
     NS_LOG_FUNCTION(this);
-
-    std::cout << "SatLogonResponseMessage" << std::endl;
 }
 
 SatLogonResponseMessage::~SatLogonResponseMessage()
@@ -1034,8 +1012,6 @@ SatLogoffMessage::GetInstanceTypeId(void) const
 SatLogoffMessage::SatLogoffMessage()
 {
     NS_LOG_FUNCTION(this);
-
-    std::cout << "SatLogoffMessage" << std::endl;
 }
 
 SatLogoffMessage::~SatLogoffMessage()
@@ -1073,8 +1049,6 @@ SatNcrMessage::GetInstanceTypeId(void) const
 SatNcrMessage::SatNcrMessage()
 {
     NS_LOG_FUNCTION(this);
-
-    std::cout << "SatNcrMessage" << std::endl;
 }
 
 SatNcrMessage::~SatNcrMessage()
@@ -1134,8 +1108,6 @@ SatCmtMessage::SatCmtMessage()
       m_frequencyCorrection(0)
 {
     NS_LOG_FUNCTION(this);
-
-    std::cout << "SatCmtMessage" << std::endl;
 }
 
 SatCmtMessage::~SatCmtMessage()

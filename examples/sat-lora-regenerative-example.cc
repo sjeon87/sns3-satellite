@@ -48,6 +48,10 @@ main(int argc, char* argv[])
     uint32_t nbUtsPerBeam = 5;
     uint32_t nbEndUsersPerUt = 1;
 
+    // TODO temp
+    beams = "3";
+    nbUtsPerBeam = 1;
+
     Time appStartTime = Seconds(0.001);
     Time simLength = Seconds(15.0);
 

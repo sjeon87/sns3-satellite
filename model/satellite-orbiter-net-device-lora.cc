@@ -220,10 +220,6 @@ SatOrbiterNetDeviceLora::ReceivePacketFeeder(Ptr<Packet> packet, const Address& 
             packet->AddPacketTag(SatDevLinkTimeTag(Simulator::Now()));
         }
 
-        // TODO for debug purposes
-        packet->Print(std::cout);
-        std::cout << std::endl;
-
         DynamicCast<LorawanMacGateway>(m_userMac[satUplinkInfoTag.GetBeamId()])->Send(packet);
     }
     if ((m_utConnected.count(destination) == 0 || destination.IsBroadcast()) &&

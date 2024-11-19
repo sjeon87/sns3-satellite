@@ -27,12 +27,14 @@
 #include "lora-device-address.h"
 #include "lora-end-device-status.h"
 #include "lora-gateway-status.h"
+#include "satellite-topology.h"
 
 #include <ns3/log.h>
 #include <ns3/net-device.h>
 #include <ns3/node-container.h>
 #include <ns3/packet.h>
 #include <ns3/pointer.h>
+#include <ns3/singleton.h>
 
 #include <map>
 #include <utility>
@@ -54,6 +56,8 @@ LoraNetworkStatus::GetTypeId(void)
 LoraNetworkStatus::LoraNetworkStatus()
 {
     NS_LOG_FUNCTION_NOARGS();
+
+    m_forwardLinkRegenerationMode = Singleton<SatTopology>::Get()->GetForwardLinkRegenerationMode();
 }
 
 LoraNetworkStatus::~LoraNetworkStatus()
@@ -152,6 +156,12 @@ LoraNetworkStatus::GetBestGatewayForDevice(LoraDeviceAddress deviceAddress, int 
     // identify the best gateway according to various metrics. For now, we just
     // ask the EndDeviceStatus to pick the best gateway for us via its method.
     std::map<double, Address> gwAddresses = edStatus->GetPowerGatewayMap();
+
+    if (m_forwardLinkRegenerationMode == SatEnums::REGENERATION_NETWORK)
+    {
+        // If regenerative satellite, simply send on the same GW that received the packet
+        return gwAddresses.begin()->second;
+    }
 
     // By iterating on the map in reverse, we go from the 'best'
     // gateway, i.e. the one with the highest received power, to the

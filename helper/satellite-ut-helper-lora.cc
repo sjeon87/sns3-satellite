@@ -39,6 +39,7 @@
 #include <ns3/satellite-phy-rx.h>
 #include <ns3/satellite-phy-tx.h>
 #include <ns3/satellite-queue.h>
+#include <ns3/satellite-topology.h>
 #include <ns3/satellite-typedefs.h>
 #include <ns3/satellite-ut-phy.h>
 #include <ns3/singleton.h>
@@ -187,7 +188,7 @@ SatUtHelperLora::Install(Ptr<Node> n,
     dev->SetPhy(phy);
 
     // Attach the Mac layer to SatNetDevice
-    dev->SetLorawanMac(mac);
+    dev->SetMac(mac);
     mac->SetDevice(dev);
 
     mac->SetPhy(phy);
@@ -230,6 +231,8 @@ SatUtHelperLora::Install(Ptr<Node> n,
     dev->SetNodeInfo(nodeInfo);
     mac->SetNodeInfo(nodeInfo);
     phy->SetNodeInfo(nodeInfo);
+
+    Singleton<SatTopology>::Get()->AddUtLayers(n, satId, beamId, 0, dev, nullptr, nullptr, phy);
 
     return dev;
 }

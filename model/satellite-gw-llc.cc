@@ -87,9 +87,13 @@ SatGwLlc::Enque(Ptr<Packet> packet, Address dest, uint8_t flowId)
 
     if (m_forwardLinkRegenerationMode == SatEnums::REGENERATION_NETWORK)
     {
-        SatGroundStationAddressTag groundStationAddressTag =
-            SatGroundStationAddressTag(Mac48Address::ConvertFrom(dest));
-        packet->AddPacketTag(groundStationAddressTag);
+        SatGroundStationAddressTag groundStationAddressTag;
+        // May have been already added by Lora Network Server, do not add twice
+        if (!packet->PeekPacketTag(groundStationAddressTag))
+        {
+            groundStationAddressTag = SatGroundStationAddressTag(Mac48Address::ConvertFrom(dest));
+            packet->AddPacketTag(groundStationAddressTag);
+        }
     }
 
     Ptr<EncapKey> key;

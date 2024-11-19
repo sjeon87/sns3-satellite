@@ -77,7 +77,7 @@ LoraForwarder::ReceiveFromLora(Ptr<SatLorawanNetDevice> loraNetDevice,
 
     Ptr<Packet> packetCopy = packet->Copy();
 
-    LoraBeamTag beamTag = LoraBeamTag(loraNetDevice->GetLorawanMac()->GetBeamId());
+    LoraBeamTag beamTag = LoraBeamTag(loraNetDevice->GetMac()->GetBeamId());
     packetCopy->AddPacketTag(beamTag);
 
     m_pointToPointNetDevice->Send(packetCopy, m_pointToPointNetDevice->GetBroadcast(), protocol);

@@ -131,30 +131,30 @@ class SatTopology : public Object
     /**
      * Set forward link regeneration mode
      *
-     * \param forwardRegenerationMode Forward link regeneration mode
+     * \param forwardLinkRegenerationMode Forward link regeneration mode
      */
-    void SetForwardRegenerationMode(SatEnums::RegenerationMode_t forwardRegenerationMode);
+    void SetForwardLinkRegenerationMode(SatEnums::RegenerationMode_t forwardLinkRegenerationMode);
 
     /**
      * Get forward link regeneration mode
      *
      * \return Forward link regeneration mode
      */
-    SatEnums::RegenerationMode_t GetForwardRegenerationMode();
+    SatEnums::RegenerationMode_t GetForwardLinkRegenerationMode();
 
     /**
      * Set return link regeneration mode
      *
-     * \param returnRegenerationMode Return link regeneration mode
+     * \param returnLinkRegenerationMode Return link regeneration mode
      */
-    void SetReturnRegenerationMode(SatEnums::RegenerationMode_t returnRegenerationMode);
+    void SetReturnLinkRegenerationMode(SatEnums::RegenerationMode_t returnLinkRegenerationMode);
 
     /**
      * Get return link regeneration mode
      *
      * \return Return link regeneration mode
      */
-    SatEnums::RegenerationMode_t GetReturnRegenerationMode();
+    SatEnums::RegenerationMode_t GetReturnLinkRegenerationMode();
 
     /**
      * Add a GW node to the topology
@@ -755,9 +755,9 @@ class SatTopology : public Object
     uint32_t GetClosestSat(GeoCoordinate position);
 
   private:
-    SatEnums::Standard_t m_standard;                        // Standard used
-    SatEnums::RegenerationMode_t m_forwardRegenerationMode; // Regeneration mode on forward link
-    SatEnums::RegenerationMode_t m_returnRegenerationMode;  // Regeneration mode on return link
+    SatEnums::Standard_t m_standard;                            // Standard used
+    SatEnums::RegenerationMode_t m_forwardLinkRegenerationMode; // Regeneration mode on forward link
+    SatEnums::RegenerationMode_t m_returnLinkRegenerationMode;  // Regeneration mode on return link
 
     std::map<uint32_t, Ptr<Node>> m_gwIds;                 // List of GW nodes
     NodeContainer m_gws;                                   // List of GW nodes

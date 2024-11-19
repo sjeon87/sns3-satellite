@@ -68,7 +68,7 @@ LoraForwarderHelper::SetAttribute(std::string name, const AttributeValue& value)
 ApplicationContainer
 LoraForwarderHelper::Install(Ptr<Node> node) const
 {
-    switch (Singleton<SatTopology>::Get()->GetForwardRegenerationMode())
+    switch (Singleton<SatTopology>::Get()->GetForwardLinkRegenerationMode())
     {
     case SatEnums::TRANSPARENT: {
         return ApplicationContainer(InstallPrivGwLora(node));
@@ -111,7 +111,7 @@ LoraForwarderHelper::InstallPrivGwLora(Ptr<Node> node) const
         {
             Ptr<SatLorawanNetDevice> loraNetDevice =
                 currentNetDevice->GetObject<SatLorawanNetDevice>();
-            uint8_t beamId = loraNetDevice->GetLorawanMac()->GetBeamId();
+            uint8_t beamId = loraNetDevice->GetMac()->GetBeamId();
             app->SetLoraNetDevice(beamId, loraNetDevice);
             loraNetDevice->SetReceiveNetworkServerCallback(
                 MakeCallback(&LoraForwarder::ReceiveFromLora, app));
@@ -136,8 +136,6 @@ LoraForwarderHelper::InstallPrivGwDvb(Ptr<Node> node) const
 
     Ptr<LoraForwarder> app = m_factory.Create<LoraForwarder>();
 
-    return app;
-
     app->SetNode(node);
     node->AddApplication(app);
 
@@ -149,7 +147,7 @@ LoraForwarderHelper::InstallPrivGwDvb(Ptr<Node> node) const
         {
             Ptr<SatLorawanNetDevice> loraNetDevice =
                 currentNetDevice->GetObject<SatLorawanNetDevice>();
-            uint8_t beamId = loraNetDevice->GetLorawanMac()->GetBeamId();
+            uint8_t beamId = loraNetDevice->GetMac()->GetBeamId();
             app->SetLoraNetDevice(beamId, loraNetDevice);
             loraNetDevice->SetReceiveNetworkServerCallback(
                 MakeCallback(&LoraForwarder::ReceiveFromLora, app));

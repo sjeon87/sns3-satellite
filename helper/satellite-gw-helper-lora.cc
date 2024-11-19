@@ -40,6 +40,7 @@
 #include <ns3/satellite-node-info.h>
 #include <ns3/satellite-orbiter-net-device.h>
 #include <ns3/satellite-phy-rx-carrier-conf.h>
+#include <ns3/satellite-topology.h>
 #include <ns3/satellite-typedefs.h>
 #include <ns3/singleton.h>
 
@@ -202,7 +203,7 @@ SatGwHelperLora::Install(Ptr<Node> n,
     dev->SetPhy(phy);
 
     // Attach the Mac layer to SatNetDevice
-    dev->SetLorawanMac(mac);
+    dev->SetMac(mac);
     mac->SetDevice(dev);
 
     mac->SetPhy(phy);
@@ -231,6 +232,9 @@ SatGwHelperLora::Install(Ptr<Node> n,
     {
         phy->BeginEndScheduling();
     }
+
+    Singleton<SatTopology>::Get()
+        ->AddGwLayers(n, feederSatId, feederBeamId, satId, beamId, dev, nullptr, nullptr, phy);
 
     return dev;
 }
