@@ -48,10 +48,6 @@ main(int argc, char* argv[])
     uint32_t nbUtsPerBeam = 5;
     uint32_t nbEndUsersPerUt = 1;
 
-    // TODO temp
-    beams = "3";
-    nbUtsPerBeam = 1;
-
     Time appStartTime = Seconds(0.001);
     Time simLength = Seconds(15.0);
 
@@ -70,8 +66,8 @@ main(int argc, char* argv[])
 
     Time firstWindowDelay = MilliSeconds(1500);
     Time secondWindowDelay = Seconds(2);
-    Time firstWindowDuration = MilliSeconds(400);
-    Time secondWindowDuration = MilliSeconds(400);
+    Time firstWindowDuration = MilliSeconds(500);
+    Time secondWindowDuration = MilliSeconds(500);
     Time firstWindowAnswerDelay = Seconds(1);
     Time secondWindowAnswerDelay = Seconds(2);
 
@@ -127,7 +123,7 @@ main(int argc, char* argv[])
     Config::SetDefault("ns3::LorawanMacEndDevice::DataRate", UintegerValue(5));
     Config::SetDefault("ns3::LorawanMacEndDevice::MType",
                        EnumValue(LorawanMacHeader::CONFIRMED_DATA_UP));
-    Config::SetDefault("ns3::SatLorawanNetDevice::ForwardToUtUsers", BooleanValue(true));
+    Config::SetDefault("ns3::SatLorawanNetDevice::ForwardToUtUsers", BooleanValue(false));
 
     // Config::SetDefault ("ns3::SatLoraConf::Standard", EnumValue (SatLoraConf::EU863_870));
     Config::SetDefault("ns3::SatLoraConf::Standard", EnumValue(SatLoraConf::SATELLITE));
