@@ -836,7 +836,7 @@ SatHelper::DoCreateScenario(BeamUserInfoMap_t& beamInfos, uint32_t gwUsers)
             for (itNd = utNetDevices.Begin(); itNd != utNetDevices.End(); itNd++)
             {
                 Ptr<SatMac> mac = DynamicCast<SatMac>(DynamicCast<SatNetDevice>(*itNd)->GetMac());
-                if (mac != nullptr)
+                if (mac != nullptr && gwMac != nullptr)
                 {
                     gwMac->ConnectUt(Mac48Address::ConvertFrom((*itNd)->GetAddress()));
                 }
