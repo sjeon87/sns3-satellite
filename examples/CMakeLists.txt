@@ -29,6 +29,7 @@ set(base_examples
     sat-loo-example
     sat-lora-constellation-example
     sat-lora-example
+    sat-lora-handover-example
     sat-lora-regenerative-example
     sat-markov-fading-trace-example
     sat-markov-logic-example

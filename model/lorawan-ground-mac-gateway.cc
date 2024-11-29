@@ -22,6 +22,7 @@
 
 #include "lorawan-ground-mac-gateway.h"
 
+#include "lora-beam-tag.h"
 #include "lora-frame-header.h"
 #include "lorawan-mac-header.h"
 #include "satellite-bbframe-conf.h"
@@ -176,6 +177,9 @@ LorawanGroundMacGateway::Receive(SatPhy::PacketContainer_t packets,
 
         if (macHdr.IsUplink())
         {
+            LoraBeamTag beamTag = LoraBeamTag(GetBeamId());
+            packetCopy->AddPacketTag(beamTag);
+
             Ptr<SatLorawanNetDevice> lorawanNetDevice = m_device->GetObject<SatLorawanNetDevice>();
             lorawanNetDevice->Receive(packetCopy);
 

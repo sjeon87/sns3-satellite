@@ -47,6 +47,9 @@ def build(bld):
     obj.source = 'sat-lora-constellation-example.cc'
 
     obj = bld.create_ns3_program('sat-lora-example', ['satellite'])
+    obj.source = 'sat-lora-handover-example.cc'
+
+    obj = bld.create_ns3_program('sat-lora-handover-example', ['satellite'])
     obj.source = 'sat-lora-example.cc'
 
     obj = bld.create_ns3_program('sat-lora-regenerative-example', ['satellite'])

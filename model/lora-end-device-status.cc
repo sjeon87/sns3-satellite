@@ -230,6 +230,7 @@ void
 LoraEndDeviceStatus::SetBeamId(uint8_t beamId)
 {
     NS_LOG_FUNCTION(this << beamId);
+
     m_beamId = beamId;
 }
 

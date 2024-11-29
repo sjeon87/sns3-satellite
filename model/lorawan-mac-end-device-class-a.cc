@@ -117,7 +117,7 @@ LorawanMacEndDeviceClassA::SendToPhy(Ptr<Packet> packetToSend)
     /////////////////////////////////////////////////////////
     // Add headers, prepare TX parameters and send the packet
     /////////////////////////////////////////////////////////
-    NS_LOG_FUNCTION(this);
+    NS_LOG_FUNCTION(this << packetToSend);
 
     NS_LOG_DEBUG("PacketToSend: " << packetToSend);
 
@@ -205,7 +205,7 @@ LorawanMacEndDeviceClassA::SendToPhy(Ptr<Packet> packetToSend)
 
     SatAddressE2ETag addressE2ETag;
     packetToSend->RemovePacketTag(addressE2ETag);
-    addressE2ETag.SetE2EDestAddress(Mac48Address::GetBroadcast());
+    addressE2ETag.SetE2EDestAddress(m_gwAddress);
     addressE2ETag.SetE2ESourceAddress(Mac48Address::ConvertFrom(m_device->GetAddress()));
     packetToSend->AddPacketTag(addressE2ETag);
 
@@ -264,11 +264,13 @@ LorawanMacEndDeviceClassA::Receive(Ptr<Packet> packet)
     NS_LOG_FUNCTION(this << packet);
 
     // We add good address and not broadcast for traces
+    // TODO why is this ???
     SatMacTag macTag;
     packet->RemovePacketTag(macTag);
     macTag.SetDestAddress(m_nodeInfo->GetMacAddress());
     packet->AddPacketTag(macTag);
 
+    // TODO why is this ???
     SatAddressE2ETag addressE2ETag;
     packet->RemovePacketTag(addressE2ETag);
     addressE2ETag.SetE2EDestAddress(m_nodeInfo->GetMacAddress());
