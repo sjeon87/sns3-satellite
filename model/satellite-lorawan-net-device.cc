@@ -152,7 +152,7 @@ SatLorawanNetDevice::Send(Ptr<Packet> packet, const Address& dest, uint16_t prot
 
     // only send tagged Lora packets
     LoraTag tag;
-    if (!packet->PeekPacketTag(tag))
+    if ((!packet->PeekPacketTag(tag)) && (m_nodeInfo->GetNodeType() == SatEnums::NT_GW))
     {
         return false;
     }

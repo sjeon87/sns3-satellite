@@ -2060,12 +2060,12 @@ SatUtMac::DoFrameStart()
                         SetSatelliteAddress(satAddress48);
                     }
 
-                    Address gwAddress = m_beamSchedulerCallback(m_satId, m_beamId)->GetGwAddress();
-                    Mac48Address gwAddress48 = Mac48Address::ConvertFrom(gwAddress);
-                    if (gwAddress48 != m_gwAddress)
+                    Mac48Address gwAddress =
+                        Singleton<SatTopology>::Get()->GetGwAddressInUt(m_nodeInfo->GetNodeId());
+                    if (gwAddress != m_gwAddress)
                     {
-                        SetGwAddress(gwAddress48);
-                        m_updateGwAddressCallback(gwAddress48);
+                        SetGwAddress(gwAddress);
+                        m_updateGwAddressCallback(gwAddress);
                         m_routingUpdateCallback(m_nodeInfo->GetMacAddress(), gwAddress);
                     }
                     m_handoverCallback(m_satId, m_beamId);

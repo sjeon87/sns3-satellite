@@ -112,14 +112,14 @@ LoraNetworkServer::AddGateway(Ptr<Node> gateway, Ptr<NetDevice> netDevice)
         // Create new gatewayStatus
         Ptr<LoraGatewayStatus> gwStatus =
             Create<LoraGatewayStatus>(gatewayAddress, netDevice, gwMac);
-        m_status->AddGateway(gatewayAddress, gwStatus);
+        m_status->AddGateway(gateway, gatewayAddress, gwStatus);
         break;
     }
     case SatEnums::REGENERATION_NETWORK: {
         // Create new gatewayStatus
         Ptr<LoraGatewayStatus> gwStatus =
             Create<LoraGatewayStatus>(gatewayAddress, netDevice, nullptr);
-        m_status->AddGateway(gatewayAddress, gwStatus);
+        m_status->AddGateway(gateway, gatewayAddress, gwStatus);
         break;
     }
     default:

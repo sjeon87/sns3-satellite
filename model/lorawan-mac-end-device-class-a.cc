@@ -195,7 +195,7 @@ LorawanMacEndDeviceClassA::SendToPhy(Ptr<Packet> packetToSend)
     packetToSend->RemovePacketTag(mTag);
     if (m_isRegenerative)
     {
-        mTag.SetDestAddress(m_satAddress);
+        mTag.SetDestAddress(Mac48Address::ConvertFrom(m_satelliteAddress));
     }
     else
     {

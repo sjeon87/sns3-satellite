@@ -225,7 +225,12 @@ LorawanMacEndDevice::DoSend(Ptr<Packet> packet)
 {
     NS_LOG_FUNCTION(this << packet);
 
-    CheckHandovers();
+    if (CheckHandovers())
+    {
+        // If handover, wait a short time that hadover has been made
+        Simulator::Schedule(MicroSeconds(1), &LorawanMacEndDevice::DoSend, this, packet);
+        return;
+    }
 
     // Checking if this is the transmission of a new packet
     if (packet != m_retxParams.packet)
@@ -536,7 +541,7 @@ LorawanMacEndDevice::TxFinished()
 {
 }
 
-void
+bool
 LorawanMacEndDevice::CheckHandovers()
 {
     NS_LOG_FUNCTION(this);
@@ -569,11 +574,11 @@ LorawanMacEndDevice::CheckHandovers()
                 SetSatelliteAddress(satAddress48);
             }
 
-            Address gwAddress = m_beamSchedulerCallback(m_satId, m_beamId)->GetGwAddress();
-            Mac48Address gwAddress48 = Mac48Address::ConvertFrom(gwAddress);
-            if (gwAddress48 != m_gwAddress)
+            Mac48Address gwAddress =
+                Singleton<SatTopology>::Get()->GetGwAddressInUt(m_nodeInfo->GetNodeId());
+            if (gwAddress != m_gwAddress)
             {
-                SetGwAddress(gwAddress48);
+                SetGwAddress(gwAddress);
                 m_routingUpdateCallback(m_nodeInfo->GetMacAddress(), gwAddress);
             }
             m_handoverCallback(m_satId, m_beamId);
@@ -592,8 +597,12 @@ LorawanMacEndDevice::CheckHandovers()
             {
                 m_updateAddressAndIdentifierCallback(m_node);
             }
+
+            return true;
         }
     }
+
+    return false;
 }
 
 void
@@ -1062,7 +1071,7 @@ LorawanMacEndDevice::SetSatAddress(Mac48Address satAddress)
 {
     NS_LOG_FUNCTION(this << satAddress);
 
-    m_satAddress = satAddress;
+    m_satelliteAddress = satAddress;
 }
 
 void

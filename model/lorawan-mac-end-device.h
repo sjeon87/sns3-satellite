@@ -480,8 +480,10 @@ class LorawanMacEndDevice : public LorawanMac
 
     /**
      * Check for UT handovers and perform it if necessary
+     *
+     * \return true if a handover has been performed
      */
-    void CheckHandovers();
+    bool CheckHandovers();
 
     /**
      * Find the minimum waiting time before the next possible transmission based
@@ -544,11 +546,6 @@ class LorawanMacEndDevice : public LorawanMac
      * Gateway address used in case of transparent satellite
      */
     Mac48Address m_gwAddress;
-
-    /**
-     * Satellite address, used in case of regenerative satellite
-     */
-    Mac48Address m_satAddress;
 
     /**
      * RA channel assigned to the UT.

@@ -43,7 +43,7 @@ int
 main(int argc, char* argv[])
 {
     Time appStartTime = Seconds(0.001);
-    Time simLength = Seconds(15.0);
+    Time simLength = Seconds(100);
 
     uint32_t packetSize = 24;
     Time loraInterval = Seconds(10);
@@ -55,9 +55,9 @@ main(int argc, char* argv[])
     double frameCarrierSpacing = 0;
     uint32_t frameSpreadingFactor = 256;
 
-    Time firstWindowDelay = MilliSeconds(1500);
+    Time firstWindowDelay = MilliSeconds(1000);
     Time secondWindowDelay = Seconds(2);
-    Time firstWindowDuration = MilliSeconds(400);
+    Time firstWindowDuration = MilliSeconds(900);
     Time secondWindowDuration = MilliSeconds(400);
     Time firstWindowAnswerDelay = Seconds(1);
     Time secondWindowAnswerDelay = Seconds(2);
@@ -198,10 +198,9 @@ main(int argc, char* argv[])
     Config::SetDefault("ns3::SatHelper::HandoversEnabled", BooleanValue(true));
     Config::SetDefault("ns3::SatHandoverModule::NumberClosestSats", UintegerValue(2));
 
-    // Config::SetDefault("ns3::SatGwMac::DisableSchedulingIfNoDeviceConnected",
-    // BooleanValue(true));
-    // Config::SetDefault("ns3::SatOrbiterMac::DisableSchedulingIfNoDeviceConnected",
-    //                    BooleanValue(true));
+    Config::SetDefault("ns3::SatGwMac::DisableSchedulingIfNoDeviceConnected", BooleanValue(true));
+    Config::SetDefault("ns3::SatOrbiterMac::DisableSchedulingIfNoDeviceConnected",
+                       BooleanValue(true));
 
     /// Set simulation output details
     Config::SetDefault("ns3::SatEnvVariables::EnableSimulationOutputOverwrite", BooleanValue(true));
@@ -209,7 +208,7 @@ main(int argc, char* argv[])
     /// Enable packet trace
     Config::SetDefault("ns3::SatHelper::PacketTraceEnabled", BooleanValue(true));
     Ptr<SimulationHelperConf> simulationConf = CreateObject<SimulationHelperConf>();
-    simulationHelper->SetSimulationTime(Seconds(100));
+    simulationHelper->SetSimulationTime(simLength);
     simulationHelper->SetGwUserCount(1);
     simulationHelper->SetUserCountPerUt(1);
     std::set<uint32_t> beamSetAll = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15,
@@ -227,11 +226,11 @@ main(int argc, char* argv[])
     simulationHelper->GetTrafficHelper()->AddLoraCbrTraffic(
         loraInterval,
         packetSize,
-        Singleton<SatTopology>::Get()->GetGwUserNodes(),
+        Singleton<SatTopology>::Get()->GetGwUserNode(0),
         Singleton<SatTopology>::Get()->GetUtUserNodes(),
         appStartTime,
         simLength,
-        Seconds(1));
+        Seconds(3));
 
     /*simulationHelper->GetTrafficHelper()->AddLoraPeriodicTraffic(
         loraInterval,
@@ -239,7 +238,7 @@ main(int argc, char* argv[])
         Singleton<SatTopology>::Get()->GetUtNodes(),
         appStartTime,
         simLength,
-        Seconds(1));*/
+        Seconds(3));*/
 
     // Outputs
     std::string outputPath = Singleton<SatEnvVariables>::Get()->LocateDirectory(
