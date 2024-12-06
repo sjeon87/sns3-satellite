@@ -192,9 +192,6 @@ main(int argc, char* argv[])
     Config::SetDefault("ns3::SatConf::ReturnLinkRegenerationMode",
                        EnumValue(SatEnums::REGENERATION_NETWORK));
 
-    // TODO remove ?
-    Config::SetDefault("ns3::SatOrbiterFeederPhy::QueueSize", UintegerValue(100000));
-
     Config::SetDefault("ns3::SatHelper::HandoversEnabled", BooleanValue(true));
     Config::SetDefault("ns3::SatHandoverModule::NumberClosestSats", UintegerValue(2));
 
@@ -207,6 +204,7 @@ main(int argc, char* argv[])
 
     /// Enable packet trace
     Config::SetDefault("ns3::SatHelper::PacketTraceEnabled", BooleanValue(true));
+
     Ptr<SimulationHelperConf> simulationConf = CreateObject<SimulationHelperConf>();
     simulationHelper->SetSimulationTime(simLength);
     simulationHelper->SetGwUserCount(1);

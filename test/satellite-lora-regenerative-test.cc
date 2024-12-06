@@ -173,7 +173,6 @@ SatLoraRegenerativeFirstWindowTestCase::DoRun(void)
     Config::SetDefault("ns3::SatPhyRxCarrierPerWindow::EnableSIC", BooleanValue(false));
 
     Config::SetDefault("ns3::SatMac::EnableStatisticsTags", BooleanValue(true));
-    Config::SetDefault("ns3::SatHelper::PacketTraceEnabled", BooleanValue(true));
 
     // Creating the reference system.
     Ptr<SatHelper> helper = CreateObject<SatHelper>(
@@ -344,7 +343,6 @@ SatLoraRegenerativeSecondWindowTestCase::DoRun(void)
     Config::SetDefault("ns3::SatPhyRxCarrierPerWindow::EnableSIC", BooleanValue(false));
 
     Config::SetDefault("ns3::SatMac::EnableStatisticsTags", BooleanValue(true));
-    Config::SetDefault("ns3::SatHelper::PacketTraceEnabled", BooleanValue(true));
 
     // Creating the reference system.
     Ptr<SatHelper> helper = CreateObject<SatHelper>(
@@ -534,7 +532,6 @@ SatLoraRegenerativeOutOfWindowWindowTestCase::DoRun(void)
 
     Config::SetDefault("ns3::SatMac::EnableStatisticsTags", BooleanValue(true));
     Config::SetDefault("ns3::SatPhy::EnableStatisticsTags", BooleanValue(true));
-    Config::SetDefault("ns3::SatHelper::PacketTraceEnabled", BooleanValue(true));
 
     // Creating the reference system.
     Ptr<SatHelper> helper = CreateObject<SatHelper>(
@@ -714,7 +711,6 @@ SatLoraRegenerativeOutOfWindowWindowNoRetransmissionTestCase::DoRun(void)
 
     Config::SetDefault("ns3::SatMac::EnableStatisticsTags", BooleanValue(true));
     Config::SetDefault("ns3::SatPhy::EnableStatisticsTags", BooleanValue(true));
-    Config::SetDefault("ns3::SatHelper::PacketTraceEnabled", BooleanValue(true));
 
     // Creating the reference system.
     Ptr<SatHelper> helper = CreateObject<SatHelper>(
@@ -880,7 +876,6 @@ SatLoraRegenerativeCbrTestCase::DoRun(void)
     Config::SetDefault("ns3::CbrApplication::PacketSize", UintegerValue(24));
 
     Config::SetDefault("ns3::SatMac::EnableStatisticsTags", BooleanValue(true));
-    Config::SetDefault("ns3::SatHelper::PacketTraceEnabled", BooleanValue(true));
 
     // Creating the reference system.
     Ptr<SatHelper> helper = CreateObject<SatHelper>(
@@ -1061,7 +1056,6 @@ SatLoraConstellationFirstWindowTestCase::DoRun(void)
     Config::SetDefault("ns3::SatPhyRxCarrierPerWindow::EnableSIC", BooleanValue(false));
 
     Config::SetDefault("ns3::SatMac::EnableStatisticsTags", BooleanValue(true));
-    Config::SetDefault("ns3::SatHelper::PacketTraceEnabled", BooleanValue(true));
 
     // Traffics
     simulationHelper->SetSimulationTime(Seconds(15.0));
@@ -1121,6 +1115,198 @@ SatLoraConstellationFirstWindowTestCase::DoRun(void)
 
 /**
  * \ingroup satellite
+ * \brief Test case to check if Lora still works after hadovers
+ *
+ *  Expected result:
+ *    Acks are received during all simulation
+ *    Satellite ID and beam change over the simulation
+ *
+ */
+class SatLoraConstellationHandoverTestCase : public TestCase
+{
+  public:
+    SatLoraConstellationHandoverTestCase();
+    virtual ~SatLoraConstellationHandoverTestCase();
+
+  private:
+    virtual void DoRun(void);
+    void MacTraceCb(std::string context, Ptr<const Packet> packet, const Address& address);
+
+    Time m_gwReceiveDate;
+    Time m_edReceiveDate31;
+    Time m_edReceiveDate40;
+    Time m_edReceiveDate41;
+
+    Address m_edAddress;
+    Address m_orbiterUserAddress31;
+    Address m_orbiterUserAddress40;
+    Address m_orbiterUserAddress41;
+};
+
+SatLoraConstellationHandoverTestCase::SatLoraConstellationHandoverTestCase()
+    : TestCase("Test constellation satellite lorawan with acks sent in first window."),
+      m_gwReceiveDate(Seconds(0)),
+      m_edReceiveDate31(Seconds(0)),
+      m_edReceiveDate40(Seconds(0)),
+      m_edReceiveDate41(Seconds(0))
+{
+}
+
+SatLoraConstellationHandoverTestCase::~SatLoraConstellationHandoverTestCase()
+{
+}
+
+void
+SatLoraConstellationHandoverTestCase::MacTraceCb(std::string context,
+                                                 Ptr<const Packet> packet,
+                                                 const Address& address)
+{
+    if (address == m_edAddress)
+    {
+        m_gwReceiveDate = Simulator::Now();
+    }
+
+    if (address == m_orbiterUserAddress31)
+    {
+        m_edReceiveDate31 = Simulator::Now();
+    }
+
+    if (address == m_orbiterUserAddress40)
+    {
+        m_edReceiveDate40 = Simulator::Now();
+    }
+
+    if (address == m_orbiterUserAddress41)
+    {
+        m_edReceiveDate41 = Simulator::Now();
+    }
+}
+
+void
+SatLoraConstellationHandoverTestCase::DoRun(void)
+{
+    // Set simulation output details
+    Singleton<SatEnvVariables>::Get()->DoInitialize();
+
+    Ptr<SimulationHelper> simulationHelper =
+        CreateObject<SimulationHelper>("test-sat-lora-regenerative/constellation-handover");
+
+    // Enable Lora
+    Config::SetDefault("ns3::LorawanMacEndDevice::DataRate", UintegerValue(5));
+    Config::SetDefault("ns3::LorawanMacEndDevice::MType",
+                       EnumValue(LorawanMacHeader::CONFIRMED_DATA_UP));
+    Config::SetDefault("ns3::SatLoraConf::Standard", EnumValue(SatLoraConf::SATELLITE));
+
+    /// Set regeneration mode
+    Config::SetDefault("ns3::SatConf::ForwardLinkRegenerationMode",
+                       EnumValue(SatEnums::REGENERATION_NETWORK));
+    Config::SetDefault("ns3::SatConf::ReturnLinkRegenerationMode",
+                       EnumValue(SatEnums::REGENERATION_NETWORK));
+
+    Config::SetDefault("ns3::LorawanMacEndDeviceClassA::FirstWindowDelay",
+                       TimeValue(MilliSeconds(1000)));
+    Config::SetDefault("ns3::LorawanMacEndDeviceClassA::SecondWindowDelay", TimeValue(Seconds(2)));
+    Config::SetDefault("ns3::LorawanMacEndDeviceClassA::FirstWindowDuration",
+                       TimeValue(MilliSeconds(900)));
+    Config::SetDefault("ns3::LorawanMacEndDeviceClassA::SecondWindowDuration",
+                       TimeValue(MilliSeconds(500)));
+    Config::SetDefault("ns3::LoraNetworkScheduler::FirstWindowAnswerDelay", TimeValue(Seconds(1)));
+    Config::SetDefault("ns3::LoraNetworkScheduler::SecondWindowAnswerDelay", TimeValue(Seconds(2)));
+
+    // Superframe configuration
+    Config::SetDefault("ns3::SatConf::SuperFrameConfForSeq0",
+                       EnumValue(SatSuperframeConf::SUPER_FRAME_CONFIG_4));
+    Config::SetDefault("ns3::SatSuperframeConf4::FrameConfigType",
+                       EnumValue(SatSuperframeConf::CONFIG_TYPE_4));
+    Config::SetDefault("ns3::SatSuperframeConf4::Frame0_AllocatedBandwidthHz", DoubleValue(15000));
+    Config::SetDefault("ns3::SatSuperframeConf4::Frame0_CarrierAllocatedBandwidthHz",
+                       DoubleValue(15000));
+
+    // CRDSA only
+    Config::SetDefault("ns3::SatLowerLayerServiceConf::DaService0_ConstantAssignmentProvided",
+                       BooleanValue(false));
+    Config::SetDefault("ns3::SatLowerLayerServiceConf::DaService3_RbdcAllowed",
+                       BooleanValue(false));
+
+    // Configure RA
+    Config::SetDefault("ns3::SatOrbiterHelper::FwdLinkErrorModel",
+                       EnumValue(SatPhyRxCarrierConf::EM_AVI));
+    Config::SetDefault("ns3::SatOrbiterHelper::RtnLinkErrorModel",
+                       EnumValue(SatPhyRxCarrierConf::EM_AVI));
+    Config::SetDefault("ns3::SatBeamHelper::RandomAccessModel", EnumValue(SatEnums::RA_MODEL_ESSA));
+    Config::SetDefault("ns3::SatBeamHelper::RaInterferenceEliminationModel",
+                       EnumValue(SatPhyRxCarrierConf::SIC_RESIDUAL));
+    Config::SetDefault("ns3::SatBeamHelper::RaCollisionModel",
+                       EnumValue(SatPhyRxCarrierConf::RA_COLLISION_CHECK_AGAINST_SINR));
+    Config::SetDefault("ns3::SatBeamHelper::ReturnLinkLinkResults", EnumValue(SatEnums::LR_LORA));
+
+    // Configure E-SSA
+    Config::SetDefault("ns3::SatPhyRxCarrierPerWindow::WindowDuration", StringValue("600ms"));
+    Config::SetDefault("ns3::SatPhyRxCarrierPerWindow::WindowStep", StringValue("200ms"));
+    Config::SetDefault("ns3::SatPhyRxCarrierPerWindow::WindowSICIterations", UintegerValue(5));
+    Config::SetDefault("ns3::SatPhyRxCarrierPerWindow::EnableSIC", BooleanValue(false));
+
+    Config::SetDefault("ns3::SatMac::EnableStatisticsTags", BooleanValue(true));
+
+    Config::SetDefault("ns3::SatHelper::HandoversEnabled", BooleanValue(true));
+    Config::SetDefault("ns3::SatHandoverModule::NumberClosestSats", UintegerValue(2));
+
+    // Traffics
+    Ptr<SimulationHelperConf> simulationConf = CreateObject<SimulationHelperConf>();
+    simulationHelper->SetSimulationTime(Seconds(100));
+    simulationHelper->SetGwUserCount(1);
+    simulationHelper->SetUserCountPerUt(1);
+    simulationHelper->SetBeamSet({31, 40, 41, 43});
+    simulationHelper->LoadScenario("constellation-leo-2-satellites-lora");
+    simulationHelper->SetUserCountPerMobileUt(simulationConf->m_utMobileUserCount);
+    simulationHelper->CreateSatScenario(SatHelper::NONE);
+
+    Ptr<Node> utNode = Singleton<SatTopology>::Get()->GetUtNode(0);
+    simulationHelper->GetTrafficHelper()->AddLoraPeriodicTraffic(Seconds(10),
+                                                                 24,
+                                                                 NodeContainer(utNode),
+                                                                 Seconds(0.001),
+                                                                 Seconds(100),
+                                                                 Seconds(3));
+
+    Ptr<SatOrbiterNetDevice> orbiterNetDevice0 = DynamicCast<SatOrbiterNetDevice>(
+        Singleton<SatTopology>::Get()->GetOrbiterNode(0)->GetDevice(0));
+    Ptr<SatOrbiterNetDevice> orbiterNetDevice1 = DynamicCast<SatOrbiterNetDevice>(
+        Singleton<SatTopology>::Get()->GetOrbiterNode(1)->GetDevice(0));
+
+    m_edAddress = Singleton<SatTopology>::Get()->GetUtNode(0)->GetDevice(2)->GetAddress();
+
+    m_orbiterUserAddress31 = orbiterNetDevice0->GetSatelliteUserAddress(31);
+    m_orbiterUserAddress40 = orbiterNetDevice1->GetSatelliteUserAddress(40);
+    m_orbiterUserAddress41 = orbiterNetDevice1->GetSatelliteUserAddress(41);
+
+    Config::Connect("/NodeList/*/DeviceList/*/SatMac/Rx",
+                    MakeCallback(&SatLoraConstellationHandoverTestCase::MacTraceCb, this));
+    Config::Connect("/NodeList/*/DeviceList/*/FeederMac/*/Rx",
+                    MakeCallback(&SatLoraConstellationHandoverTestCase::MacTraceCb, this));
+    Config::Connect("/NodeList/*/DeviceList/*/UserMac/*/Rx",
+                    MakeCallback(&SatLoraConstellationHandoverTestCase::MacTraceCb, this));
+
+    simulationHelper->RunSimulation();
+
+    Simulator::Destroy();
+
+    Singleton<SatEnvVariables>::Get()->DoDispose();
+
+    NS_TEST_ASSERT_MSG_NE(m_gwReceiveDate, Seconds(0), "Packet should be received by Gateway.");
+    NS_TEST_ASSERT_MSG_NE(m_edReceiveDate31,
+                          Seconds(0),
+                          "Ack should be received by End Device from satellite 0 and beam 31.");
+    NS_TEST_ASSERT_MSG_NE(m_edReceiveDate40,
+                          Seconds(0),
+                          "Ack should be received by End Device from satellite 1 and beam 40.");
+    NS_TEST_ASSERT_MSG_NE(m_edReceiveDate41,
+                          Seconds(0),
+                          "Ack should be received by End Device from satellite 1 and beam 41.");
+}
+
+/**
+ * \ingroup satellite
  * \brief Test suite for Satellite mobility unit test cases.
  */
 class SatLoraRegenerativeTestSuite : public TestSuite
@@ -1130,7 +1316,7 @@ class SatLoraRegenerativeTestSuite : public TestSuite
 };
 
 SatLoraRegenerativeTestSuite::SatLoraRegenerativeTestSuite()
-    : TestSuite("sat-lora-regenerative-test", Type::UNIT)
+    : TestSuite("sat-lora-regenerative-test", Type::SYSTEM)
 {
     AddTestCase(new SatLoraRegenerativeFirstWindowTestCase, TestCase::Duration::QUICK);
     AddTestCase(new SatLoraRegenerativeSecondWindowTestCase, TestCase::Duration::QUICK);
@@ -1139,6 +1325,7 @@ SatLoraRegenerativeTestSuite::SatLoraRegenerativeTestSuite()
                 TestCase::Duration::QUICK);
     AddTestCase(new SatLoraRegenerativeCbrTestCase, TestCase::Duration::QUICK);
     AddTestCase(new SatLoraConstellationFirstWindowTestCase, TestCase::Duration::QUICK);
+    AddTestCase(new SatLoraConstellationHandoverTestCase, TestCase::Duration::QUICK);
 }
 
 // Do allocate an instance of this TestSuite
