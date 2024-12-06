@@ -390,7 +390,7 @@ class SatLoraOutOfWindowWindowTestCase : public TestCase
 };
 
 SatLoraOutOfWindowWindowTestCase::SatLoraOutOfWindowWindowTestCase()
-    : TestCase("Test satellite lorawan with acks sent in second window."),
+    : TestCase("Test satellite lorawan with acks sent out of reception windows."),
       m_edReceiveDate(Seconds(0)),
       m_phyGwReceive(false),
       m_phyEdReceive(false)
@@ -566,7 +566,8 @@ class SatLoraOutOfWindowWindowNoRetransmissionTestCase : public TestCase
 };
 
 SatLoraOutOfWindowWindowNoRetransmissionTestCase::SatLoraOutOfWindowWindowNoRetransmissionTestCase()
-    : TestCase("Test satellite lorawan with acks sent in second window."),
+    : TestCase("Test satellite lorawan with acks sent out of reception windows and no "
+               "retransmission needed."),
       m_edReceiveDate(Seconds(0))
 {
 }
@@ -864,7 +865,7 @@ class SatLoraTestSuite : public TestSuite
 };
 
 SatLoraTestSuite::SatLoraTestSuite()
-    : TestSuite("sat-lora-test", Type::UNIT)
+    : TestSuite("sat-lora-test", Type::SYSTEM)
 {
     AddTestCase(new SatLoraFirstWindowTestCase, TestCase::Duration::QUICK);
     AddTestCase(new SatLoraSecondWindowTestCase, TestCase::Duration::QUICK);

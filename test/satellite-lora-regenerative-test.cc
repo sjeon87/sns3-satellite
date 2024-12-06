@@ -82,7 +82,7 @@ class SatLoraRegenerativeFirstWindowTestCase : public TestCase
 };
 
 SatLoraRegenerativeFirstWindowTestCase::SatLoraRegenerativeFirstWindowTestCase()
-    : TestCase("Test satellite lorawan with acks sent in first window."),
+    : TestCase("Test regenerative satellite lorawan with acks sent in first window."),
       m_gwReceiveDate(Seconds(0)),
       m_edReceiveDate(Seconds(0))
 {
@@ -249,7 +249,7 @@ class SatLoraRegenerativeSecondWindowTestCase : public TestCase
 };
 
 SatLoraRegenerativeSecondWindowTestCase::SatLoraRegenerativeSecondWindowTestCase()
-    : TestCase("Test satellite lorawan with acks sent in second window."),
+    : TestCase("Test regenerative satellite lorawan with acks sent in second window."),
       m_gwReceiveDate(Seconds(0)),
       m_edReceiveDate(Seconds(0))
 {
@@ -421,7 +421,7 @@ class SatLoraRegenerativeOutOfWindowWindowTestCase : public TestCase
 };
 
 SatLoraRegenerativeOutOfWindowWindowTestCase::SatLoraRegenerativeOutOfWindowWindowTestCase()
-    : TestCase("Test satellite lorawan with acks sent in second window."),
+    : TestCase("Test regenerative satellite lorawan with acks sent out of reception windows."),
       m_edReceiveDate(Seconds(0)),
       m_phyGwReceive(false),
       m_phyEdReceive(false)
@@ -617,7 +617,8 @@ class SatLoraRegenerativeOutOfWindowWindowNoRetransmissionTestCase : public Test
 
 SatLoraRegenerativeOutOfWindowWindowNoRetransmissionTestCase::
     SatLoraRegenerativeOutOfWindowWindowNoRetransmissionTestCase()
-    : TestCase("Test satellite lorawan with acks sent in second window."),
+    : TestCase("Test regenerative satellite lorawan with acks sent out of reception windows and no "
+               "retransmission needed."),
       m_edReceiveDate(Seconds(0))
 {
 }
@@ -783,7 +784,7 @@ class SatLoraRegenerativeCbrTestCase : public TestCase
 };
 
 SatLoraRegenerativeCbrTestCase::SatLoraRegenerativeCbrTestCase()
-    : TestCase("Test satellite lorawan with acks sent in second window."),
+    : TestCase("Test regenerativesatellite lorawan with CBR traffic."),
       m_edReceiveDate(Seconds(0))
 {
 }
@@ -1119,7 +1120,7 @@ SatLoraConstellationFirstWindowTestCase::DoRun(void)
  *
  *  Expected result:
  *    Acks are received during all simulation
- *    Satellite ID and beam change over the simulation
+ *    Satellite ID and beam change over the simulation: 1/41 -> 1/40 -> 0/31
  *
  */
 class SatLoraConstellationHandoverTestCase : public TestCase
@@ -1144,7 +1145,7 @@ class SatLoraConstellationHandoverTestCase : public TestCase
 };
 
 SatLoraConstellationHandoverTestCase::SatLoraConstellationHandoverTestCase()
-    : TestCase("Test constellation satellite lorawan with acks sent in first window."),
+    : TestCase("Test constellation satellite lorawan with handovers."),
       m_gwReceiveDate(Seconds(0)),
       m_edReceiveDate31(Seconds(0)),
       m_edReceiveDate40(Seconds(0)),
