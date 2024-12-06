@@ -75,6 +75,12 @@ LorawanMacEndDeviceClassA::GetTypeId(void)
     return tid;
 }
 
+TypeId
+LorawanMacEndDeviceClassA::GetInstanceTypeId(void) const
+{
+    return GetTypeId();
+}
+
 LorawanMacEndDeviceClassA::LorawanMacEndDeviceClassA()
 {
     NS_FATAL_ERROR("Default constructor not in use");
@@ -93,6 +99,11 @@ LorawanMacEndDeviceClassA::LorawanMacEndDeviceClassA(Ptr<Node> node,
       m_rx1DrOffset(0)
 {
     NS_LOG_FUNCTION(this);
+
+    ObjectBase::ConstructSelf(AttributeConstructionList());
+
+    NS_ASSERT_MSG(m_secondWindowDelay > m_firstWindowDelay + m_firstWindowDuration,
+                  "Second window must open after first one is closed");
 
     // Void the two receiveWindow events
     m_closeFirstWindow = EventId();
@@ -265,13 +276,11 @@ LorawanMacEndDeviceClassA::Receive(Ptr<Packet> packet)
     NS_LOG_FUNCTION(this << packet);
 
     // We add good address and not broadcast for traces
-    // TODO why is this ???
     SatMacTag macTag;
     packet->RemovePacketTag(macTag);
     macTag.SetDestAddress(m_nodeInfo->GetMacAddress());
     packet->AddPacketTag(macTag);
 
-    // TODO why is this ???
     SatAddressE2ETag addressE2ETag;
     packet->RemovePacketTag(addressE2ETag);
     addressE2ETag.SetE2EDestAddress(m_nodeInfo->GetMacAddress());
@@ -320,8 +329,6 @@ LorawanMacEndDeviceClassA::Receive(Ptr<Packet> packet)
 
             // Parse the MAC commands
             ParseCommands(fHdr);
-
-            // m_device->GetObject<SatLorawanNetDevice> ()->Receive (packetCopy);
 
             // Call the trace source
             m_receivedPacket(packet);

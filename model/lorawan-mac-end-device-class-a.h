@@ -41,6 +41,8 @@ class LorawanMacEndDeviceClassA : public LorawanMacEndDevice
   public:
     static TypeId GetTypeId(void);
 
+    TypeId GetInstanceTypeId(void) const;
+
     LorawanMacEndDeviceClassA();
     LorawanMacEndDeviceClassA(Ptr<Node> node,
                               uint32_t satId,

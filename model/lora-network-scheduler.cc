@@ -73,6 +73,9 @@ LoraNetworkScheduler::LoraNetworkScheduler(Ptr<LoraNetworkStatus> status,
       m_secondWindowAnswerDelay(Seconds(2))
 {
     ObjectBase::ConstructSelf(AttributeConstructionList());
+
+    NS_ASSERT_MSG(m_firstWindowAnswerDelay < m_secondWindowAnswerDelay,
+                  "First window answer delay must be lower than second window answer delay");
 }
 
 LoraNetworkScheduler::~LoraNetworkScheduler()
