@@ -65,9 +65,6 @@ SatIslArbiter::BaseDecide(Ptr<Packet> pkt, Mac48Address destination)
 
     if (targetId == -1)
     {
-        Singleton<SatTopology>::Get()->PrintTopology(std::cout);
-        Singleton<SatIdMapper>::Get()->ShowIslMap();
-        std::cout << pkt->GetUid() << std::endl;
         NS_FATAL_ERROR("Cannot resolve target node ID");
     }
 
