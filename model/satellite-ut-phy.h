@@ -35,6 +35,7 @@
 #include <ns3/ptr.h>
 
 #include <set>
+#include <stdint.h>
 
 namespace ns3
 {

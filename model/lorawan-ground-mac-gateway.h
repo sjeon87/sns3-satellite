@@ -28,6 +28,8 @@
 #include "lorawan-mac.h"
 #include "satellite-bbframe-container.h"
 
+#include <stdint.h>
+
 namespace ns3
 {
 

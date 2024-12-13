@@ -30,6 +30,8 @@
 #include <ns3/satellite-typedefs.h>
 #include <ns3/satellite-ut-mac.h>
 
+#include <stdint.h>
+
 namespace ns3
 {
 

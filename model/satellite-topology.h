@@ -45,6 +45,7 @@
 
 #include <map>
 #include <ostream>
+#include <stdint.h>
 #include <utility>
 
 namespace ns3

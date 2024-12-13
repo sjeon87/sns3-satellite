@@ -31,6 +31,7 @@
 
 #include <map>
 #include <set>
+#include <stdint.h>
 #include <vector>
 
 namespace ns3

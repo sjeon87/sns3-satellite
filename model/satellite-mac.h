@@ -36,6 +36,7 @@
 
 #include <cstring>
 #include <queue>
+#include <stdint.h>
 #include <string>
 
 namespace ns3

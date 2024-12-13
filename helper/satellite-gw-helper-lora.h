@@ -30,6 +30,8 @@
 #include <ns3/satellite-superframe-sequence.h>
 #include <ns3/satellite-typedefs.h>
 
+#include <stdint.h>
+
 namespace ns3
 {
 

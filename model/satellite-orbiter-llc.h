@@ -25,6 +25,7 @@
 #include "satellite-llc.h"
 #include "satellite-node-info.h"
 
+#include <stdint.h>
 #include <vector>
 
 namespace ns3

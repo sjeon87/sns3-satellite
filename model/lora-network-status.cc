@@ -38,6 +38,7 @@
 #include <ns3/singleton.h>
 
 #include <map>
+#include <stdint.h>
 #include <utility>
 
 namespace ns3

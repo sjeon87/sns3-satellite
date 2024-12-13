@@ -44,6 +44,7 @@
 #include <ns3/pointer.h>
 
 #include <map>
+#include <stdint.h>
 #include <string>
 #include <utility>
 #include <vector>

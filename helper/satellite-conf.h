@@ -30,6 +30,7 @@
 
 #include <fstream>
 #include <set>
+#include <stdint.h>
 #include <string>
 #include <utility>
 #include <vector>

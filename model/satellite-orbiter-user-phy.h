@@ -33,6 +33,7 @@
 #include <ns3/ptr.h>
 
 #include <queue>
+#include <stdint.h>
 #include <tuple>
 
 namespace ns3

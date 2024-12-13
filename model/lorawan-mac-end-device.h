@@ -37,6 +37,7 @@
 #include <ns3/traced-value.h>
 
 #include <list>
+#include <stdint.h>
 #include <vector>
 
 namespace ns3

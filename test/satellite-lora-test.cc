@@ -51,6 +51,7 @@
 #include <ns3/uinteger.h>
 
 #include <iostream>
+#include <stdint.h>
 
 using namespace ns3;
 

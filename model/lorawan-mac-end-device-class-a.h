@@ -30,6 +30,8 @@
 #include "lorawan-mac-end-device.h" // LorawanMacEndDevice
 #include "lorawan-mac.h"            // Packet
 
+#include <stdint.h>
+
 namespace ns3
 {
 

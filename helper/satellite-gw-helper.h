@@ -35,6 +35,7 @@
 #include <ns3/satellite-typedefs.h>
 #include <ns3/traced-callback.h>
 
+#include <stdint.h>
 #include <string>
 
 namespace ns3

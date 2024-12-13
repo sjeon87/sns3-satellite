@@ -25,6 +25,7 @@
 #include "satellite-return-link-encapsulator-arq.h"
 #include "satellite-return-link-encapsulator.h"
 
+#include <stdint.h>
 #include <utility>
 
 NS_LOG_COMPONENT_DEFINE("SatOrbiterUserLlc");

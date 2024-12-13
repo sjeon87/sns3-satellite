@@ -35,6 +35,8 @@
 #include <ns3/ipv4-l3-protocol.h>
 #include <ns3/node.h>
 
+#include <stdint.h>
+
 namespace ns3
 {
 
