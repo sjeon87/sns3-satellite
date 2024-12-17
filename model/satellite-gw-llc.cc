@@ -34,6 +34,9 @@
 #include <ns3/log.h>
 #include <ns3/simulator.h>
 
+#include <utility>
+#include <vector>
+
 NS_LOG_COMPONENT_DEFINE("SatGwLlc");
 
 namespace ns3
@@ -49,14 +52,7 @@ SatGwLlc::GetTypeId(void)
 }
 
 SatGwLlc::SatGwLlc()
-{
-    NS_LOG_FUNCTION(this);
-    NS_ASSERT(false); // this version of the constructor should not been used
-}
-
-SatGwLlc::SatGwLlc(SatEnums::RegenerationMode_t forwardLinkRegenerationMode,
-                   SatEnums::RegenerationMode_t returnLinkRegenerationMode)
-    : SatLlc(forwardLinkRegenerationMode, returnLinkRegenerationMode)
+    : SatLlc()
 {
     NS_LOG_FUNCTION(this);
 }
@@ -84,9 +80,13 @@ SatGwLlc::Enque(Ptr<Packet> packet, Address dest, uint8_t flowId)
 
     if (m_forwardLinkRegenerationMode == SatEnums::REGENERATION_NETWORK)
     {
-        SatGroundStationAddressTag groundStationAddressTag =
-            SatGroundStationAddressTag(Mac48Address::ConvertFrom(dest));
-        packet->AddPacketTag(groundStationAddressTag);
+        SatGroundStationAddressTag groundStationAddressTag;
+        // May have been already added by Lora Network Server, do not add twice
+        if (!packet->PeekPacketTag(groundStationAddressTag))
+        {
+            groundStationAddressTag = SatGroundStationAddressTag(Mac48Address::ConvertFrom(dest));
+            packet->AddPacketTag(groundStationAddressTag);
+        }
     }
 
     Ptr<EncapKey> key;
@@ -367,6 +367,20 @@ SatGwLlc::GetNPacketsInQueue(Mac48Address utAddress) const
     }
 
     return sum;
+}
+
+void
+SatGwLlc::ClearQueues()
+{
+    NS_LOG_FUNCTION(this);
+
+    for (EncapContainer_t::const_iterator it = m_encaps.begin(); it != m_encaps.end(); ++it)
+    {
+        NS_ASSERT(it->second != nullptr);
+        Ptr<SatQueue> queue = it->second->GetQueue();
+        NS_ASSERT(queue != nullptr);
+        queue->DequeueAll();
+    }
 }
 
 } // namespace ns3

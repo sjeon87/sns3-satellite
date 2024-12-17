@@ -35,19 +35,23 @@
 #include <ns3/object-map.h>
 #include <ns3/object-vector.h>
 #include <ns3/probe.h>
-#include <ns3/satellite-geo-net-device.h>
 #include <ns3/satellite-helper.h>
 #include <ns3/satellite-id-mapper.h>
 #include <ns3/satellite-net-device.h>
+#include <ns3/satellite-orbiter-net-device.h>
 #include <ns3/satellite-phy-rx-carrier.h>
 #include <ns3/satellite-phy-rx.h>
 #include <ns3/satellite-phy.h>
+#include <ns3/satellite-topology.h>
 #include <ns3/scalar-collector.h>
 #include <ns3/singleton.h>
 #include <ns3/string.h>
 #include <ns3/unit-conversion-collector.h>
 
+#include <map>
 #include <sstream>
+#include <string>
+#include <utility>
 
 NS_LOG_COMPONENT_DEFINE("SatStatsLinkRxPowerHelper");
 
@@ -430,26 +434,6 @@ SatStatsLinkRxPowerHelper::RxPowerCallback(double rxPowerDb, const Address& from
     }
 }
 
-void
-SatStatsLinkRxPowerHelper::SaveAddressAndIdentifier(Ptr<Node> utNode)
-{
-    NS_LOG_FUNCTION(this << utNode->GetId());
-
-    const SatIdMapper* satIdMapper = Singleton<SatIdMapper>::Get();
-    const Address addr = satIdMapper->GetUtMacWithNode(utNode);
-
-    if (addr.IsInvalid())
-    {
-        NS_LOG_WARN(this << " Node " << utNode->GetId() << " is not a valid UT");
-    }
-    else
-    {
-        const uint32_t identifier = GetIdentifierForUt(utNode);
-        m_identifierMap[addr] = identifier;
-        NS_LOG_INFO(this << " associated address " << addr << " with identifier " << identifier);
-    }
-}
-
 bool
 SatStatsLinkRxPowerHelper::ConnectProbeToCollector(Ptr<Probe> probe, uint32_t identifier)
 {
@@ -607,7 +591,7 @@ SatStatsFwdFeederLinkRxPowerHelper::DoInstallProbes()
 {
     NS_LOG_FUNCTION(this);
 
-    NodeContainer uts = GetSatHelper()->GetBeamHelper()->GetUtNodes();
+    NodeContainer uts = Singleton<SatTopology>::Get()->GetUtNodes();
 
     for (NodeContainer::Iterator it = uts.Begin(); it != uts.End(); ++it)
     {
@@ -615,17 +599,17 @@ SatStatsFwdFeederLinkRxPowerHelper::DoInstallProbes()
         SaveAddressAndIdentifier(*it);
     }
 
-    NodeContainer sats = GetSatHelper()->GetBeamHelper()->GetGeoSatNodes();
+    NodeContainer sats = Singleton<SatTopology>::Get()->GetOrbiterNodes();
 
     for (NodeContainer::Iterator it = sats.Begin(); it != sats.End(); ++it)
     {
-        Ptr<NetDevice> dev = GetSatSatGeoNetDevice(*it);
-        Ptr<SatGeoNetDevice> satGeoDev = dev->GetObject<SatGeoNetDevice>();
-        NS_ASSERT(satGeoDev != nullptr);
-        std::map<uint32_t, Ptr<SatPhy>> satGeoFeederPhys = satGeoDev->GetFeederPhy();
+        Ptr<NetDevice> dev = GetSatSatOrbiterNetDevice(*it);
+        Ptr<SatOrbiterNetDevice> satOrbiterDev = dev->GetObject<SatOrbiterNetDevice>();
+        NS_ASSERT(satOrbiterDev != nullptr);
+        std::map<uint32_t, Ptr<SatPhy>> satOrbiterFeederPhys = satOrbiterDev->GetFeederPhy();
         ObjectMapValue phy;
-        satGeoDev->GetAttribute("FeederPhy", phy);
-        NS_LOG_DEBUG(this << " GeoSat Node ID " << (*it)->GetId() << " device #"
+        satOrbiterDev->GetAttribute("FeederPhy", phy);
+        NS_LOG_DEBUG(this << " OrbiterSat Node ID " << (*it)->GetId() << " device #"
                           << dev->GetIfIndex() << " has " << phy.GetN() << " PHY instance(s)");
 
         for (ObjectMapValue::Iterator itPhy = phy.Begin(); itPhy != phy.End(); ++itPhy)
@@ -649,7 +633,7 @@ SatStatsFwdFeederLinkRxPowerHelper::DoInstallProbes()
                 {
                     NS_FATAL_ERROR("Error connecting to RxPowerTrace trace source"
                                    << " of SatPhyRxCarrier"
-                                   << " at GeoSat node ID " << (*it)->GetId() << " device #"
+                                   << " at OrbiterSat node ID " << (*it)->GetId() << " device #"
                                    << dev->GetIfIndex() << " PHY #" << itPhy->first
                                    << " RX carrier #" << itCarrier->first);
                 }
@@ -689,7 +673,7 @@ SatStatsFwdUserLinkRxPowerHelper::DoInstallProbes()
 {
     NS_LOG_FUNCTION(this);
 
-    NodeContainer uts = GetSatHelper()->GetBeamHelper()->GetUtNodes();
+    NodeContainer uts = Singleton<SatTopology>::Get()->GetUtNodes();
     for (NodeContainer::Iterator it = uts.Begin(); it != uts.End(); ++it)
     {
         // Create a map of UT addresses and identifiers.
@@ -759,14 +743,14 @@ SatStatsRtnFeederLinkRxPowerHelper::DoInstallProbes()
 {
     NS_LOG_FUNCTION(this);
 
-    NodeContainer uts = GetSatHelper()->GetBeamHelper()->GetUtNodes();
+    NodeContainer uts = Singleton<SatTopology>::Get()->GetUtNodes();
     for (NodeContainer::Iterator it = uts.Begin(); it != uts.End(); ++it)
     {
         // Create a map of UT addresses and identifiers.
         SaveAddressAndIdentifier(*it);
     }
 
-    NodeContainer gws = GetSatHelper()->GetBeamHelper()->GetGwNodes();
+    NodeContainer gws = Singleton<SatTopology>::Get()->GetGwNodes();
     for (NodeContainer::Iterator it = gws.Begin(); it != gws.End(); ++it)
     {
         NetDeviceContainer devs = GetGwSatNetDevice(*it);
@@ -836,24 +820,24 @@ SatStatsRtnUserLinkRxPowerHelper::DoInstallProbes()
 {
     NS_LOG_FUNCTION(this);
 
-    NodeContainer uts = GetSatHelper()->GetBeamHelper()->GetUtNodes();
+    NodeContainer uts = Singleton<SatTopology>::Get()->GetUtNodes();
     for (NodeContainer::Iterator it = uts.Begin(); it != uts.End(); ++it)
     {
         // Create a map of UT addresses and identifiers.
         SaveAddressAndIdentifier(*it);
     }
 
-    NodeContainer sats = GetSatHelper()->GetBeamHelper()->GetGeoSatNodes();
+    NodeContainer sats = Singleton<SatTopology>::Get()->GetOrbiterNodes();
 
     for (NodeContainer::Iterator it = sats.Begin(); it != sats.End(); ++it)
     {
-        Ptr<NetDevice> dev = GetSatSatGeoNetDevice(*it);
-        Ptr<SatGeoNetDevice> satGeoDev = dev->GetObject<SatGeoNetDevice>();
-        NS_ASSERT(satGeoDev != nullptr);
+        Ptr<NetDevice> dev = GetSatSatOrbiterNetDevice(*it);
+        Ptr<SatOrbiterNetDevice> satOrbiterDev = dev->GetObject<SatOrbiterNetDevice>();
+        NS_ASSERT(satOrbiterDev != nullptr);
         Ptr<SatPhy> satPhy;
-        std::map<uint32_t, Ptr<SatPhy>> satGeoUserPhys = satGeoDev->GetUserPhy();
-        for (std::map<uint32_t, Ptr<SatPhy>>::iterator it2 = satGeoUserPhys.begin();
-             it2 != satGeoUserPhys.end();
+        std::map<uint32_t, Ptr<SatPhy>> satOrbiterUserPhys = satOrbiterDev->GetUserPhy();
+        for (std::map<uint32_t, Ptr<SatPhy>>::iterator it2 = satOrbiterUserPhys.begin();
+             it2 != satOrbiterUserPhys.end();
              ++it2)
         {
             satPhy = it2->second;
@@ -863,7 +847,7 @@ SatStatsRtnUserLinkRxPowerHelper::DoInstallProbes()
             ObjectVectorValue carriers;
             satPhyRx->GetAttribute("RxCarrierList", carriers);
             NS_LOG_DEBUG(this << " Node ID " << (*it)->GetId() << " device #"
-                              << satGeoDev->GetIfIndex() << " has " << carriers.GetN()
+                              << satOrbiterDev->GetIfIndex() << " has " << carriers.GetN()
                               << " RX carriers");
 
             for (ObjectVectorValue::Iterator itCarrier = carriers.Begin();
@@ -877,7 +861,7 @@ SatStatsRtnUserLinkRxPowerHelper::DoInstallProbes()
                     NS_FATAL_ERROR("Error connecting to RxPowerTrace trace source"
                                    << " of SatPhyRxCarrier"
                                    << " at node ID " << (*it)->GetId() << " device #"
-                                   << satGeoDev->GetIfIndex() << " RX carrier #"
+                                   << satOrbiterDev->GetIfIndex() << " RX carrier #"
                                    << itCarrier->first);
                 }
 

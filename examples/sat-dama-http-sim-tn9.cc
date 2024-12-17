@@ -166,19 +166,21 @@ main(int argc, char* argv[])
     }
     }
 
-    // Creating the reference system. Note, currently the satellite module supports
-    // only one reference system, which is named as "Scenario72". The string is utilized
-    // in mapping the scenario to the needed reference system configuration files. Arbitrary
-    // scenario name results in fatal error.
+    simulationHelper->LoadScenario("geo-33E");
+
+    // Creating the reference system.
     simulationHelper->CreateSatScenario();
 
     /**
      * Set-up HTTP traffic
      */
-    simulationHelper->InstallTrafficModel(SimulationHelper::HTTP,
-                                          SimulationHelper::TCP,
-                                          SimulationHelper::FWD_LINK,
-                                          MilliSeconds(3));
+    simulationHelper->GetTrafficHelper()->AddHttpTraffic(
+        SatTrafficHelper::FWD_LINK,
+        NodeContainer(Singleton<SatTopology>::Get()->GetGwUserNode(0)),
+        Singleton<SatTopology>::Get()->GetUtUserNodes(),
+        MilliSeconds(3),
+        Seconds(simLength),
+        Seconds(0));
 
     /**
      * Set-up statistics

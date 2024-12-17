@@ -87,16 +87,15 @@ main(int argc, char* argv[])
     Config::SetDefault("ns3::SatUtHelper::FwdLinkErrorModel", EnumValue(em));
     Config::SetDefault("ns3::SatGwHelper::RtnLinkErrorModel", EnumValue(em));
 
-    // Creating the reference system. Note, currently the satellite module supports
-    // only one reference system, which is named as "Scenario72". The string is utilized
-    // in mapping the scenario to the needed reference system configuration files. Arbitrary
-    // scenario name results in fatal error.
+    simulationHelper->LoadScenario("geo-33E");
+
+    // Creating the reference system.
     Ptr<SatHelper> helper = simulationHelper->CreateSatScenario();
 
     // Get the end users so that it is possible to attach
     // applications on them
-    NodeContainer utUsers = helper->GetUtUsers();
-    NodeContainer gwUsers = helper->GetGwUsers();
+    NodeContainer utUsers = Singleton<SatTopology>::Get()->GetUtUserNodes();
+    NodeContainer gwUsers = Singleton<SatTopology>::Get()->GetGwUserNodes();
 
     // Random variable for sharing the UTs to CBR and On-Off users
     Ptr<UniformRandomVariable> rand = CreateObject<UniformRandomVariable>();
@@ -190,9 +189,9 @@ main(int argc, char* argv[])
         {
             // Set destination addresses
             InetSocketAddress cbrDest(helper->GetUserAddress(utCbrUsers.Get(i)), port);
-            cbrDest.SetTos(cbrTos);
 
             cbrHelper.SetAttribute("Remote", AddressValue(Address(cbrDest)));
+            cbrHelper.SetAttribute("Tos", UintegerValue(cbrTos));
             cbrSinkHelper.SetAttribute("Local", AddressValue(Address(cbrDest)));
 
             gwCbrApps.Add(cbrHelper.Install(gwUsers.Get(cbrGwUserId)));
@@ -241,10 +240,10 @@ main(int argc, char* argv[])
         {
             // Set destination addresses
             InetSocketAddress onOffDest(helper->GetUserAddress(utOnOffUsers.Get(i)), port);
-            onOffDest.SetTos(onOffTos);
 
             // On-Off sends packets to GW user no 3.
             onOffHelper.SetAttribute("Remote", AddressValue(Address(onOffDest)));
+            onOffHelper.SetAttribute("Tos", UintegerValue(onOffTos));
             onOffSinkHelper.SetAttribute("Local", AddressValue(Address(onOffDest)));
 
             gwOnOffApps.Add(onOffHelper.Install(gwUsers.Get(onOffGwUserId)));

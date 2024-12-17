@@ -44,8 +44,10 @@
 #include <ns3/singleton.h>
 
 #include <algorithm>
+#include <map>
 #include <sstream>
 #include <utility>
+#include <vector>
 
 NS_LOG_COMPONENT_DEFINE("SatBeamScheduler");
 
@@ -196,7 +198,8 @@ SatBeamScheduler::GetTypeId(void)
             .AddAttribute("CnoEstimationMode",
                           "Mode of the C/N0 estimator",
                           EnumValue(SatCnoEstimator::LAST),
-                          MakeEnumAccessor(&SatBeamScheduler::m_cnoEstimatorMode),
+                          MakeEnumAccessor<SatCnoEstimator::EstimationMode_t>(
+                              &SatBeamScheduler::m_cnoEstimatorMode),
                           MakeEnumChecker(SatCnoEstimator::LAST,
                                           "LastValueInWindow",
                                           SatCnoEstimator::MINIMUM,
@@ -233,7 +236,8 @@ SatBeamScheduler::GetTypeId(void)
                           "Strategy used when performing handover to transfer capacity requests "
                           "and C/No informations",
                           EnumValue(SatBeamScheduler::BASIC),
-                          MakeEnumAccessor(&SatBeamScheduler::m_handoverStrategy),
+                          MakeEnumAccessor<SatBeamScheduler::HandoverInformationForward_t>(
+                              &SatBeamScheduler::m_handoverStrategy),
                           MakeEnumChecker(SatBeamScheduler::BASIC,
                                           "Basic",
                                           SatBeamScheduler::CHECK_GATEWAY,
@@ -241,7 +245,8 @@ SatBeamScheduler::GetTypeId(void)
             .AddAttribute("SuperFrameAllocatorType",
                           "Type of SuperFrameAllocator",
                           EnumValue(SatEnums::DEFAULT_SUPERFRAME_ALLOCATOR),
-                          MakeEnumAccessor(&SatBeamScheduler::m_superframeAllocatorType),
+                          MakeEnumAccessor<SatEnums::SuperframeAllocatorType_t>(
+                              &SatBeamScheduler::m_superframeAllocatorType),
                           MakeEnumChecker(SatEnums::DEFAULT_SUPERFRAME_ALLOCATOR, "Default"))
             .AddTraceSource("BacklogRequestsTrace",
                             "Trace for backlog requests done to beam scheduler.",
@@ -275,7 +280,8 @@ SatBeamScheduler::GetTypeId(void)
 }
 
 SatBeamScheduler::SatBeamScheduler()
-    : m_beamId(0),
+    : m_satId(0),
+      m_beamId(0),
       m_superframeSeq(0),
       m_superFrameCounter(0),
       m_txCallback(),
@@ -337,24 +343,34 @@ SatBeamScheduler::SendToSatellite(Ptr<SatControlMessage> msg, Address satelliteM
 void
 SatBeamScheduler::SetSendTbtpCallback(SendTbtpCallback cb)
 {
+    NS_LOG_FUNCTION(this << &cb);
+
     m_txTbtpCallback = cb;
 }
 
 void
-SatBeamScheduler::Initialize(uint32_t beamId,
+SatBeamScheduler::Initialize(uint32_t satId,
+                             uint32_t beamId,
+                             Ptr<SatNetDevice> gwNetDevice,
+                             Ptr<SatOrbiterNetDevice> orbiterNetDevice,
                              SatBeamScheduler::SendCtrlMsgCallback cb,
                              Ptr<SatSuperframeSeq> seq,
                              uint32_t maxFrameSizeInBytes,
+                             Address satAddress,
                              Address gwAddress)
 {
     NS_LOG_FUNCTION(this << beamId << &cb);
 
     m_satelliteCnoEstimator = CreateCnoEstimator();
 
+    m_satId = satId;
     m_beamId = beamId;
+    m_gwMac = DynamicCast<SatGwMac>(gwNetDevice->GetMac());
+    m_orbiterNetDevice = orbiterNetDevice;
     m_txCallback = cb;
     m_superframeSeq = seq;
     m_maxBbFrameSize = maxFrameSizeInBytes;
+    m_satAddress = satAddress;
     m_gwAddress = gwAddress;
 
     /**
@@ -527,6 +543,14 @@ SatBeamScheduler::HasUt(Address utId)
     return result != m_utInfos.end();
 }
 
+bool
+SatBeamScheduler::HasUt()
+{
+    NS_LOG_FUNCTION(this);
+
+    return !m_utInfos.empty();
+}
+
 void
 SatBeamScheduler::UpdateUtCno(Address utId, double cno)
 {
@@ -565,7 +589,7 @@ SatBeamScheduler::CreateCnoEstimator()
 {
     NS_LOG_FUNCTION(this);
 
-    Ptr<SatCnoEstimator> estimator = NULL;
+    Ptr<SatCnoEstimator> estimator = nullptr;
 
     switch (m_cnoEstimatorMode)
     {
@@ -607,8 +631,13 @@ SatBeamScheduler::Schedule()
     uint32_t requestedKbpsSum(0);
     uint32_t offeredKbpsSum(0);
 
+    if (m_useLora)
+    {
+        return;
+    }
+
     // check that there is UTs to schedule
-    if (m_utInfos.size() > 0)
+    if (m_utInfos.size() > 0 && !m_useLora)
     {
         requestedKbpsSum = UpdateDamaEntriesWithReqs();
 
@@ -950,7 +979,7 @@ SatBeamScheduler::UpdateDamaEntriesWithAllocs(
 void
 SatBeamScheduler::TransferUtToBeam(Address utId, Ptr<SatBeamScheduler> destination)
 {
-    NS_LOG_FUNCTION(this << utId << destination->m_beamId);
+    NS_LOG_FUNCTION(this << utId << destination->m_satId << destination->m_beamId);
 
     UtInfoMap_t::iterator utIterator = m_utInfos.find(utId);
     if (utIterator == m_utInfos.end())
@@ -973,7 +1002,8 @@ SatBeamScheduler::TransferUtToBeam(Address utId, Ptr<SatBeamScheduler> destinati
             break;
         }
         case CHECK_GATEWAY: {
-            if (m_gwAddress != destination->m_gwAddress)
+            if (m_satAddress != destination->m_satAddress ||
+                m_gwAddress != destination->m_gwAddress)
             {
                 utInfo->ClearCrMsgs();
             }
@@ -983,6 +1013,40 @@ SatBeamScheduler::TransferUtToBeam(Address utId, Ptr<SatBeamScheduler> destinati
             NS_FATAL_ERROR("Unknown handover strategy");
         }
     }
+}
+
+void
+SatBeamScheduler::ConnectUt(Mac48Address address)
+{
+    NS_LOG_FUNCTION(this << address);
+
+    m_orbiterNetDevice->ConnectUt(address, m_beamId);
+    m_gwMac->ConnectUt(address);
+}
+
+void
+SatBeamScheduler::DisconnectUt(Mac48Address address)
+{
+    NS_LOG_FUNCTION(this << address);
+
+    m_orbiterNetDevice->DisconnectUt(address, m_beamId);
+    m_gwMac->DisconnectUt(address);
+}
+
+void
+SatBeamScheduler::ConnectGw(Mac48Address address)
+{
+    NS_LOG_FUNCTION(this << address);
+
+    m_orbiterNetDevice->ConnectGw(address, m_beamId);
+}
+
+void
+SatBeamScheduler::DisconnectGw(Mac48Address address)
+{
+    NS_LOG_FUNCTION(this << address);
+
+    m_orbiterNetDevice->DisconnectGw(address, m_beamId);
 }
 
 void
@@ -1007,7 +1071,9 @@ SatBeamScheduler::CreateTimu() const
     NS_LOG_FUNCTION(this);
 
     Ptr<SatTimuMessage> timuMsg = CreateObject<SatTimuMessage>();
+    timuMsg->SetAllocatedSatId(m_satId);
     timuMsg->SetAllocatedBeamId(m_beamId);
+    timuMsg->SetSatAddress(m_satAddress);
     timuMsg->SetGwAddress(m_gwAddress);
     return timuMsg;
 }
@@ -1033,6 +1099,14 @@ SatBeamScheduler::ReserveLogonChannel(uint32_t logonChannelId)
         // channel for UTs without entering in an infinite loop in AddUt
         m_logonChannelIndex = logonChannelId;
     }
+}
+
+void
+SatBeamScheduler::SetUseLora(bool useLora)
+{
+    NS_LOG_FUNCTION(this << useLora);
+
+    m_useLora = useLora;
 }
 
 } // namespace ns3

@@ -27,6 +27,10 @@
 #include <ns3/log.h>
 
 #include <algorithm>
+#include <cmath>
+#include <deque>
+#include <utility>
+#include <vector>
 
 NS_LOG_COMPONENT_DEFINE("SatBbFrameContainer");
 
@@ -245,10 +249,22 @@ SatBbFrameContainer::GetMaxSymbolRate()
     return m_maxSymbolRate;
 }
 
+void
+SatBbFrameContainer::ClearAllFrames()
+{
+    NS_LOG_FUNCTION(this);
+
+    m_ctrlContainer.clear();
+    for (FrameContainer_t::iterator it = m_container.begin(); it != m_container.end(); ++it)
+    {
+        it->second.clear();
+    }
+}
+
 Ptr<SatBbFrame>
 SatBbFrameContainer::GetNextFrame()
 {
-    Ptr<SatBbFrame> nextFrame = NULL;
+    Ptr<SatBbFrame> nextFrame = nullptr;
 
     if (m_ctrlContainer.empty() == false)
     {
@@ -288,7 +304,7 @@ SatBbFrameContainer::CreateFrameToTail(uint32_t priorityClass, SatEnums::SatModc
 
     Ptr<SatBbFrame> frame = Create<SatBbFrame>(modcod, m_defaultBbFrameType, m_bbFrameConf);
 
-    if (frame != NULL)
+    if (frame != nullptr)
     {
         if (priorityClass > 0)
         {
@@ -336,7 +352,7 @@ SatBbFrameContainer::MergeBbFrames(double carrierBandwidthInHz)
                 double maxNewOccupancyIfMerged =
                     0.0; // holder variable during a maximum value search
                 Ptr<SatBbFrame> frameToMerge =
-                    NULL; // holder variable for frame to potentially merge
+                    nullptr; // holder variable for frame to potentially merge
 
                 // check rest of the containers to find frame to merge.
                 for (FrameContainer_t::reverse_iterator itToMerge =

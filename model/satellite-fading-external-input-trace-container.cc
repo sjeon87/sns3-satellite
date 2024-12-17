@@ -28,7 +28,13 @@
 #include <ns3/singleton.h>
 #include <ns3/string.h>
 
+#include <cstdlib>
 #include <fstream>
+#include <ios>
+#include <limits>
+#include <map>
+#include <string>
+#include <utility>
 
 NS_LOG_COMPONENT_DEFINE("SatFadingExternalInputTraceContainer");
 
@@ -47,7 +53,8 @@ SatFadingExternalInputTraceContainer::GetTypeId(void)
             .AddAttribute("UtInputMode",
                           "Input mode to read trace source files from given index table.",
                           EnumValue(SatFadingExternalInputTraceContainer::LIST_MODE),
-                          MakeEnumAccessor(&SatFadingExternalInputTraceContainer::m_utInputMode),
+                          MakeEnumAccessor<SatFadingExternalInputTraceContainer::InputMode_t>(
+                              &SatFadingExternalInputTraceContainer::m_utInputMode),
                           MakeEnumChecker(SatFadingExternalInputTraceContainer::LIST_MODE,
                                           "ListMode",
                                           SatFadingExternalInputTraceContainer::POSITION_MODE,
@@ -101,8 +108,8 @@ SatFadingExternalInputTraceContainer::SatFadingExternalInputTraceContainer()
     NS_LOG_FUNCTION(this);
 
     ObjectBase::ConstructSelf(AttributeConstructionList());
-    m_dataPath =
-        Singleton<SatEnvVariables>::Get()->LocateDataDirectory() + "/ext-fadingtraces/input/";
+    m_dataPath = Singleton<SatEnvVariables>::Get()->LocateDataDirectory() +
+                 "/additional-input/ext-fadingtraces/input/";
 }
 
 SatFadingExternalInputTraceContainer::~SatFadingExternalInputTraceContainer()
@@ -275,7 +282,7 @@ SatFadingExternalInputTraceContainer::TestFadingTraces(uint32_t numOfUts, uint32
         if (iter == m_utFadingMap.end())
         {
             ueCount++;
-            CreateUtFadingTrace(ueCount, NULL);
+            CreateUtFadingTrace(ueCount, nullptr);
         }
     }
 
@@ -286,7 +293,7 @@ SatFadingExternalInputTraceContainer::TestFadingTraces(uint32_t numOfUts, uint32
         if (iter == m_gwFadingMap.end())
         {
             gwCount++;
-            CreateGwFadingTrace(gwCount, NULL);
+            CreateGwFadingTrace(gwCount, nullptr);
         }
     }
 

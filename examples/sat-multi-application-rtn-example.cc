@@ -88,16 +88,15 @@ main(int argc, char* argv[])
     Config::SetDefault("ns3::SatUtHelper::FwdLinkErrorModel", EnumValue(em));
     Config::SetDefault("ns3::SatGwHelper::RtnLinkErrorModel", EnumValue(em));
 
-    // Creating the reference system. Note, currently the satellite module supports
-    // only one reference system, which is named as "Scenario72". The string is utilized
-    // in mapping the scenario to the needed reference system configuration files. Arbitrary
-    // scenario name results in fatal error.
+    simulationHelper->LoadScenario("geo-33E");
+
+    // Creating the reference system.
     Ptr<SatHelper> helper = simulationHelper->CreateSatScenario();
 
     // Get the end users so that it is possible to attach
     // applications on them
-    NodeContainer utUsers = helper->GetUtUsers();
-    NodeContainer gwUsers = helper->GetGwUsers();
+    NodeContainer utUsers = Singleton<SatTopology>::Get()->GetUtUserNodes();
+    NodeContainer gwUsers = Singleton<SatTopology>::Get()->GetGwUserNodes();
 
     // Random variable for sharing the UTs to CBR and On-Off users
     Ptr<UniformRandomVariable> rand = CreateObject<UniformRandomVariable>();
@@ -187,10 +186,10 @@ main(int argc, char* argv[])
             InetSocketAddress(helper->GetUserAddress(gwUsers.Get(cbrGwUserId)), port));
         cbrHelper.SetAttribute("Interval", StringValue(interval));
         cbrHelper.SetAttribute("PacketSize", UintegerValue(packetSize));
+        cbrHelper.SetAttribute("Tos", UintegerValue(cbrTos));
 
         // Set destination addresses
         InetSocketAddress cbrDest(helper->GetUserAddress(gwUsers.Get(cbrGwUserId)), port);
-        cbrDest.SetTos(cbrTos);
 
         // Cbr and Sink applications creation. CBR to UT users and sinks to GW users.
         gwCbrSinkApps.Add(cbrSinkHelper.Install(gwUsers.Get(cbrGwUserId)));
@@ -242,7 +241,6 @@ main(int argc, char* argv[])
 
         // Set destination addresses
         InetSocketAddress onOffDest(helper->GetUserAddress(gwUsers.Get(onOffGwUserId)), port);
-        onOffDest.SetTos(onOffTos);
 
         // Cbr and Sink applications creation
         gwOnOffSinkApps.Add(onOffSinkHelper.Install(gwUsers.Get(onOffGwUserId)));
@@ -252,6 +250,7 @@ main(int argc, char* argv[])
         for (uint32_t i = 0; i < utOnOffUsers.GetN(); i++)
         {
             onOffHelper.SetAttribute("Remote", AddressValue(Address(onOffDest)));
+            onOffHelper.SetAttribute("Tos", UintegerValue(onOffTos));
             onOffSinkHelper.SetAttribute("Local", AddressValue(Address(onOffDest)));
 
             utOnOffApps.Add(onOffHelper.Install(utOnOffUsers.Get(i)));

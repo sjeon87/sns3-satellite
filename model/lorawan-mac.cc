@@ -24,6 +24,10 @@
 
 #include <ns3/log.h>
 
+#include <algorithm>
+#include <cmath>
+#include <vector>
+
 namespace ns3
 {
 
@@ -62,7 +66,7 @@ LorawanMac::LorawanMac()
 }
 
 LorawanMac::LorawanMac(uint32_t satId, uint32_t beamId)
-    : SatMac(satId, beamId, SatEnums::TRANSPARENT, SatEnums::TRANSPARENT),
+    : SatMac(satId, beamId),
       m_beamId(beamId),
       m_isRegenerative(false)
 {
@@ -103,8 +107,9 @@ LorawanMac::SetPhy(Ptr<SatPhy> phy)
 {
     // Set the phy
     m_phy = phy;
-    DynamicCast<SatLoraPhyTx>(m_phy->GetPhyTx())
-        ->SetTxFinishedCallback(MakeCallback(&LorawanMac::TxFinished, this));
+    Ptr<SatLoraPhyTx> phyLoraTx = DynamicCast<SatLoraPhyTx>(m_phy->GetPhyTx());
+    NS_ASSERT_MSG(phyLoraTx != nullptr, "Lorawan MAC does not have a SatLoraPhyTx instance");
+    phyLoraTx->SetTxFinishedCallback(MakeCallback(&LorawanMac::TxFinished, this));
 }
 
 LoraLogicalChannelHelper

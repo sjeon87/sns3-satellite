@@ -27,6 +27,8 @@
 #include <ns3/simple-ref-count.h>
 
 #include <deque>
+#include <map>
+#include <stdint.h>
 #include <vector>
 
 namespace ns3
@@ -149,6 +151,11 @@ class SatBbFrameContainer : public Object
      * \return The maximum symbol rate.
      */
     uint32_t GetMaxSymbolRate();
+
+    /**
+     * Remove all frames in containers.
+     */
+    void ClearAllFrames();
 
   private:
     typedef std::map<SatEnums::SatModcod_t, std::deque<Ptr<SatBbFrame>>> FrameContainer_t;

@@ -165,7 +165,7 @@ SatBaseTestCase::SendControlMsg(Ptr<SatControlMessage> msg, const Address& dest)
     if (msg->GetMsgType() == SatControlMsgTag::SAT_CR_CTRL_MSG)
     {
         Ptr<SatCrMessage> cr = DynamicCast<SatCrMessage>(msg);
-        if (cr == NULL)
+        if (cr == nullptr)
         {
             NS_FATAL_ERROR("Dynamic cast to CR message failed!");
         }
@@ -208,9 +208,9 @@ class SatRequestManagerTestSuite : public TestSuite
 };
 
 SatRequestManagerTestSuite::SatRequestManagerTestSuite()
-    : TestSuite("sat-rm-test", UNIT)
+    : TestSuite("sat-rm-test", Type::UNIT)
 {
-    AddTestCase(new SatBaseTestCase, TestCase::QUICK);
+    AddTestCase(new SatBaseTestCase, TestCase::Duration::QUICK);
 }
 
 // Do allocate an instance of this TestSuite

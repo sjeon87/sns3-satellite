@@ -31,6 +31,8 @@
 #include <ns3/string.h>
 
 #include <algorithm>
+#include <utility>
+#include <vector>
 
 NS_LOG_COMPONENT_DEFINE("SatBstpController");
 
@@ -62,7 +64,7 @@ SatBstpController::SatBstpController()
 
 SatBstpController::~SatBstpController()
 {
-    m_staticBstp = NULL;
+    m_staticBstp = nullptr;
 }
 
 void
@@ -88,7 +90,8 @@ SatBstpController::GetTypeId(void)
             .AddAttribute("BeamHoppingMode",
                           "Beam hopping mode.",
                           EnumValue(SatBstpController::BH_STATIC),
-                          MakeEnumAccessor(&SatBstpController::m_bhMode),
+                          MakeEnumAccessor<SatBstpController::BeamHoppingType_t>(
+                              &SatBstpController::m_bhMode),
                           MakeEnumChecker(SatBstpController::BH_STATIC,
                                           "Static",
                                           SatBstpController::BH_DYNAMIC,

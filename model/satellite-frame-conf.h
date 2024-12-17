@@ -31,6 +31,10 @@
 #include <ns3/random-variable-stream.h>
 #include <ns3/simple-ref-count.h>
 
+#include <map>
+#include <sstream>
+#include <stdint.h>
+#include <string>
 #include <tuple>
 #include <vector>
 

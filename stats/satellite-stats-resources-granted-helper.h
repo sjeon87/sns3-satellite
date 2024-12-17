@@ -22,11 +22,14 @@
 #ifndef SATELLITE_STATS_RESOURCES_GRANTED_HELPER_H
 #define SATELLITE_STATS_RESOURCES_GRANTED_HELPER_H
 
+#include "satellite-stats-helper.h"
+
 #include <ns3/collector-map.h>
 #include <ns3/ptr.h>
-#include <ns3/satellite-stats-helper.h>
 
 #include <list>
+#include <map>
+#include <utility>
 
 namespace ns3
 {
@@ -54,6 +57,12 @@ class SatStatsResourcesGrantedHelper : public SatStatsHelper
      */
     static TypeId GetTypeId();
 
+    /**
+     * Change identifier used on probes, when handovers occur.
+     */
+    template <typename R, typename C, typename P>
+    void UpdateIdentifierOnProbes();
+
   protected:
     // inherited from SatStatsHelper base class
     void DoInstall();
@@ -67,7 +76,7 @@ class SatStatsResourcesGrantedHelper : public SatStatsHelper
     void InstallProbe(Ptr<Node> utNode, R (C::*collectorTraceSink)(P, P));
 
     /// Maintains a list of probes created by this helper.
-    std::list<Ptr<Probe>> m_probes;
+    std::map<Ptr<Probe>, std::pair<Ptr<Node>, uint32_t>> m_probes;
 
     /// Maintains a list of collectors created by this helper.
     CollectorMap m_terminalCollectors;

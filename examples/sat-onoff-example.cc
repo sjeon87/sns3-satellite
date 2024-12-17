@@ -90,14 +90,6 @@ main(int argc, char* argv[])
         satScenario = SatHelper::FULL;
     }
 
-    // Set up user given parameters for on/off functionality.
-    Config::SetDefault("ns3::OnOffApplication::PacketSize", UintegerValue(packetSize));
-    Config::SetDefault("ns3::OnOffApplication::DataRate", StringValue(dataRate));
-    Config::SetDefault("ns3::OnOffApplication::OnTime",
-                       StringValue("ns3::ConstantRandomVariable[Constant=" + onTime + "]"));
-    Config::SetDefault("ns3::OnOffApplication::OffTime",
-                       StringValue("ns3::ConstantRandomVariable[Constant=" + offTime + "]"));
-
     // enable info logs
     LogComponentEnable("OnOffApplication", LOG_LEVEL_INFO);
     LogComponentEnable("PacketSink", LOG_LEVEL_INFO);
@@ -107,13 +99,10 @@ main(int argc, char* argv[])
     // GlobalValue::Bind ("SimulatorImplementationType", StringValue
     // ("ns3::RealtimeSimulatorImpl"));
 
-    // create satellite helper with given scenario default=simple
+    simulationHelper->LoadScenario("geo-33E");
 
-    // Creating the reference system. Note, currently the satellite module supports
-    // only one reference system, which is named as "Scenario72". The string is utilized
-    // in mapping the scenario to the needed reference system configuration files. Arbitrary
-    // scenario name results in fatal error.
-    Ptr<SatHelper> helper = simulationHelper->CreateSatScenario(satScenario);
+    // Creating the reference system.
+    simulationHelper->CreateSatScenario(satScenario);
 
     // --- Create applications according to given user parameters
 
@@ -125,20 +114,36 @@ main(int argc, char* argv[])
     // and Sink application to UT connected user
     if ((sender == "gw") || (sender == "both"))
     {
-        simulationHelper->InstallTrafficModel(SimulationHelper::ONOFF,
-                                              SimulationHelper::UDP,
-                                              SimulationHelper::FWD_LINK,
-                                              Seconds(1.0));
+        simulationHelper->GetTrafficHelper()->AddOnOffTraffic(
+            SatTrafficHelper::FWD_LINK,
+            SatTrafficHelper::UDP,
+            DataRate(dataRate),
+            packetSize,
+            NodeContainer(Singleton<SatTopology>::Get()->GetGwUserNode(0)),
+            Singleton<SatTopology>::Get()->GetUtUserNodes(),
+            "ns3::ConstantRandomVariable[Constant=" + onTime + "]",
+            "ns3::ConstantRandomVariable[Constant=" + offTime + "]",
+            Seconds(1.0),
+            Time(simDuration),
+            Seconds(0));
     }
 
     // in case of sender is UT or Both, create OnOff application to UT connected user
     // and Sink application to GW connected user
     if (sender == "ut" || sender == "both")
     {
-        simulationHelper->InstallTrafficModel(SimulationHelper::ONOFF,
-                                              SimulationHelper::UDP,
-                                              SimulationHelper::RTN_LINK,
-                                              Seconds(2.0));
+        simulationHelper->GetTrafficHelper()->AddOnOffTraffic(
+            SatTrafficHelper::RTN_LINK,
+            SatTrafficHelper::UDP,
+            DataRate(dataRate),
+            packetSize,
+            NodeContainer(Singleton<SatTopology>::Get()->GetGwUserNode(0)),
+            Singleton<SatTopology>::Get()->GetUtUserNodes(),
+            "ns3::ConstantRandomVariable[Constant=" + onTime + "]",
+            "ns3::ConstantRandomVariable[Constant=" + offTime + "]",
+            Seconds(2.0),
+            Time(simDuration),
+            Seconds(0));
     }
 
     // prompt info of the used parameters

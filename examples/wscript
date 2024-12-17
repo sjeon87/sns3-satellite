@@ -1,12 +1,14 @@
 # -*- Mode: python; py-indent-offset: 4; indent-tabs-mode: nil; coding: utf-8; -*-
 
 def build(bld):
-
     obj = bld.create_ns3_program('sat-arq-fwd-example', ['satellite'])
     obj.source = 'sat-arq-fwd-example.cc'
 
     obj = bld.create_ns3_program('sat-arq-rtn-example', ['satellite'])
     obj.source = 'sat-arq-rtn-example.cc'
+    
+    obj = bld.create_ns3_program('sat-beam-position-tracer', ['satellite'])
+    obj.source = 'sat-beam-position-tracer.cc'
     
     obj = bld.create_ns3_program('sat-cbr-example', ['satellite'])
     obj.source = 'sat-cbr-example.cc'
@@ -38,8 +40,20 @@ def build(bld):
     obj = bld.create_ns3_program('sat-essa-example', ['satellite'])
     obj.source = 'sat-essa-example.cc'
 
+    obj = bld.create_ns3_program('sat-gw-handover-example', ['satellite'])
+    obj.source = 'sat-gw-handover-example.cc'
+
+    obj = bld.create_ns3_program('sat-lora-constellation-example', ['satellite'])
+    obj.source = 'sat-lora-constellation-example.cc'
+
     obj = bld.create_ns3_program('sat-lora-example', ['satellite'])
+    obj.source = 'sat-lora-handover-example.cc'
+
+    obj = bld.create_ns3_program('sat-lora-handover-example', ['satellite'])
     obj.source = 'sat-lora-example.cc'
+
+    obj = bld.create_ns3_program('sat-lora-regenerative-example', ['satellite'])
+    obj.source = 'sat-lora-regenerative-example.cc'
 
     obj = bld.create_ns3_program('sat-list-position-ext-fading-example', ['satellite'])
     obj.source = 'sat-list-position-ext-fading-example.cc'

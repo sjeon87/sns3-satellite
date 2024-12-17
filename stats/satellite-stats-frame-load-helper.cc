@@ -21,6 +21,9 @@
 
 #include "satellite-stats-frame-load-helper.h"
 
+#include "satellite-frame-symbol-load-probe.h"
+#include "satellite-frame-user-load-probe.h"
+
 #include <ns3/boolean.h>
 #include <ns3/callback.h>
 #include <ns3/data-collection-object.h>
@@ -31,13 +34,17 @@
 #include <ns3/node-container.h>
 #include <ns3/satellite-beam-helper.h>
 #include <ns3/satellite-beam-scheduler.h>
-#include <ns3/satellite-frame-symbol-load-probe.h>
-#include <ns3/satellite-frame-user-load-probe.h>
 #include <ns3/satellite-helper.h>
 #include <ns3/satellite-ncc.h>
+#include <ns3/satellite-topology.h>
 #include <ns3/scalar-collector.h>
+#include <ns3/singleton.h>
 #include <ns3/string.h>
 
+#include <list>
+#include <map>
+#include <sstream>
+#include <string>
 #include <utility>
 
 NS_LOG_COMPONENT_DEFINE("SatStatsFrameLoadHelper");
@@ -300,7 +307,7 @@ SatStatsFrameLoadHelper::GetCollector(uint32_t frameId, std::string identifier)
         }
 
         case SatStatsHelper::IDENTIFIER_GW: {
-            NodeContainer gws = GetSatHelper()->GetBeamHelper()->GetGwNodes();
+            NodeContainer gws = Singleton<SatTopology>::Get()->GetGwNodes();
             for (NodeContainer::Iterator it = gws.Begin(); it != gws.End(); ++it)
             {
                 const uint32_t gwId = GetGwId(*it);

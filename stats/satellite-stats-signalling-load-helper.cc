@@ -37,12 +37,16 @@
 #include <ns3/satellite-helper.h>
 #include <ns3/satellite-id-mapper.h>
 #include <ns3/satellite-net-device.h>
+#include <ns3/satellite-topology.h>
 #include <ns3/scalar-collector.h>
 #include <ns3/singleton.h>
 #include <ns3/string.h>
 #include <ns3/unit-conversion-collector.h>
 
+#include <map>
 #include <sstream>
+#include <string>
+#include <utility>
 
 NS_LOG_COMPONENT_DEFINE("SatStatsSignallingLoadHelper");
 
@@ -286,26 +290,6 @@ SatStatsSignallingLoadHelper::SignallingTxCallback(Ptr<const Packet> packet, con
 
 } // end of `void RxCallback (Ptr<const Packet>, const Address);`
 
-void
-SatStatsSignallingLoadHelper::SaveAddressAndIdentifier(Ptr<Node> utNode)
-{
-    NS_LOG_FUNCTION(this << utNode->GetId());
-
-    const SatIdMapper* satIdMapper = Singleton<SatIdMapper>::Get();
-    const Address addr = satIdMapper->GetUtMacWithNode(utNode);
-
-    if (addr.IsInvalid())
-    {
-        NS_LOG_WARN(this << " Node " << utNode->GetId() << " is not a valid UT");
-    }
-    else
-    {
-        const uint32_t identifier = GetIdentifierForUt(utNode);
-        m_identifierMap[addr] = identifier;
-        NS_LOG_INFO(this << " associated address " << addr << " with identifier " << identifier);
-    }
-}
-
 // FORWARD LINK ///////////////////////////////////////////////////////////////
 
 NS_OBJECT_ENSURE_REGISTERED(SatStatsFwdSignallingLoadHelper);
@@ -335,7 +319,7 @@ SatStatsFwdSignallingLoadHelper::DoInstallProbes()
     NS_LOG_FUNCTION(this);
 
     // Create a map of UT addresses and identifiers.
-    NodeContainer uts = GetSatHelper()->GetBeamHelper()->GetUtNodes();
+    NodeContainer uts = Singleton<SatTopology>::Get()->GetUtNodes();
     for (NodeContainer::Iterator it = uts.Begin(); it != uts.End(); ++it)
     {
         SaveAddressAndIdentifier(*it);
@@ -343,7 +327,7 @@ SatStatsFwdSignallingLoadHelper::DoInstallProbes()
 
     // Connect to trace sources at GW nodes.
 
-    NodeContainer gws = GetSatHelper()->GetBeamHelper()->GetGwNodes();
+    NodeContainer gws = Singleton<SatTopology>::Get()->GetGwNodes();
     Callback<void, Ptr<const Packet>, const Address&> callback =
         MakeCallback(&SatStatsFwdSignallingLoadHelper::SignallingTxCallback, this);
 
@@ -401,7 +385,7 @@ void
 SatStatsRtnSignallingLoadHelper::DoInstallProbes()
 {
     NS_LOG_FUNCTION(this);
-    NodeContainer uts = GetSatHelper()->GetBeamHelper()->GetUtNodes();
+    NodeContainer uts = Singleton<SatTopology>::Get()->GetUtNodes();
 
     for (NodeContainer::Iterator it = uts.Begin(); it != uts.End(); ++it)
     {
@@ -429,7 +413,8 @@ SatStatsRtnSignallingLoadHelper::DoInstallProbes()
             {
                 NS_LOG_INFO(this << " created probe " << probeName.str()
                                  << ", connected to collector " << identifier);
-                m_probes.push_back(probe->GetObject<Probe>());
+                m_probes.insert(
+                    std::make_pair(probe->GetObject<Probe>(), std::make_pair(*it, identifier)));
             }
             else
             {
@@ -447,5 +432,41 @@ SatStatsRtnSignallingLoadHelper::DoInstallProbes()
     } // end of `for (it = uts.Begin(); it != uts.End (); ++it)`
 
 } // end of `void DoInstallProbes ();`
+
+void
+SatStatsRtnSignallingLoadHelper::UpdateIdentifierOnProbes()
+{
+    NS_LOG_FUNCTION(this);
+
+    std::map<Ptr<Probe>, std::pair<Ptr<Node>, uint32_t>>::iterator it;
+
+    for (it = m_probes.begin(); it != m_probes.end(); it++)
+    {
+        Ptr<Probe> probe = it->first;
+        Ptr<Node> node = it->second.first;
+        uint32_t identifier = it->second.second;
+
+        if (!m_conversionCollectors.DisconnectWithProbe(
+                probe->GetObject<Probe>(),
+                "OutputBytes",
+                identifier,
+                &UnitConversionCollector::TraceSinkUinteger32))
+        {
+            NS_FATAL_ERROR("Error disconnecting trace file on handover");
+        }
+
+        identifier = GetIdentifierForUtUser(node);
+
+        if (!m_conversionCollectors.ConnectWithProbe(probe->GetObject<Probe>(),
+                                                     "OutputBytes",
+                                                     identifier,
+                                                     &UnitConversionCollector::TraceSinkUinteger32))
+        {
+            NS_FATAL_ERROR("Error connecting trace file on handover");
+        }
+
+        it->second.second = identifier;
+    }
+} // end of `void UpdateIdentifierOnProbes ();`
 
 } // end of namespace ns3

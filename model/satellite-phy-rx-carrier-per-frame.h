@@ -30,6 +30,11 @@
 
 #include <ns3/singleton.h>
 
+#include <list>
+#include <map>
+#include <stdint.h>
+#include <vector>
+
 namespace ns3
 {
 

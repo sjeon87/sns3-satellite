@@ -34,6 +34,9 @@
 #include <ns3/packet.h>
 #include <ns3/ptr.h>
 
+#include <set>
+#include <stdint.h>
+
 namespace ns3
 {
 
@@ -66,8 +69,7 @@ class SatUtPhy : public SatPhy
     SatUtPhy(SatPhy::CreateParam_t& params,
              Ptr<SatLinkResults> linkResults,
              SatPhyRxCarrierConf::RxCarrierCreateParams_s parameters,
-             Ptr<SatSuperframeConf> superFrameConf,
-             SatEnums::RegenerationMode_t forwardLinkRegenerationMode);
+             Ptr<SatSuperframeConf> superFrameConf);
 
     /**
      * Destructor
@@ -97,10 +99,11 @@ class SatUtPhy : public SatPhy
     virtual double GetAdditionalInterference();
 
     /**
-     * \brief Change underlying SatChannel to send and receive data from a new beam
+     * \brief Change underlying SatChannel to send and receive data from a new satellite and beam
+     * \param satId the new satellite to listen/send to
      * \param beamId the new beam to listen/send to
      */
-    void PerformHandover(uint32_t beamId);
+    void PerformHandover(uint32_t satId, uint32_t beamId);
 
     /**
      * \brief Inform whether or not the underlying Tx channel is properly configured for

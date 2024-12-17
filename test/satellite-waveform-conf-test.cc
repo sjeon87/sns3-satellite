@@ -80,7 +80,7 @@ SatDvbRcs2WaveformTableTestCase::DoRun(void)
                                                           true);
 
     std::string path = Singleton<SatEnvVariables>::Get()->GetDataPath() + "/";
-    std::string fileName = "dvbRcs2Waveforms.txt";
+    std::string folderName = "scenarios/geo-33E/waveforms";
 
     // Enable ACM
     Config::SetDefault("ns3::SatWaveformConf::AcmEnabled", BooleanValue(true));
@@ -88,7 +88,7 @@ SatDvbRcs2WaveformTableTestCase::DoRun(void)
     Ptr<SatLinkResultsDvbRcs2> lr = CreateObject<SatLinkResultsDvbRcs2>();
     lr->Initialize();
 
-    Ptr<SatWaveformConf> wf = CreateObject<SatWaveformConf>(path + fileName);
+    Ptr<SatWaveformConf> wf = CreateObject<SatWaveformConf>(path + folderName);
     wf->InitializeEbNoRequirements(lr);
 
     uint32_t refResults[21] = {6,  6,  7,  7,  7,  8,  8,  9,  9,  9, 10,
@@ -213,10 +213,10 @@ class SatWaveformConfTestSuite : public TestSuite
 };
 
 SatWaveformConfTestSuite::SatWaveformConfTestSuite()
-    : TestSuite("sat-waveform-conf-test", UNIT)
+    : TestSuite("sat-waveform-conf-test", Type::UNIT)
 {
-    AddTestCase(new SatDvbRcs2WaveformTableTestCase, TestCase::QUICK);
-    AddTestCase(new SatDvbS2BbFrameConfTestCase, TestCase::QUICK);
+    AddTestCase(new SatDvbRcs2WaveformTableTestCase, TestCase::Duration::QUICK);
+    AddTestCase(new SatDvbS2BbFrameConfTestCase, TestCase::Duration::QUICK);
 }
 
 // Do allocate an instance of this TestSuite

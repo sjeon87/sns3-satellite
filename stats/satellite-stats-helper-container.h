@@ -23,12 +23,14 @@
 #ifndef SATELLITE_STATS_HELPER_CONTAINER_H
 #define SATELLITE_STATS_HELPER_CONTAINER_H
 
+#include "satellite-stats-helper.h"
+
 #include <ns3/object.h>
 #include <ns3/ptr.h>
-#include <ns3/satellite-stats-helper.h>
 
 #include <list>
 #include <set>
+#include <string>
 
 namespace ns3
 {
@@ -141,7 +143,7 @@ class SatStatsHelperContainer : public Object
      * \param satHelper the satellite module helper which would be used to learn
      *                  the topology of the simulation.
      */
-    SatStatsHelperContainer(Ptr<const SatHelper> satHelper);
+    SatStatsHelperContainer(Ptr<SatHelper> satHelper);
 
     /**
      * inherited from ObjectBase base class
@@ -786,6 +788,14 @@ class SatStatsHelperContainer : public Object
      */
     static std::string GetOutputTypeSuffix(SatStatsHelper::OutputType_t outputType);
 
+    /**
+     * \brief Update the address and the proper identifier from the given UT node.
+     * \param utNode a UT node.
+     *
+     * Used for UT handovers. Do it for all statistic instances.
+     */
+    void UpdateAddressAndIdentifier(Ptr<Node> utNode);
+
   protected:
     /**
      * Inherited from Object base class
@@ -794,13 +804,13 @@ class SatStatsHelperContainer : public Object
 
   private:
     /// Satellite module helper for reference.
-    Ptr<const SatHelper> m_satHelper;
+    Ptr<SatHelper> m_satHelper;
 
     /// Prefix of every SatStatsHelper instance names and every output file.
     std::string m_name;
 
     /// Maintains the active SatStatsHelper instances which have created.
-    std::list<Ptr<const SatStatsHelper>> m_stats;
+    std::list<Ptr<SatStatsHelper>> m_stats;
 
     /// Set of names of statisticscreated. Used to avoid creating same stat twice.
     std::set<std::string> m_names;

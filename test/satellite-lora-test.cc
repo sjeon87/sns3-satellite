@@ -25,14 +25,13 @@
  */
 
 // Include a header file from your module to test.
-#include "../model/satellite-mobility-model.h"
-#include "../model/satellite-position-allocator.h"
-#include "../utils/satellite-env-variables.h"
-
 #include "ns3/boolean.h"
 #include "ns3/config.h"
 #include "ns3/log.h"
 #include "ns3/mobility-helper.h"
+#include "ns3/satellite-env-variables.h"
+#include "ns3/satellite-mobility-model.h"
+#include "ns3/satellite-position-allocator.h"
 #include "ns3/simulator.h"
 #include "ns3/singleton.h"
 #include "ns3/string.h"
@@ -48,9 +47,11 @@
 #include <ns3/satellite-helper.h>
 #include <ns3/satellite-lora-conf.h>
 #include <ns3/satellite-lorawan-net-device.h>
+#include <ns3/satellite-topology.h>
 #include <ns3/uinteger.h>
 
 #include <iostream>
+#include <stdint.h>
 
 using namespace ns3;
 
@@ -115,11 +116,9 @@ SatLoraFirstWindowTestCase::DoRun(void)
     Singleton<SatEnvVariables>::Get()->SetOutputVariables("test-sat-lora", "first-window", true);
 
     // Enable Lora
-    Config::SetDefault("ns3::SatHelper::Standard", EnumValue(SatEnums::LORA));
     Config::SetDefault("ns3::LorawanMacEndDevice::DataRate", UintegerValue(5));
     Config::SetDefault("ns3::LorawanMacEndDevice::MType",
                        EnumValue(LorawanMacHeader::CONFIRMED_DATA_UP));
-    Config::SetDefault("ns3::SatLorawanNetDevice::ForwardToUtUsers", BooleanValue(false));
     Config::SetDefault("ns3::SatLoraConf::Standard", EnumValue(SatLoraConf::SATELLITE));
 
     Config::SetDefault("ns3::LorawanMacEndDeviceClassA::FirstWindowDelay",
@@ -154,9 +153,6 @@ SatLoraFirstWindowTestCase::DoRun(void)
     Config::SetDefault("ns3::SatBeamHelper::RaCollisionModel",
                        EnumValue(SatPhyRxCarrierConf::RA_COLLISION_CHECK_AGAINST_SINR));
     Config::SetDefault("ns3::SatBeamHelper::ReturnLinkLinkResults", EnumValue(SatEnums::LR_LORA));
-    Config::SetDefault("ns3::SatWaveformConf::DefaultWfId", UintegerValue(2));
-    Config::SetDefault("ns3::SatHelper::RtnLinkWaveformConfFileName",
-                       StringValue("loraWaveforms.txt"));
 
     // Configure E-SSA
     Config::SetDefault("ns3::SatPhyRxCarrierPerWindow::WindowDuration", StringValue("600ms"));
@@ -165,13 +161,15 @@ SatLoraFirstWindowTestCase::DoRun(void)
     Config::SetDefault("ns3::SatPhyRxCarrierPerWindow::EnableSIC", BooleanValue(false));
 
     Config::SetDefault("ns3::SatMac::EnableStatisticsTags", BooleanValue(true));
+    Config::SetDefault("ns3::SatHelper::PacketTraceEnabled", BooleanValue(true));
 
     // Creating the reference system.
-    Ptr<SatHelper> helper = CreateObject<SatHelper>();
+    Ptr<SatHelper> helper = CreateObject<SatHelper>(
+        Singleton<SatEnvVariables>::Get()->LocateDataDirectory() + "/scenarios/geo-33E-lora");
     helper->CreatePredefinedScenario(SatHelper::SIMPLE);
 
     // >>> Start of actual test using Simple scenario >>>
-    Ptr<Node> utNode = helper->UtNodes().Get(0);
+    Ptr<Node> utNode = Singleton<SatTopology>::Get()->GetUtNode(0);
     Ptr<LoraPeriodicSender> app = Create<LoraPeriodicSender>();
 
     app->SetInterval(Seconds(10));
@@ -183,8 +181,8 @@ SatLoraFirstWindowTestCase::DoRun(void)
     app->SetNode(utNode);
     utNode->AddApplication(app);
 
-    m_gwAddress = helper->GwNodes().Get(0)->GetDevice(1)->GetAddress();
-    m_edAddress = helper->UtNodes().Get(0)->GetDevice(2)->GetAddress();
+    m_gwAddress = Singleton<SatTopology>::Get()->GetGwNode(0)->GetDevice(1)->GetAddress();
+    m_edAddress = Singleton<SatTopology>::Get()->GetUtNode(0)->GetDevice(2)->GetAddress();
 
     Config::Connect("/NodeList/*/DeviceList/*/SatMac/Rx",
                     MakeCallback(&SatLoraFirstWindowTestCase::MacTraceCb, this));
@@ -270,11 +268,9 @@ SatLoraSecondWindowTestCase::DoRun(void)
     Singleton<SatEnvVariables>::Get()->SetOutputVariables("test-sat-lora", "second-window", true);
 
     // Enable Lora
-    Config::SetDefault("ns3::SatHelper::Standard", EnumValue(SatEnums::LORA));
     Config::SetDefault("ns3::LorawanMacEndDevice::DataRate", UintegerValue(5));
     Config::SetDefault("ns3::LorawanMacEndDevice::MType",
                        EnumValue(LorawanMacHeader::CONFIRMED_DATA_UP));
-    Config::SetDefault("ns3::SatLorawanNetDevice::ForwardToUtUsers", BooleanValue(false));
     Config::SetDefault("ns3::SatLoraConf::Standard", EnumValue(SatLoraConf::SATELLITE));
 
     Config::SetDefault("ns3::LorawanMacEndDeviceClassA::FirstWindowDelay",
@@ -312,9 +308,6 @@ SatLoraSecondWindowTestCase::DoRun(void)
     Config::SetDefault("ns3::SatBeamHelper::RaCollisionModel",
                        EnumValue(SatPhyRxCarrierConf::RA_COLLISION_CHECK_AGAINST_SINR));
     Config::SetDefault("ns3::SatBeamHelper::ReturnLinkLinkResults", EnumValue(SatEnums::LR_LORA));
-    Config::SetDefault("ns3::SatWaveformConf::DefaultWfId", UintegerValue(2));
-    Config::SetDefault("ns3::SatHelper::RtnLinkWaveformConfFileName",
-                       StringValue("loraWaveforms.txt"));
 
     // Configure E-SSA
     Config::SetDefault("ns3::SatPhyRxCarrierPerWindow::WindowDuration", StringValue("600ms"));
@@ -323,13 +316,15 @@ SatLoraSecondWindowTestCase::DoRun(void)
     Config::SetDefault("ns3::SatPhyRxCarrierPerWindow::EnableSIC", BooleanValue(false));
 
     Config::SetDefault("ns3::SatMac::EnableStatisticsTags", BooleanValue(true));
+    Config::SetDefault("ns3::SatHelper::PacketTraceEnabled", BooleanValue(true));
 
     // Creating the reference system.
-    Ptr<SatHelper> helper = CreateObject<SatHelper>();
+    Ptr<SatHelper> helper = CreateObject<SatHelper>(
+        Singleton<SatEnvVariables>::Get()->LocateDataDirectory() + "/scenarios/geo-33E-lora");
     helper->CreatePredefinedScenario(SatHelper::SIMPLE);
 
     // >>> Start of actual test using Simple scenario >>>
-    Ptr<Node> utNode = helper->UtNodes().Get(0);
+    Ptr<Node> utNode = Singleton<SatTopology>::Get()->GetUtNode(0);
     Ptr<LoraPeriodicSender> app = Create<LoraPeriodicSender>();
 
     app->SetInterval(Seconds(10));
@@ -341,8 +336,8 @@ SatLoraSecondWindowTestCase::DoRun(void)
     app->SetNode(utNode);
     utNode->AddApplication(app);
 
-    m_gwAddress = helper->GwNodes().Get(0)->GetDevice(1)->GetAddress();
-    m_edAddress = helper->UtNodes().Get(0)->GetDevice(2)->GetAddress();
+    m_gwAddress = Singleton<SatTopology>::Get()->GetGwNode(0)->GetDevice(1)->GetAddress();
+    m_edAddress = Singleton<SatTopology>::Get()->GetUtNode(0)->GetDevice(2)->GetAddress();
 
     Config::Connect("/NodeList/*/DeviceList/*/SatMac/Rx",
                     MakeCallback(&SatLoraSecondWindowTestCase::MacTraceCb, this));
@@ -396,7 +391,7 @@ class SatLoraOutOfWindowWindowTestCase : public TestCase
 };
 
 SatLoraOutOfWindowWindowTestCase::SatLoraOutOfWindowWindowTestCase()
-    : TestCase("Test satellite lorawan with acks sent in second window."),
+    : TestCase("Test satellite lorawan with acks sent out of reception windows."),
       m_edReceiveDate(Seconds(0)),
       m_phyGwReceive(false),
       m_phyEdReceive(false)
@@ -447,11 +442,9 @@ SatLoraOutOfWindowWindowTestCase::DoRun(void)
     Singleton<SatEnvVariables>::Get()->SetOutputVariables("test-sat-lora", "out-of-window", true);
 
     // Enable Lora
-    Config::SetDefault("ns3::SatHelper::Standard", EnumValue(SatEnums::LORA));
     Config::SetDefault("ns3::LorawanMacEndDevice::DataRate", UintegerValue(5));
     Config::SetDefault("ns3::LorawanMacEndDevice::MType",
                        EnumValue(LorawanMacHeader::CONFIRMED_DATA_UP));
-    Config::SetDefault("ns3::SatLorawanNetDevice::ForwardToUtUsers", BooleanValue(false));
     Config::SetDefault("ns3::SatLoraConf::Standard", EnumValue(SatLoraConf::SATELLITE));
 
     Config::SetDefault("ns3::LorawanMacEndDeviceClassA::FirstWindowDelay",
@@ -488,9 +481,6 @@ SatLoraOutOfWindowWindowTestCase::DoRun(void)
     Config::SetDefault("ns3::SatBeamHelper::RaCollisionModel",
                        EnumValue(SatPhyRxCarrierConf::RA_COLLISION_CHECK_AGAINST_SINR));
     Config::SetDefault("ns3::SatBeamHelper::ReturnLinkLinkResults", EnumValue(SatEnums::LR_LORA));
-    Config::SetDefault("ns3::SatWaveformConf::DefaultWfId", UintegerValue(2));
-    Config::SetDefault("ns3::SatHelper::RtnLinkWaveformConfFileName",
-                       StringValue("loraWaveforms.txt"));
 
     // Configure E-SSA
     Config::SetDefault("ns3::SatPhyRxCarrierPerWindow::WindowDuration", StringValue("600ms"));
@@ -500,13 +490,15 @@ SatLoraOutOfWindowWindowTestCase::DoRun(void)
 
     Config::SetDefault("ns3::SatMac::EnableStatisticsTags", BooleanValue(true));
     Config::SetDefault("ns3::SatPhy::EnableStatisticsTags", BooleanValue(true));
+    Config::SetDefault("ns3::SatHelper::PacketTraceEnabled", BooleanValue(true));
 
     // Creating the reference system.
-    Ptr<SatHelper> helper = CreateObject<SatHelper>();
+    Ptr<SatHelper> helper = CreateObject<SatHelper>(
+        Singleton<SatEnvVariables>::Get()->LocateDataDirectory() + "/scenarios/geo-33E-lora");
     helper->CreatePredefinedScenario(SatHelper::SIMPLE);
 
     // >>> Start of actual test using Simple scenario >>>
-    Ptr<Node> utNode = helper->UtNodes().Get(0);
+    Ptr<Node> utNode = Singleton<SatTopology>::Get()->GetUtNode(0);
     Ptr<LoraPeriodicSender> app = Create<LoraPeriodicSender>();
 
     app->SetInterval(Seconds(10));
@@ -518,8 +510,8 @@ SatLoraOutOfWindowWindowTestCase::DoRun(void)
     app->SetNode(utNode);
     utNode->AddApplication(app);
 
-    m_gwAddress = helper->GwNodes().Get(0)->GetDevice(1)->GetAddress();
-    m_edAddress = helper->UtNodes().Get(0)->GetDevice(2)->GetAddress();
+    m_gwAddress = Singleton<SatTopology>::Get()->GetGwNode(0)->GetDevice(1)->GetAddress();
+    m_edAddress = utNode->GetDevice(2)->GetAddress();
 
     Config::Connect("/NodeList/*/DeviceList/*/SatMac/Rx",
                     MakeCallback(&SatLoraOutOfWindowWindowTestCase::MacTraceCb, this));
@@ -575,7 +567,8 @@ class SatLoraOutOfWindowWindowNoRetransmissionTestCase : public TestCase
 };
 
 SatLoraOutOfWindowWindowNoRetransmissionTestCase::SatLoraOutOfWindowWindowNoRetransmissionTestCase()
-    : TestCase("Test satellite lorawan with acks sent in second window."),
+    : TestCase("Test satellite lorawan with acks sent out of reception windows and no "
+               "retransmission needed."),
       m_edReceiveDate(Seconds(0))
 {
 }
@@ -609,11 +602,9 @@ SatLoraOutOfWindowWindowNoRetransmissionTestCase::DoRun(void)
     Singleton<SatEnvVariables>::Get()->SetOutputVariables("test-sat-lora", "out-of-window", true);
 
     // Enable Lora
-    Config::SetDefault("ns3::SatHelper::Standard", EnumValue(SatEnums::LORA));
     Config::SetDefault("ns3::LorawanMacEndDevice::DataRate", UintegerValue(5));
     Config::SetDefault("ns3::LorawanMacEndDevice::MType",
                        EnumValue(LorawanMacHeader::UNCONFIRMED_DATA_UP));
-    Config::SetDefault("ns3::SatLorawanNetDevice::ForwardToUtUsers", BooleanValue(false));
     Config::SetDefault("ns3::SatLoraConf::Standard", EnumValue(SatLoraConf::SATELLITE));
 
     Config::SetDefault("ns3::LorawanMacEndDeviceClassA::FirstWindowDelay",
@@ -650,9 +641,6 @@ SatLoraOutOfWindowWindowNoRetransmissionTestCase::DoRun(void)
     Config::SetDefault("ns3::SatBeamHelper::RaCollisionModel",
                        EnumValue(SatPhyRxCarrierConf::RA_COLLISION_CHECK_AGAINST_SINR));
     Config::SetDefault("ns3::SatBeamHelper::ReturnLinkLinkResults", EnumValue(SatEnums::LR_LORA));
-    Config::SetDefault("ns3::SatWaveformConf::DefaultWfId", UintegerValue(2));
-    Config::SetDefault("ns3::SatHelper::RtnLinkWaveformConfFileName",
-                       StringValue("loraWaveforms.txt"));
 
     // Configure E-SSA
     Config::SetDefault("ns3::SatPhyRxCarrierPerWindow::WindowDuration", StringValue("600ms"));
@@ -662,13 +650,15 @@ SatLoraOutOfWindowWindowNoRetransmissionTestCase::DoRun(void)
 
     Config::SetDefault("ns3::SatMac::EnableStatisticsTags", BooleanValue(true));
     Config::SetDefault("ns3::SatPhy::EnableStatisticsTags", BooleanValue(true));
+    Config::SetDefault("ns3::SatHelper::PacketTraceEnabled", BooleanValue(true));
 
     // Creating the reference system.
-    Ptr<SatHelper> helper = CreateObject<SatHelper>();
+    Ptr<SatHelper> helper = CreateObject<SatHelper>(
+        Singleton<SatEnvVariables>::Get()->LocateDataDirectory() + "/scenarios/geo-33E-lora");
     helper->CreatePredefinedScenario(SatHelper::SIMPLE);
 
     // >>> Start of actual test using Simple scenario >>>
-    Ptr<Node> utNode = helper->UtNodes().Get(0);
+    Ptr<Node> utNode = Singleton<SatTopology>::Get()->GetUtNode(0);
     Ptr<LoraPeriodicSender> app = Create<LoraPeriodicSender>();
 
     app->SetInterval(Seconds(10));
@@ -680,8 +670,8 @@ SatLoraOutOfWindowWindowNoRetransmissionTestCase::DoRun(void)
     app->SetNode(utNode);
     utNode->AddApplication(app);
 
-    m_gwAddress = helper->GwNodes().Get(0)->GetDevice(1)->GetAddress();
-    m_edAddress = helper->UtNodes().Get(0)->GetDevice(2)->GetAddress();
+    m_gwAddress = Singleton<SatTopology>::Get()->GetGwNode(0)->GetDevice(1)->GetAddress();
+    m_edAddress = utNode->GetDevice(2)->GetAddress();
 
     Config::Connect(
         "/NodeList/*/DeviceList/*/SatMac/Rx",
@@ -759,11 +749,9 @@ SatLoraCbrTestCase::DoRun(void)
     Singleton<SatEnvVariables>::Get()->SetOutputVariables("test-sat-lora", "cbr", true);
 
     // Enable Lora
-    Config::SetDefault("ns3::SatHelper::Standard", EnumValue(SatEnums::LORA));
     Config::SetDefault("ns3::LorawanMacEndDevice::DataRate", UintegerValue(5));
     Config::SetDefault("ns3::LorawanMacEndDevice::MType",
                        EnumValue(LorawanMacHeader::CONFIRMED_DATA_UP));
-    Config::SetDefault("ns3::SatLorawanNetDevice::ForwardToUtUsers", BooleanValue(true));
     Config::SetDefault("ns3::SatLoraConf::Standard", EnumValue(SatLoraConf::SATELLITE));
 
     Config::SetDefault("ns3::LorawanMacEndDeviceClassA::FirstWindowDelay",
@@ -798,9 +786,6 @@ SatLoraCbrTestCase::DoRun(void)
     Config::SetDefault("ns3::SatBeamHelper::RaCollisionModel",
                        EnumValue(SatPhyRxCarrierConf::RA_COLLISION_CHECK_AGAINST_SINR));
     Config::SetDefault("ns3::SatBeamHelper::ReturnLinkLinkResults", EnumValue(SatEnums::LR_LORA));
-    Config::SetDefault("ns3::SatWaveformConf::DefaultWfId", UintegerValue(2));
-    Config::SetDefault("ns3::SatHelper::RtnLinkWaveformConfFileName",
-                       StringValue("loraWaveforms.txt"));
 
     // Configure E-SSA
     Config::SetDefault("ns3::SatPhyRxCarrierPerWindow::WindowDuration", StringValue("600ms"));
@@ -812,12 +797,15 @@ SatLoraCbrTestCase::DoRun(void)
     Config::SetDefault("ns3::CbrApplication::PacketSize", UintegerValue(24));
 
     Config::SetDefault("ns3::SatMac::EnableStatisticsTags", BooleanValue(true));
+    Config::SetDefault("ns3::SatHelper::PacketTraceEnabled", BooleanValue(true));
+
     // Creating the reference system.
-    Ptr<SatHelper> helper = CreateObject<SatHelper>();
+    Ptr<SatHelper> helper = CreateObject<SatHelper>(
+        Singleton<SatEnvVariables>::Get()->LocateDataDirectory() + "/scenarios/geo-33E-lora");
     helper->CreatePredefinedScenario(SatHelper::SIMPLE);
 
-    NodeContainer utUsers = helper->GetUtUsers();
-    NodeContainer gwUsers = helper->GetGwUsers();
+    NodeContainer utUsers = Singleton<SatTopology>::Get()->GetUtUserNodes();
+    NodeContainer gwUsers = Singleton<SatTopology>::Get()->GetGwUserNodes();
     InetSocketAddress gwUserAddr = InetSocketAddress(helper->GetUserAddress(gwUsers.Get(0)), 9);
 
     PacketSinkHelper sinkHelper("ns3::UdpSocketFactory", Address());
@@ -837,8 +825,8 @@ SatLoraCbrTestCase::DoRun(void)
     sinkContainer.Start(Seconds(1));
     sinkContainer.Stop(Seconds(20));
 
-    m_gwAddress = helper->GwNodes().Get(0)->GetDevice(1)->GetAddress();
-    m_edAddress = helper->UtNodes().Get(0)->GetDevice(2)->GetAddress();
+    m_gwAddress = Singleton<SatTopology>::Get()->GetGwNode(0)->GetDevice(1)->GetAddress();
+    m_edAddress = Singleton<SatTopology>::Get()->GetUtNode(0)->GetDevice(2)->GetAddress();
 
     Ptr<PacketSink> receiver = DynamicCast<PacketSink>(sinkContainer.Get(0));
 
@@ -878,13 +866,13 @@ class SatLoraTestSuite : public TestSuite
 };
 
 SatLoraTestSuite::SatLoraTestSuite()
-    : TestSuite("sat-lora-test", UNIT)
+    : TestSuite("sat-lora-test", Type::SYSTEM)
 {
-    AddTestCase(new SatLoraFirstWindowTestCase, TestCase::QUICK);
-    AddTestCase(new SatLoraSecondWindowTestCase, TestCase::QUICK);
-    AddTestCase(new SatLoraOutOfWindowWindowTestCase, TestCase::QUICK);
-    AddTestCase(new SatLoraOutOfWindowWindowNoRetransmissionTestCase, TestCase::QUICK);
-    AddTestCase(new SatLoraCbrTestCase, TestCase::QUICK);
+    AddTestCase(new SatLoraFirstWindowTestCase, TestCase::Duration::QUICK);
+    AddTestCase(new SatLoraSecondWindowTestCase, TestCase::Duration::QUICK);
+    AddTestCase(new SatLoraOutOfWindowWindowTestCase, TestCase::Duration::QUICK);
+    AddTestCase(new SatLoraOutOfWindowWindowNoRetransmissionTestCase, TestCase::Duration::QUICK);
+    AddTestCase(new SatLoraCbrTestCase, TestCase::Duration::QUICK);
 }
 
 // Do allocate an instance of this TestSuite

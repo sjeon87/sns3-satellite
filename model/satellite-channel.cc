@@ -44,6 +44,9 @@
 #include <ns3/singleton.h>
 
 #include <algorithm>
+#include <cstddef>
+#include <utility>
+#include <vector>
 
 NS_LOG_COMPONENT_DEFINE("SatChannel");
 
@@ -114,7 +117,8 @@ SatChannel::GetTypeId(void)
             .AddAttribute("RxPowerCalculationMode",
                           "Rx Power calculation mode",
                           EnumValue(SatEnums::RX_PWR_CALCULATION),
-                          MakeEnumAccessor(&SatChannel::m_rxPowerCalculationMode),
+                          MakeEnumAccessor<SatEnums::RxPowerCalculationMode_t>(
+                              &SatChannel::m_rxPowerCalculationMode),
                           MakeEnumChecker(SatEnums::RX_PWR_CALCULATION,
                                           "RxPowerCalculation",
                                           SatEnums::RX_PWR_INPUT_TRACE,
@@ -124,7 +128,7 @@ SatChannel::GetTypeId(void)
             .AddAttribute("ForwardingMode",
                           "Channel forwarding mode.",
                           EnumValue(SatChannel::ALL_BEAMS),
-                          MakeEnumAccessor(&SatChannel::m_fwdMode),
+                          MakeEnumAccessor<SatChannel::SatChannelFwdMode_e>(&SatChannel::m_fwdMode),
                           MakeEnumChecker(SatChannel::ONLY_DEST_NODE,
                                           "OnlyDestNode",
                                           SatChannel::ONLY_DEST_BEAM,
@@ -138,6 +142,7 @@ void
 SatChannel::AddRx(Ptr<SatPhyRx> phyRx)
 {
     NS_LOG_FUNCTION(this << phyRx);
+
     m_phyRxContainer.push_back(phyRx);
 }
 
@@ -676,7 +681,7 @@ SatChannel::GetSourceAddress(Ptr<SatSignalParameters> rxParams)
 
     SatSignalParameters::PacketsInBurst_t::const_iterator i = rxParams->m_packetsInBurst.begin();
 
-    if (*i == NULL)
+    if (*i == nullptr)
     {
         NS_FATAL_ERROR("SatChannel::GetSourceAddress - Empty packet list");
     }

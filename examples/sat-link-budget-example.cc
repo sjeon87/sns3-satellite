@@ -115,11 +115,10 @@ main(int argc, char* argv[])
     posAllocator->Add(GeoCoordinate(latitude, longitude, altitude));
     simulationHelper->SetUtPositionAllocatorForBeam(beamId, posAllocator);
 
-    // Creating the reference system. Note, currently the satellite module supports
-    // only one reference system, which is named as "Scenario72". The string is utilized
-    // in mapping the scenario to the needed reference system configuration files. Arbitrary
-    // scenario name results in fatal error.
-    Ptr<SatHelper> helper = simulationHelper->CreateSatScenario();
+    simulationHelper->LoadScenario("geo-33E");
+
+    // Creating the reference system.
+    simulationHelper->CreateSatScenario();
 
     // set callback traces where we want results out
     Config::Connect("/NodeList/*/DeviceList/*/SatPhy/PhyRx/RxCarrierList/*/LinkBudgetTrace",
@@ -131,34 +130,42 @@ main(int argc, char* argv[])
     Config::Connect("/NodeList/*/DeviceList/*/FeederPhy/*/PhyRx/RxCarrierList/*/LinkBudgetTrace",
                     MakeCallback(&LinkBudgetTraceCb));
     // Set UT position
-    NodeContainer ut = helper->UtNodes();
-    Ptr<SatMobilityModel> utMob = ut.Get(0)->GetObject<SatMobilityModel>();
+    Ptr<SatMobilityModel> utMob =
+        Singleton<SatTopology>::Get()->GetUtNode(0)->GetObject<SatMobilityModel>();
 
     // Install CBR traffic model
-    Config::SetDefault("ns3::CbrApplication::Interval", StringValue("0.1s"));
-    Config::SetDefault("ns3::CbrApplication::PacketSize", UintegerValue(512));
-    simulationHelper->InstallTrafficModel(SimulationHelper::CBR,
-                                          SimulationHelper::UDP,
-                                          SimulationHelper::FWD_LINK,
-                                          Seconds(0.1),
-                                          Seconds(0.25));
+    simulationHelper->GetTrafficHelper()->AddCbrTraffic(
+        SatTrafficHelper::FWD_LINK,
+        SatTrafficHelper::UDP,
+        MilliSeconds(100),
+        512,
+        NodeContainer(Singleton<SatTopology>::Get()->GetGwUserNode(0)),
+        Singleton<SatTopology>::Get()->GetUtUserNodes(),
+        Seconds(0.1),
+        Seconds(0.25),
+        Seconds(0));
 
-    simulationHelper->InstallTrafficModel(SimulationHelper::CBR,
-                                          SimulationHelper::UDP,
-                                          SimulationHelper::RTN_LINK,
-                                          Seconds(0.1),
-                                          Seconds(0.25));
+    simulationHelper->GetTrafficHelper()->AddCbrTraffic(
+        SatTrafficHelper::RTN_LINK,
+        SatTrafficHelper::UDP,
+        MilliSeconds(100),
+        512,
+        NodeContainer(Singleton<SatTopology>::Get()->GetGwUserNode(0)),
+        Singleton<SatTopology>::Get()->GetUtUserNodes(),
+        Seconds(0.1),
+        Seconds(0.25),
+        Seconds(0));
 
-    NodeContainer gw = helper->GwNodes();
-    Ptr<SatMobilityModel> gwMob = gw.Get(0)->GetObject<SatMobilityModel>();
+    Ptr<SatMobilityModel> gwMob =
+        Singleton<SatTopology>::Get()->GetGwNode(0)->GetObject<SatMobilityModel>();
 
-    Ptr<Node> geo = helper->GeoSatNodes().Get(0);
-    Ptr<SatMobilityModel> geoMob = geo->GetObject<SatMobilityModel>();
+    Ptr<Node> sat = Singleton<SatTopology>::Get()->GetOrbiterNode(0);
+    Ptr<SatMobilityModel> satMob = sat->GetObject<SatMobilityModel>();
 
     // print used parameters using log info
     NS_LOG_INFO("--- satellite-link-budget-example ---");
     NS_LOG_INFO(" Beam ID: " << beamId);
-    NS_LOG_INFO(" Geo position: " << geoMob->GetGeoPosition() << " " << geoMob->GetPosition());
+    NS_LOG_INFO(" Sat position: " << satMob->GetGeoPosition() << " " << satMob->GetPosition());
     NS_LOG_INFO(" GW position: " << gwMob->GetGeoPosition() << " " << gwMob->GetPosition());
     NS_LOG_INFO(" UT position: " << utMob->GetGeoPosition() << " " << utMob->GetPosition());
     NS_LOG_INFO("  ");

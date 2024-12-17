@@ -28,6 +28,9 @@
 #include <ns3/log.h>
 
 #include <cmath>
+#include <fstream>
+#include <stdint.h>
+#include <string>
 
 NS_LOG_COMPONENT_DEFINE("SatMutualInformationTable");
 

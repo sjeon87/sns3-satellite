@@ -28,11 +28,11 @@
  *
  */
 
-#include "../helper/satellite-helper.h"
-#include "../utils/satellite-env-variables.h"
-
 #include "ns3/core-module.h"
+#include "ns3/satellite-env-variables.h"
+#include "ns3/satellite-helper.h"
 #include "ns3/satellite-id-mapper.h"
+#include "ns3/satellite-topology.h"
 #include "ns3/simulator.h"
 #include "ns3/singleton.h"
 #include "ns3/string.h"
@@ -93,7 +93,8 @@ ScenarioCreationSimple::DoRun(void)
     // Create simple scenario
 
     // Creating the reference system.
-    Ptr<SatHelper> helper = CreateObject<SatHelper>();
+    Ptr<SatHelper> helper = CreateObject<SatHelper>(
+        Singleton<SatEnvVariables>::Get()->LocateDataDirectory() + "/scenarios/geo-33E");
 
     // Enable creation traces
     Config::SetDefault("ns3::SatHelper::ScenarioCreationTraceEnabled", BooleanValue(true));
@@ -101,8 +102,12 @@ ScenarioCreationSimple::DoRun(void)
     helper->CreatePredefinedScenario(SatHelper::SIMPLE);
 
     // check results what can be done at this level. More checking done in module level with traces
-    NS_TEST_ASSERT_MSG_EQ(helper->GetGwUsers().GetN(), 1, "GW User count is not what expected!");
-    NS_TEST_ASSERT_MSG_EQ(helper->GetUtUsers().GetN(), 1, "UT User count is not what expected!");
+    NS_TEST_ASSERT_MSG_EQ(Singleton<SatTopology>::Get()->GetGwUserNodes().GetN(),
+                          1,
+                          "GW User count is not what expected!");
+    NS_TEST_ASSERT_MSG_EQ(Singleton<SatTopology>::Get()->GetNUtUserNodes(),
+                          1,
+                          "UT User count is not what expected!");
 
     Singleton<SatEnvVariables>::Get()->DoDispose();
 
@@ -162,7 +167,8 @@ ScenarioCreationLarger::DoRun(void)
     // Create larger scenario
 
     // Creating the reference system.
-    Ptr<SatHelper> helper = CreateObject<SatHelper>();
+    Ptr<SatHelper> helper = CreateObject<SatHelper>(
+        Singleton<SatEnvVariables>::Get()->LocateDataDirectory() + "/scenarios/geo-33E");
 
     // Enable creation traces
     Config::SetDefault("ns3::SatHelper::ScenarioCreationTraceEnabled", BooleanValue(true));
@@ -170,8 +176,12 @@ ScenarioCreationLarger::DoRun(void)
     helper->CreatePredefinedScenario(SatHelper::LARGER);
 
     // check results what can be done at this level. More checking done in module level with traces
-    NS_TEST_ASSERT_MSG_EQ(helper->GetGwUsers().GetN(), 1, "GW User count is not what expected!");
-    NS_TEST_ASSERT_MSG_EQ(helper->GetUtUsers().GetN(), 5, "UT User count is not what expected!");
+    NS_TEST_ASSERT_MSG_EQ(Singleton<SatTopology>::Get()->GetGwUserNodes().GetN(),
+                          1,
+                          "GW User count is not what expected!");
+    NS_TEST_ASSERT_MSG_EQ(Singleton<SatTopology>::Get()->GetNUtUserNodes(),
+                          5,
+                          "UT User count is not what expected!");
 
     Singleton<SatEnvVariables>::Get()->DoDispose();
 
@@ -231,7 +241,8 @@ ScenarioCreationFull::DoRun(void)
     // Create full scenario
 
     // Creating the reference system.
-    Ptr<SatHelper> helper = CreateObject<SatHelper>();
+    Ptr<SatHelper> helper = CreateObject<SatHelper>(
+        Singleton<SatEnvVariables>::Get()->LocateDataDirectory() + "/scenarios/geo-33E");
 
     // Enable creation traces
     Config::SetDefault("ns3::SatHelper::ScenarioCreationTraceEnabled", BooleanValue(true));
@@ -242,10 +253,12 @@ ScenarioCreationFull::DoRun(void)
     // reference system includes 98 beams and we create three UTs with three users per UT in full
     // scenario and five GW users
 
-    NS_TEST_ASSERT_MSG_EQ(helper->GetGwUsers().GetN(), 5, "GW User count is not what expected!");
-    // NS_TEST_ASSERT_MSG_EQ (helper->GetUtUsers().GetN(), 98*3*3, "UT User count is not what
-    // expected!");
-    NS_TEST_ASSERT_MSG_EQ(helper->GetUtUsers().GetN(),
+    NS_TEST_ASSERT_MSG_EQ(Singleton<SatTopology>::Get()->GetGwUserNodes().GetN(),
+                          5,
+                          "GW User count is not what expected!");
+    // NS_TEST_ASSERT_MSG_EQ (Singleton<SatTopology>::Get()->GetNUtUserNodes(), 98*3*3, "UT User
+    // count is not what expected!");
+    NS_TEST_ASSERT_MSG_EQ(Singleton<SatTopology>::Get()->GetNUtUserNodes(),
                           72 * 3 * 3,
                           "UT User count is not what expected!");
 
@@ -310,7 +323,8 @@ ScenarioCreationUser::DoRun(void)
     // Create user scenario
 
     // Creating the reference system.
-    Ptr<SatHelper> helper = CreateObject<SatHelper>();
+    Ptr<SatHelper> helper = CreateObject<SatHelper>(
+        Singleton<SatEnvVariables>::Get()->LocateDataDirectory() + "/scenarios/geo-33E");
     SatBeamUserInfo beamInfo = SatBeamUserInfo(1, 1);
     std::map<std::pair<uint32_t, uint32_t>, SatBeamUserInfo> beamMap;
     beamMap[std::make_pair(0, 8)] = beamInfo;
@@ -324,8 +338,12 @@ ScenarioCreationUser::DoRun(void)
     helper->CreateUserDefinedScenario(beamMap);
 
     // check results what can be done at this level. More checking done in module level with traces
-    NS_TEST_ASSERT_MSG_EQ(helper->GetGwUsers().GetN(), 5, "GW User count is not what expected!");
-    NS_TEST_ASSERT_MSG_EQ(helper->GetUtUsers().GetN(), 5, "UT User count is not what expected!");
+    NS_TEST_ASSERT_MSG_EQ(Singleton<SatTopology>::Get()->GetGwUserNodes().GetN(),
+                          5,
+                          "GW User count is not what expected!");
+    NS_TEST_ASSERT_MSG_EQ(Singleton<SatTopology>::Get()->GetNUtUserNodes(),
+                          5,
+                          "UT User count is not what expected!");
 
     Singleton<SatEnvVariables>::Get()->DoDispose();
 
@@ -333,8 +351,8 @@ ScenarioCreationUser::DoRun(void)
 }
 
 // The TestSuite class names the TestSuite as sat-scenario-creation, identifies what type of
-// TestSuite (SYSTEM), and enables the TestCases to be run. Typically, only the constructor for this
-// class must be defined
+// TestSuite (Type::SYSTEM), and enables the TestCases to be run. Typically, only the constructor
+// for this class must be defined
 //
 class ScenarioCreationTestSuite : public TestSuite
 {
@@ -343,19 +361,19 @@ class ScenarioCreationTestSuite : public TestSuite
 };
 
 ScenarioCreationTestSuite::ScenarioCreationTestSuite()
-    : TestSuite("sat-scenario-creation", SYSTEM)
+    : TestSuite("sat-scenario-creation", Type::SYSTEM)
 {
     // add ScenarioCreationSimple case to suite sat-scenario-creation
-    AddTestCase(new ScenarioCreationSimple, TestCase::QUICK);
+    AddTestCase(new ScenarioCreationSimple, TestCase::Duration::QUICK);
 
     // add ScenarioCreationLarger case to suite sat-scenario-creation
-    AddTestCase(new ScenarioCreationLarger, TestCase::QUICK);
+    AddTestCase(new ScenarioCreationLarger, TestCase::Duration::QUICK);
 
     // add ScenarioCreationFull case to suite sat-scenario-creation
-    AddTestCase(new ScenarioCreationFull, TestCase::QUICK);
+    AddTestCase(new ScenarioCreationFull, TestCase::Duration::QUICK);
 
     // add ScenarioCreationUser case to suite sat-scenario-creation
-    AddTestCase(new ScenarioCreationUser, TestCase::QUICK);
+    AddTestCase(new ScenarioCreationUser, TestCase::Duration::QUICK);
 }
 
 // Allocate an instance of this TestSuite

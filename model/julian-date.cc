@@ -31,12 +31,16 @@
 #include <ns3/assert.h>
 #include <ns3/nstime.h>
 
+#include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <iomanip>
+#include <ostream>
 #include <sstream>
 #include <stdint.h>
 #include <string>
+#include <utility>
+#include <vector>
 
 namespace ns3
 {
@@ -240,7 +244,7 @@ JulianDate::SetDate(const std::string& date, TimeSystem ts)
 
     // YYYY-MM-DD HH:MM:SS(.MMM)
     std::sscanf(date.c_str(),
-                "%04d%*c%02d%*c%02d %02d%*c%02d%*c%lf",
+                "%04u%*c%02u%*c%02u %02u%*c%02u%*c%lf",
                 &dt.year,
                 &dt.month,
                 &dt.day,

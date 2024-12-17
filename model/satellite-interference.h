@@ -26,6 +26,11 @@
 #include <ns3/object.h>
 #include <ns3/simple-ref-count.h>
 
+#include <map>
+#include <stdint.h>
+#include <utility>
+#include <vector>
+
 namespace ns3
 {
 

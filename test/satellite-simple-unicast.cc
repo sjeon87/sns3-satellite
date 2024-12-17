@@ -28,9 +28,6 @@
  *
  */
 
-#include "../helper/satellite-helper.h"
-#include "../utils/satellite-env-variables.h"
-
 #include "ns3/cbr-application.h"
 #include "ns3/cbr-helper.h"
 #include "ns3/config.h"
@@ -38,6 +35,9 @@
 #include "ns3/log.h"
 #include "ns3/packet-sink-helper.h"
 #include "ns3/packet-sink.h"
+#include "ns3/satellite-env-variables.h"
+#include "ns3/satellite-helper.h"
+#include "ns3/satellite-topology.h"
 #include "ns3/simulator.h"
 #include "ns3/singleton.h"
 #include "ns3/string.h"
@@ -104,10 +104,11 @@ SimpleUnicast1::DoRun(void)
     Config::SetDefault("ns3::SatGwHelper::RtnLinkErrorModel", EnumValue(em));
 
     // Creating the reference system.
-    Ptr<SatHelper> helper = CreateObject<SatHelper>();
+    Ptr<SatHelper> helper = CreateObject<SatHelper>(
+        Singleton<SatEnvVariables>::Get()->LocateDataDirectory() + "/scenarios/geo-33E");
     helper->CreatePredefinedScenario(SatHelper::SIMPLE);
 
-    NodeContainer utUsers = helper->GetUtUsers();
+    NodeContainer utUsers = Singleton<SatTopology>::Get()->GetUtUserNodes();
 
     // >>> Start of actual test using Simple scenario >>>
 
@@ -118,7 +119,7 @@ SimpleUnicast1::DoRun(void)
                   Address(InetSocketAddress(helper->GetUserAddress(utUsers.Get(0)), port)));
     cbr.SetAttribute("Interval", StringValue("1s"));
 
-    ApplicationContainer gwApps = cbr.Install(helper->GetGwUsers());
+    ApplicationContainer gwApps = cbr.Install(Singleton<SatTopology>::Get()->GetGwUserNodes());
     gwApps.Start(Seconds(1.0));
     gwApps.Stop(Seconds(2.1));
 
@@ -208,10 +209,11 @@ SimpleUnicast2::DoRun(void)
     Config::SetDefault("ns3::SatGwHelper::RtnLinkErrorModel", EnumValue(em));
 
     // Creating the reference system.
-    Ptr<SatHelper> helper = CreateObject<SatHelper>();
+    Ptr<SatHelper> helper = CreateObject<SatHelper>(
+        Singleton<SatEnvVariables>::Get()->LocateDataDirectory() + "/scenarios/geo-33E");
     helper->CreatePredefinedScenario(SatHelper::LARGER);
 
-    NodeContainer utUsers = helper->GetUtUsers();
+    NodeContainer utUsers = Singleton<SatTopology>::Get()->GetUtUserNodes();
 
     // >>> Start of actual test using Larger scenario >>>
 
@@ -225,13 +227,13 @@ SimpleUnicast2::DoRun(void)
     CbrHelper cbr("ns3::UdpSocketFactory",
                   Address(InetSocketAddress(helper->GetUserAddress(utUsers.Get(0)), port)));
     cbr.SetAttribute("Interval", StringValue("1s"));
-    ApplicationContainer gwApps = cbr.Install(helper->GetGwUsers());
+    ApplicationContainer gwApps = cbr.Install(Singleton<SatTopology>::Get()->GetGwUserNodes());
 
     // app to send receiver 2
     cbr.SetAttribute(
         "Remote",
         AddressValue(Address(InetSocketAddress(helper->GetUserAddress(utUsers.Get(4)), port))));
-    gwApps.Add(cbr.Install(helper->GetGwUsers()));
+    gwApps.Add(cbr.Install(Singleton<SatTopology>::Get()->GetGwUserNodes()));
 
     gwApps.Start(Seconds(1.0));
     gwApps.Stop(Seconds(2.1));
@@ -341,11 +343,12 @@ SimpleUnicast3::DoRun(void)
     Config::SetDefault("ns3::SatGwHelper::RtnLinkErrorModel", EnumValue(em));
 
     // Creating the reference system.
-    Ptr<SatHelper> helper = CreateObject<SatHelper>();
+    Ptr<SatHelper> helper = CreateObject<SatHelper>(
+        Singleton<SatEnvVariables>::Get()->LocateDataDirectory() + "/scenarios/geo-33E");
     helper->CreatePredefinedScenario(SatHelper::FULL);
 
-    NodeContainer utUsers = helper->GetUtUsers();
-    NodeContainer gwUsers = helper->GetGwUsers();
+    NodeContainer utUsers = Singleton<SatTopology>::Get()->GetUtUserNodes();
+    NodeContainer gwUsers = Singleton<SatTopology>::Get()->GetGwUserNodes();
 
     // >>> Start of actual test using Full scenario >>>
 
@@ -477,12 +480,13 @@ SimpleUnicast4::DoRun(void)
     Config::SetDefault("ns3::SatGwHelper::RtnLinkErrorModel", EnumValue(em));
 
     // Creating the reference system.
-    Ptr<SatHelper> helper = CreateObject<SatHelper>();
+    Ptr<SatHelper> helper = CreateObject<SatHelper>(
+        Singleton<SatEnvVariables>::Get()->LocateDataDirectory() + "/scenarios/geo-33E");
     helper->CreatePredefinedScenario(SatHelper::SIMPLE);
 
     // >>> Start of actual test using Simple scenario >>>
 
-    NodeContainer gwUsers = helper->GetGwUsers();
+    NodeContainer gwUsers = Singleton<SatTopology>::Get()->GetGwUserNodes();
 
     // Create the Cbr application to send UDP datagrams of size
     // 512 bytes at a rate of 500 Kb/s (defaults), one packet send (interval 1s)
@@ -491,7 +495,7 @@ SimpleUnicast4::DoRun(void)
                   Address(InetSocketAddress(helper->GetUserAddress(gwUsers.Get(0)), port)));
     cbr.SetAttribute("Interval", StringValue("1s"));
 
-    ApplicationContainer utApps = cbr.Install(helper->GetUtUsers());
+    ApplicationContainer utApps = cbr.Install(Singleton<SatTopology>::Get()->GetUtUserNodes());
     utApps.Start(Seconds(1.0));
     utApps.Stop(Seconds(2.1));
 
@@ -581,13 +585,14 @@ SimpleUnicast5::DoRun(void)
     Config::SetDefault("ns3::SatGwHelper::RtnLinkErrorModel", EnumValue(em));
 
     // Creating the reference system.
-    Ptr<SatHelper> helper = CreateObject<SatHelper>();
+    Ptr<SatHelper> helper = CreateObject<SatHelper>(
+        Singleton<SatEnvVariables>::Get()->LocateDataDirectory() + "/scenarios/geo-33E");
     helper->CreatePredefinedScenario(SatHelper::LARGER);
 
     // >>> Start of actual test using Larger scenario >>>
 
-    NodeContainer gwUsers = helper->GetGwUsers();
-    NodeContainer utUsers = helper->GetUtUsers();
+    NodeContainer gwUsers = Singleton<SatTopology>::Get()->GetGwUserNodes();
+    NodeContainer utUsers = Singleton<SatTopology>::Get()->GetUtUserNodes();
 
     // port used for packet delivering
     uint16_t port = 9; // Discard port (RFC 863)
@@ -696,13 +701,14 @@ SimpleUnicast6::DoRun(void)
     Config::SetDefault("ns3::SatGwHelper::RtnLinkErrorModel", EnumValue(em));
 
     // Creating the reference system.
-    Ptr<SatHelper> helper = CreateObject<SatHelper>();
+    Ptr<SatHelper> helper = CreateObject<SatHelper>(
+        Singleton<SatEnvVariables>::Get()->LocateDataDirectory() + "/scenarios/geo-33E");
     helper->CreatePredefinedScenario(SatHelper::FULL);
 
     // >>> Start of actual test using Full scenario >>>
 
-    NodeContainer gwUsers = helper->GetGwUsers();
-    NodeContainer utUsers = helper->GetUtUsers();
+    NodeContainer gwUsers = Singleton<SatTopology>::Get()->GetGwUserNodes();
+    NodeContainer utUsers = Singleton<SatTopology>::Get()->GetUtUserNodes();
 
     // >>> Start of actual test using Full scenario >>>
 
@@ -830,11 +836,12 @@ SimpleUnicast7::DoRun(void)
     Config::SetDefault("ns3::SatGwHelper::RtnLinkErrorModel", EnumValue(em));
 
     // Creating the reference system.
-    Ptr<SatHelper> helper = CreateObject<SatHelper>();
+    Ptr<SatHelper> helper = CreateObject<SatHelper>(
+        Singleton<SatEnvVariables>::Get()->LocateDataDirectory() + "/scenarios/geo-33E");
     helper->CreatePredefinedScenario(SatHelper::SIMPLE);
 
-    NodeContainer utUsers = helper->GetUtUsers();
-    NodeContainer gwUsers = helper->GetGwUsers();
+    NodeContainer utUsers = Singleton<SatTopology>::Get()->GetUtUserNodes();
+    NodeContainer gwUsers = Singleton<SatTopology>::Get()->GetGwUserNodes();
 
     // >>> Start of actual test using Simple scenario >>>
 
@@ -964,11 +971,12 @@ SimpleUnicast8::DoRun(void)
     Config::SetDefault("ns3::SatGwHelper::RtnLinkErrorModel", EnumValue(em));
 
     // Creating the reference system.
-    Ptr<SatHelper> helper = CreateObject<SatHelper>();
+    Ptr<SatHelper> helper = CreateObject<SatHelper>(
+        Singleton<SatEnvVariables>::Get()->LocateDataDirectory() + "/scenarios/geo-33E");
     helper->CreatePredefinedScenario(SatHelper::LARGER);
 
-    NodeContainer utUsers = helper->GetUtUsers();
-    NodeContainer gwUsers = helper->GetGwUsers();
+    NodeContainer utUsers = Singleton<SatTopology>::Get()->GetUtUserNodes();
+    NodeContainer gwUsers = Singleton<SatTopology>::Get()->GetGwUserNodes();
 
     // >>> Start of actual test using Simple scenario >>>
 
@@ -1062,8 +1070,8 @@ SimpleUnicast8::DoRun(void)
 }
 
 // The TestSuite class names the TestSuite as sat-simple-unicast, identifies what type of TestSuite
-// (SYSTEM), and enables the TestCases to be run.  Typically, only the constructor for this class
-// must be defined
+// (Type::SYSTEM), and enables the TestCases to be run.  Typically, only the constructor for this
+// class must be defined
 //
 class SimpleUnicastTestSuite : public TestSuite
 {
@@ -1072,31 +1080,31 @@ class SimpleUnicastTestSuite : public TestSuite
 };
 
 SimpleUnicastTestSuite::SimpleUnicastTestSuite()
-    : TestSuite("sat-simple-unicast", SYSTEM)
+    : TestSuite("sat-simple-unicast", Type::SYSTEM)
 {
     // add simple-unicast-1 case to suite sat-simple-unicast
-    AddTestCase(new SimpleUnicast1, TestCase::QUICK);
+    AddTestCase(new SimpleUnicast1, TestCase::Duration::QUICK);
 
     // add simple-unicast-2 case to suite sat-simple-unicast
-    AddTestCase(new SimpleUnicast2, TestCase::QUICK);
+    AddTestCase(new SimpleUnicast2, TestCase::Duration::QUICK);
 
     // add simple_unicast-3 case to suite sat-simple-unicast
-    AddTestCase(new SimpleUnicast3, TestCase::QUICK);
+    AddTestCase(new SimpleUnicast3, TestCase::Duration::QUICK);
 
     // add simple-unicast-4 case to suite sat-simple-unicast
-    AddTestCase(new SimpleUnicast4, TestCase::QUICK);
+    AddTestCase(new SimpleUnicast4, TestCase::Duration::QUICK);
 
     // add simple-unicast-5 case to suite sat-simple-unicast
-    AddTestCase(new SimpleUnicast5, TestCase::QUICK);
+    AddTestCase(new SimpleUnicast5, TestCase::Duration::QUICK);
 
     // add simple-unicast-6 case to suite sat-simple-unicast
-    AddTestCase(new SimpleUnicast6, TestCase::QUICK);
+    AddTestCase(new SimpleUnicast6, TestCase::Duration::QUICK);
 
     // add simple-unicast-7 case to suite sat-simple-unicast
-    AddTestCase(new SimpleUnicast7, TestCase::QUICK);
+    AddTestCase(new SimpleUnicast7, TestCase::Duration::QUICK);
 
     // add simple-unicast-8 case to suite sat-simple-unicast
-    AddTestCase(new SimpleUnicast8, TestCase::QUICK);
+    AddTestCase(new SimpleUnicast8, TestCase::Duration::QUICK);
 }
 
 // Allocate an instance of this TestSuite

@@ -21,13 +21,14 @@
  */
 
 #ifndef SATELLITE_PHY_RX_CARRIER_UPLINK_H
-#define SATELLITE_PHY_RX_CARRIER_UPLINK__H
+#define SATELLITE_PHY_RX_CARRIER_UPLINK_H
 
 #include "satellite-phy-rx-carrier.h"
 
 #include <deque>
 #include <list>
 #include <map>
+#include <stdint.h>
 #include <vector>
 
 namespace ns3

@@ -27,6 +27,8 @@
 #include <ns3/simulator.h>
 #include <ns3/singleton.h>
 
+#include <string>
+
 NS_LOG_COMPONENT_DEFINE("SatTracedMobilityModel");
 
 namespace ns3
@@ -44,7 +46,8 @@ SatTracedMobilityModel::GetTypeId(void)
             .AddAttribute("ReferenceEllipsoid",
                           "Reference Ellipsoid model to use when reading coordinates",
                           EnumValue(GeoCoordinate::SPHERE),
-                          MakeEnumAccessor(&SatTracedMobilityModel::m_refEllipsoid),
+                          MakeEnumAccessor<GeoCoordinate::ReferenceEllipsoid_t>(
+                              &SatTracedMobilityModel::m_refEllipsoid),
                           MakeEnumChecker(GeoCoordinate::SPHERE,
                                           "Sphere",
                                           GeoCoordinate::WGS84,
@@ -69,7 +72,7 @@ SatTracedMobilityModel::GetInstanceTypeId(void) const
 void
 SatTracedMobilityModel::DoDispose()
 {
-    m_antennaGainPatterns = NULL;
+    m_antennaGainPatterns = nullptr;
 
     Object::DoDispose();
 }
@@ -145,10 +148,22 @@ SatTracedMobilityModel::UpdateGeoPositionFromFile(void)
     Simulator::Schedule(m_updateInterval, &SatTracedMobilityModel::UpdateGeoPositionFromFile, this);
 }
 
-uint32_t
-SatTracedMobilityModel::GetBestBeamId(void) const
+void
+SatTracedMobilityModel::SetSatId(uint32_t satId)
 {
-    return m_antennaGainPatterns->GetBestBeamId(m_satId, m_geoPosition, false);
+    m_satId = satId;
+}
+
+uint32_t
+SatTracedMobilityModel::GetSatId(void) const
+{
+    return m_satId;
+}
+
+uint32_t
+SatTracedMobilityModel::GetBestBeamId(bool ignoreNan) const
+{
+    return m_antennaGainPatterns->GetBestBeamId(m_satId, m_geoPosition, ignoreNan);
 }
 
 } // namespace ns3

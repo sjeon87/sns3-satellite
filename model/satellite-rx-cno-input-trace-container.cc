@@ -26,6 +26,12 @@
 
 #include <ns3/singleton.h>
 
+#include <ios>
+#include <sstream>
+#include <stdint.h>
+#include <string>
+#include <utility>
+
 NS_LOG_COMPONENT_DEFINE("SatRxCnoInputTraceContainer");
 
 namespace ns3
@@ -102,7 +108,7 @@ SatRxCnoInputTraceContainer::AddNode(key_t key)
 
     if (beamId < 0 || (utId < 0 && gwId < 0))
     {
-        return NULL;
+        return nullptr;
     }
     else
     {
@@ -136,7 +142,7 @@ SatRxCnoInputTraceContainer::AddNode(key_t key)
     }
 
     NS_FATAL_ERROR("SatRxCnoInputTraceContainer::AddNode failed");
-    return NULL;
+    return nullptr;
 }
 
 Ptr<SatInputFileStreamTimeDoubleContainer>

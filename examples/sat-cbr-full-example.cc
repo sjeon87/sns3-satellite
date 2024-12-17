@@ -87,24 +87,22 @@ main(int argc, char* argv[])
     Config::SetDefault("ns3::SatGwHelper::RtnLinkConstantErrorRate", DoubleValue(errorRate));
     Config::SetDefault("ns3::SatGwHelper::RtnLinkErrorModel", EnumValue(em));
 
-    // Create full scenario
+    simulationHelper->LoadScenario("geo-33E");
 
-    // Creating the reference system. Note, currently the satellite module supports
-    // only one reference system, which is named as "Scenario72". The string is utilized
-    // in mapping the scenario to the needed reference system configuration files. Arbitrary
-    // scenario name results in fatal error.
+    // Create full scenario
     simulationHelper->CreateSatScenario(SatHelper::FULL);
 
     // >>> Start of actual test using Full scenario >>>
-    Config::SetDefault("ns3::CbrApplication::Interval", StringValue(interval));
-    Config::SetDefault("ns3::CbrApplication::PacketSize", UintegerValue(packetSize));
-
-    simulationHelper->InstallTrafficModel(SimulationHelper::CBR,
-                                          SimulationHelper::UDP,
-                                          SimulationHelper::FWD_LINK,
-                                          appStartTime,
-                                          Seconds(simLength),
-                                          Seconds(0.001));
+    simulationHelper->GetTrafficHelper()->AddCbrTraffic(
+        SatTrafficHelper::FWD_LINK,
+        SatTrafficHelper::UDP,
+        Time(interval),
+        packetSize,
+        NodeContainer(Singleton<SatTopology>::Get()->GetGwUserNode(0)),
+        Singleton<SatTopology>::Get()->GetUtUserNodes(),
+        appStartTime,
+        Seconds(simLength),
+        Seconds(0.001));
 
     NS_LOG_INFO("--- sat-cbr-full-example ---");
     NS_LOG_INFO("  Packet size in bytes: " << packetSize);

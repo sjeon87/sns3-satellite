@@ -28,6 +28,10 @@
 
 #include <cmath>
 #include <limits>
+#include <sstream>
+#include <stdint.h>
+#include <string>
+#include <utility>
 #include <vector>
 
 namespace ns3

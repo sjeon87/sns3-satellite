@@ -22,14 +22,17 @@
 #ifndef SATELLITE_STATS_PACKET_ERROR_HELPER_H
 #define SATELLITE_STATS_PACKET_ERROR_HELPER_H
 
+#include "satellite-stats-helper.h"
+
 #include <ns3/address.h>
 #include <ns3/collector-map.h>
 #include <ns3/ptr.h>
 #include <ns3/satellite-enums.h>
 #include <ns3/satellite-phy-rx-carrier.h>
-#include <ns3/satellite-stats-helper.h>
 
 #include <map>
+#include <string>
+#include <utility>
 
 namespace ns3
 {
@@ -71,6 +74,25 @@ class SatStatsPacketErrorHelper : public SatStatsHelper
      * Used only in return link.
      */
     void ErrorRxCallback(uint32_t nPackets, const Address& fromOrTo, bool isError);
+
+    /**
+     * \brief Connect the probe to the right collector.
+     * \param probe
+     * \param identifier
+     */
+    bool ConnectProbeToCollector(Ptr<Probe> probe, uint32_t identifier);
+
+    /**
+     * \brief Disconnect the probe from the right collector.
+     * \param probe
+     * \param identifier
+     */
+    bool DisconnectProbeFromCollector(Ptr<Probe> probe, uint32_t identifier);
+
+    /**
+     * Change identifier used on probes, when handovers occur.
+     */
+    virtual void UpdateIdentifierOnProbes();
 
     /**
      * \param traceSourceName name of trace source of PHY RX carrier to listen to.
@@ -116,15 +138,6 @@ class SatStatsPacketErrorHelper : public SatStatsHelper
 
   private:
     /**
-     * \brief Save the address and the proper identifier from the given UT node.
-     * \param utNode a UT node.
-     *
-     * The address of the given node will be saved in the #m_identifierMap
-     * member variable. Used only in return link.
-     */
-    void SaveAddressAndIdentifier(Ptr<Node> utNode);
-
-    /**
      * \brief Set up several listeners on a GW node and connect them to the
      *        collectors.
      * \param gwNode
@@ -153,16 +166,13 @@ class SatStatsPacketErrorHelper : public SatStatsHelper
     void InstallProbeOnUt(Ptr<Node> utNode);
 
     /// Maintains a list of probes created by this helper (for forward link).
-    std::list<Ptr<Probe>> m_probes;
+    std::map<Ptr<Probe>, std::pair<Ptr<Node>, uint32_t>> m_probes;
 
     /// Maintains a list of collectors created by this helper.
     CollectorMap m_terminalCollectors;
 
     /// The aggregator created by this helper.
     Ptr<DataCollectionObject> m_aggregator;
-
-    /// Map of address and the identifier associated with it (for return link).
-    std::map<const Address, uint32_t> m_identifierMap;
 
     /// Name of trace source of PHY RX carrier to listen to.
     std::string m_traceSourceName;

@@ -28,6 +28,9 @@
 #include <ns3/ptr.h>
 #include <ns3/simple-ref-count.h>
 
+#include <map>
+#include <stdint.h>
+#include <string>
 #include <vector>
 
 namespace ns3
@@ -221,9 +224,9 @@ class SatWaveformConf : public Object
 
     /**
      * Constructor
-     * \param filePathName Path and filename of the waveform configurations
+     * \param directoryPathName Path and to the directory of the waveform configurations
      */
-    SatWaveformConf(std::string filePathName);
+    SatWaveformConf(std::string directoryPathName);
 
     /**
      * Destructor for SatWaveformConf
@@ -354,6 +357,12 @@ class SatWaveformConf : public Object
     static const uint32_t LONG_BURST_LENGTH = 1616;
 
   private:
+    /**
+     * \brief Read the default waveform ID from a file
+     * \param filePathName path and file name
+     */
+    void ReadFromFileDefaultWaveform(std::string filePathName);
+
     /**
      * \brief Read the waveform table from a file
      * \param filePathName path and file name

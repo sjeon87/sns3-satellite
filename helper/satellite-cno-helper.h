@@ -22,10 +22,15 @@
 #ifndef __SATELLITE_CNO_HELPER_H__
 #define __SATELLITE_CNO_HELPER_H__
 
+#include "satellite-helper.h"
+
 #include <ns3/log.h>
 #include <ns3/object.h>
-#include <ns3/satellite-helper.h>
 #include <ns3/type-id.h>
+
+#include <stdint.h>
+#include <string>
+#include <vector>
 
 namespace ns3
 {

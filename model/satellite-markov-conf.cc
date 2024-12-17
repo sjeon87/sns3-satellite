@@ -22,7 +22,10 @@
 
 #include <ns3/log.h>
 
+#include <cstdlib>
 #include <map>
+#include <utility>
+#include <vector>
 
 namespace ns3
 {
@@ -98,8 +101,8 @@ SatMarkovConf::SatMarkovConf()
       m_minimumPositionChangeInMeters(1000.0),
       m_cooldownPeriodLength(Seconds(0.00005)),
       m_useDecibels(false),
-      m_looConf(NULL),
-      m_rayleighConf(NULL),
+      m_looConf(nullptr),
+      m_rayleighConf(nullptr),
       m_faderType(SatMarkovConf::LOO_FADER)
 {
     NS_LOG_FUNCTION(this);
@@ -161,8 +164,8 @@ SatMarkovConf::Reset()
         }
     }
 
-    m_looConf = NULL;
-    m_rayleighConf = NULL;
+    m_looConf = nullptr;
+    m_rayleighConf = nullptr;
 
     m_initialProbabilities.clear();
     m_markovElevations.clear();

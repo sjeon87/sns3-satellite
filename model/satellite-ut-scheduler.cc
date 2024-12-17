@@ -30,6 +30,7 @@
 #include <ns3/uinteger.h>
 
 #include <algorithm>
+#include <vector>
 
 NS_LOG_COMPONENT_DEFINE("SatUtScheduler");
 
@@ -108,8 +109,8 @@ SatUtScheduler::DoDispose()
 
     m_schedContextCallback.Nullify();
     m_txOpportunityCallback.Nullify();
-    m_llsConf = NULL;
-    m_nodeInfo = NULL;
+    m_llsConf = nullptr;
+    m_nodeInfo = nullptr;
 
     Object::DoDispose();
 }

@@ -22,6 +22,10 @@
 
 #include <ns3/log.h>
 
+#include <cmath>
+#include <complex>
+#include <stdint.h>
+
 namespace ns3
 {
 

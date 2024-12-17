@@ -30,6 +30,7 @@
 #include <ns3/simulator.h>
 
 #include <algorithm>
+#include <deque>
 #include <limits>
 #include <ostream>
 #include <utility>
@@ -183,13 +184,14 @@ SatPhyRxCarrierPerSlot::CreateInterference(Ptr<SatSignalParameters> rxParams, Ad
     }
 
     NS_FATAL_ERROR("SatSatellitePhyRxCarrier::CreateInterference - Invalid channel type!");
-    return NULL;
+    return nullptr;
 }
 
 void
 SatPhyRxCarrierPerSlot::EndRxData(uint32_t key)
 {
-    NS_LOG_FUNCTION(this);
+    NS_LOG_FUNCTION(this << key);
+
     NS_LOG_INFO(this << " state: " << GetState());
 
     NS_ASSERT(GetState() == RX);
@@ -215,7 +217,7 @@ SatPhyRxCarrierPerSlot::EndRxData(uint32_t key)
     GetInterferenceModel()->NotifyRxEnd(packetRxParams.interferenceEvent);
 
     /// erase the used Rx params
-    packetRxParams.interferenceEvent = NULL;
+    packetRxParams.interferenceEvent = nullptr;
     RemoveStoredRxParams(key);
 }
 
@@ -521,7 +523,7 @@ SatPhyRxCarrierPerSlot::ReceiveSlot(SatPhyRxCarrier::rxParams_s packetRxParams,
     /// send packet upwards
     m_rxCallback(packetRxParams.rxParams, phyError);
 
-    packetRxParams.rxParams = NULL;
+    packetRxParams.rxParams = nullptr;
 }
 
 void

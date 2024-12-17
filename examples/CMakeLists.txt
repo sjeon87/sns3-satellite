@@ -1,6 +1,7 @@
 set(base_examples
     sat-arq-fwd-example
     sat-arq-rtn-example
+    sat-beam-position-tracer
     sat-cbr-example
     sat-cbr-full-example
     sat-cbr-stats-example
@@ -16,6 +17,7 @@ set(base_examples
     sat-fwd-system-test-example
     sat-generic-launcher
     sat-group-example
+    sat-gw-handover-example
     sat-handover-example
     sat-http-example
     sat-iot-example
@@ -25,7 +27,10 @@ set(base_examples
     sat-log-example
     sat-logon-example
     sat-loo-example
+    sat-lora-constellation-example
     sat-lora-example
+    sat-lora-handover-example
+    sat-lora-regenerative-example
     sat-markov-fading-trace-example
     sat-markov-logic-example
     sat-mobility-beam-tracer

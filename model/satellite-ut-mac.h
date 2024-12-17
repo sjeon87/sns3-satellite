@@ -23,7 +23,6 @@
 #ifndef SATELLITE_UT_MAC_H
 #define SATELLITE_UT_MAC_H
 
-#include "satellite-beam-scheduler.h"
 #include "satellite-enums.h"
 #include "satellite-mac.h"
 #include "satellite-phy.h"
@@ -39,6 +38,10 @@
 #include <ns3/traced-callback.h>
 #include <ns3/traced-value.h>
 
+#include <map>
+#include <queue>
+#include <set>
+#include <stdint.h>
 #include <utility>
 
 namespace ns3
@@ -90,18 +93,16 @@ class SatUtMac : public SatMac
      *
      * This is the constructor for the SatUtMac
      *
+     * \param node Node containing this MAC
      * \param satId ID of sat for UT
      * \param beamId ID of beam for UT
      * \param seq Pointer to superframe sequence.
-     * \param forwardLinkRegenerationMode Forward link regeneration mode
-     * \param returnLinkRegenerationMode Return link regeneration mode
      * \param crdsaOnlyForControl CRDSA buffer operation mode
      */
-    SatUtMac(uint32_t satId,
+    SatUtMac(Ptr<Node> node,
+             uint32_t satId,
              uint32_t beamId,
              Ptr<SatSuperframeSeq> seq,
-             SatEnums::RegenerationMode_t forwardLinkRegenerationMode,
-             SatEnums::RegenerationMode_t returnLinkRegenerationMode,
              bool crdsaOnlyForControl);
 
     /**
@@ -206,17 +207,6 @@ class SatUtMac : public SatMac
     void SetUpdateGwAddressCallback(SatUtMac::UpdateGwAddressCallback cb);
 
     /**
-     * Callback to get the SatBeamScheduler from the beam ID for handover
-     */
-    typedef Callback<Ptr<SatBeamScheduler>, uint32_t, uint32_t> BeamScheculerCallback;
-
-    /**
-     * \brief Set the beam scheduler callback
-     * \param cb Callback to get the SatBeamScheduler
-     */
-    void SetBeamScheculerCallback(SatUtMac::BeamScheculerCallback cb);
-
-    /**
      * Get Tx time for the next possible superframe.
      * \param superFrameSeqId Superframe sequence id
      * \return Time Time to transmit
@@ -319,7 +309,7 @@ class SatUtMac : public SatMac
      * \brief Callback to reconfigure physical layer during handover.
      * \param uint32_t new beam Id
      */
-    typedef Callback<void, uint32_t> HandoverCallback;
+    typedef Callback<void, uint32_t, uint32_t> HandoverCallback;
 
     /**
      * \brief Method to set handover callback.
@@ -340,30 +330,15 @@ class SatUtMac : public SatMac
     void SetGatewayUpdateCallback(SatUtMac::GatewayUpdateCallback cb);
 
     /**
-     * \brief Callback to check whether the current beam is still the best one
-     * to use for sending data; and sending handover recommendation if not
-     * \param uint32_t the current satellite ID
-     * \param uint32_t the current beam ID
+     * \brief Callback to update addresses in statistics helpers
      */
-    typedef Callback<bool, uint32_t, uint32_t> BeamCheckerCallback;
+    typedef Callback<void, Ptr<Node>> UpdateAddressAndIdentifierCallback;
 
     /**
-     * \brief Callback to ask for the best beam ID during handover
-     * \return The best beam ID
+     * \brief Set the callback to update addresses in statistics helpers.
+     * \param cb Callback to update addresses in statistics helpers
      */
-    typedef Callback<uint32_t> AskedBeamCallback;
-
-    /**
-     * \brief Method to set the beam checker callback
-     * \param cb callback to invoke to check beams and recommend handover
-     */
-    void SetBeamCheckerCallback(SatUtMac::BeamCheckerCallback cb);
-
-    /**
-     * \brief Method to get the best beam when performing handover
-     * \param cb callback to invoke to ask best beam ID
-     */
-    void SetAskedBeamCallback(SatUtMac::AskedBeamCallback cb);
+    void SetUpdateAddressAndIdentifierCallback(SatUtMac::UpdateAddressAndIdentifierCallback cb);
 
     void LogOff();
 
@@ -619,6 +594,11 @@ class SatUtMac : public SatMac
     SatUtMac(const SatUtMac&);
 
     /**
+     * Node containing this MAC
+     */
+    Ptr<Node> m_node;
+
+    /**
      * ID of sat for UT
      */
     uint32_t m_satId;
@@ -749,14 +729,20 @@ class SatUtMac : public SatMac
     class SatTimuInfo : public SimpleRefCount<SatTimuInfo>
     {
       public:
-        SatTimuInfo(uint32_t beamId, Address address);
+        SatTimuInfo(uint32_t beamId, uint32_t satId, Address satAddress, Address gwAddress);
 
         uint32_t GetBeamId() const;
+
+        uint32_t GetSatId() const;
+
+        Address GetSatAddress() const;
 
         Address GetGwAddress() const;
 
       private:
         uint32_t m_beamId;
+        uint32_t m_satId;
+        Address m_satAddress;
         Address m_gwAddress;
     };
 
@@ -816,16 +802,6 @@ class SatUtMac : public SatMac
     SatUtMac::GatewayUpdateCallback m_gatewayUpdateCallback;
 
     /**
-     * Beam checker and handover recommendation sending callback
-     */
-    SatUtMac::BeamCheckerCallback m_beamCheckerCallback;
-
-    /**
-     * Beam checker and handover recommendation sending callback
-     */
-    SatUtMac::AskedBeamCallback m_askedBeamCallback;
-
-    /**
      * Tx checking callback
      */
     SatUtMac::TxCheckCallback m_txCheckCallback;
@@ -846,9 +822,9 @@ class SatUtMac : public SatMac
     SatUtMac::UpdateGwAddressCallback m_updateGwAddressCallback;
 
     /**
-     * Callback to get the SatBeamScheduler linked to a beam ID
+     * Callback to update addresses in statistics helpers
      */
-    SatUtMac::BeamScheculerCallback m_beamScheculerCallback;
+    SatUtMac::UpdateAddressAndIdentifierCallback m_updateAddressAndIdentifierCallback;
 };
 
 } // namespace ns3

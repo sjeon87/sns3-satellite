@@ -64,12 +64,12 @@ static std::string
 GetUserInfo(Ptr<SatHelper> helper, Ptr<Node> node)
 {
     std::stringstream ss; // create a string stream
-    Ptr<Node> utNode = helper->GetUserHelper()->GetUtNode(node);
+    Ptr<Node> utNode = Singleton<SatTopology>::Get()->GetUtNode(node);
     NodeContainer nodeUsers;
 
     if (utNode)
     {
-        nodeUsers = helper->GetUserHelper()->GetUtUsers(utNode);
+        nodeUsers = Singleton<SatTopology>::Get()->GetUtUserNodes(utNode);
         ss << "UT"
            << Singleton<SatIdMapper>::Get()->GetUtIdWithMac(
                   Singleton<SatIdMapper>::Get()->GetUtMacWithNode(utNode))
@@ -77,7 +77,7 @@ GetUserInfo(Ptr<SatHelper> helper, Ptr<Node> node)
     }
     else
     {
-        nodeUsers = helper->GetUserHelper()->GetGwUsers();
+        nodeUsers = Singleton<SatTopology>::Get()->GetGwUserNodes();
         ss << "GW-user-";
     }
 
@@ -156,8 +156,8 @@ EstablishMulticastGroup(Ptr<SatHelper> helper,
 
     if (sinkToAll)
     {
-        NodeContainer users = NodeContainer(helper->GetUserHelper()->GetGwUsers(),
-                                            helper->GetUserHelper()->GetUtUsers());
+        NodeContainer users = NodeContainer(Singleton<SatTopology>::Get()->GetGwUserNodes(),
+                                            Singleton<SatTopology>::Get()->GetUtUserNodes());
 
         PacketSinkHelper sinkHelperGroup("ns3::UdpSocketFactory",
                                          InetSocketAddress(groupAddress, port));
@@ -299,10 +299,9 @@ main(int argc, char* argv[])
 
     /// Create satellite helper with given scenario default=larger
 
-    // Creating the reference system. Note, currently the satellite module supports
-    // only one reference system, which is named as "Scenario72". The string is utilized
-    // in mapping the scenario to the needed reference system configuration files. Arbitrary
-    // scenario name results in fatal error.
+    simulationHelper->LoadScenario("geo-33E");
+
+    // Creating the reference system.
     Ptr<SatHelper> helper = simulationHelper->CreateSatScenario(satScenario);
 
     NS_LOG_INFO("--- Creating scenario: " << scenario << " ---");
@@ -315,8 +314,8 @@ main(int argc, char* argv[])
     uint16_t multicastPort = 9; // Discard port (RFC 863)
 
     /// Get users
-    NodeContainer utUsers = helper->GetUtUsers();
-    NodeContainer gwUsers = helper->GetGwUsers();
+    NodeContainer utUsers = Singleton<SatTopology>::Get()->GetUtUserNodes();
+    NodeContainer gwUsers = Singleton<SatTopology>::Get()->GetGwUserNodes();
 
     if (scenario == "larger")
     {

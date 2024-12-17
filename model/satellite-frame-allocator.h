@@ -28,6 +28,12 @@
 #include <ns3/simple-ref-count.h>
 #include <ns3/traced-callback.h>
 
+#include <list>
+#include <map>
+#include <stdint.h>
+#include <utility>
+#include <vector>
+
 namespace ns3
 {
 

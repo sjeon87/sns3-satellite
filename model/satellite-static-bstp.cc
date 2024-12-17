@@ -26,8 +26,13 @@
 #include <ns3/singleton.h>
 
 #include <algorithm>
+#include <fstream>
 #include <istream>
+#include <map>
 #include <sstream>
+#include <string>
+#include <utility>
+#include <vector>
 
 NS_LOG_COMPONENT_DEFINE("SatStaticBstp");
 
@@ -51,10 +56,8 @@ SatStaticBstp::SatStaticBstp(std::string fileName)
 {
     NS_LOG_FUNCTION(this);
 
-    std::string dataPath = Singleton<SatEnvVariables>::Get()->LocateDataDirectory() + "/";
-
     // Load satellite configuration file
-    LoadBstp(dataPath + fileName);
+    LoadBstp(fileName);
 }
 
 void

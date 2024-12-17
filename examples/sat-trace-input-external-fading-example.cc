@@ -50,7 +50,7 @@ using namespace ns3;
  *         - external fading trace
  *
  *         The input folder is:
- *         {NS-3-root-folder}/contrib/satellite/data/fadingtraces
+ *         {NS-3-root-folder}/contrib/satellite/data/additional-data/fadingtraces
  *
  *         The input data files must be available in the folder stated above for the example
  *         program to read, otherwise the program will fail.
@@ -114,9 +114,9 @@ main(int argc, char* argv[])
     /// Enable per packet interference & interference density output trace
     Config::SetDefault("ns3::SatGwHelper::DaRtnLinkInterferenceModel",
                        EnumValue(SatPhyRxCarrierConf::IF_PER_PACKET));
-    Config::SetDefault("ns3::SatGeoHelper::DaRtnLinkInterferenceModel",
+    Config::SetDefault("ns3::SatOrbiterHelper::DaRtnLinkInterferenceModel",
                        EnumValue(SatPhyRxCarrierConf::IF_PER_PACKET));
-    Config::SetDefault("ns3::SatGeoHelper::DaFwdLinkInterferenceModel",
+    Config::SetDefault("ns3::SatOrbiterHelper::DaFwdLinkInterferenceModel",
                        EnumValue(SatPhyRxCarrierConf::IF_PER_PACKET));
     Config::SetDefault("ns3::SatUtHelper::DaFwdLinkInterferenceModel",
                        EnumValue(SatPhyRxCarrierConf::IF_PER_PACKET));
@@ -165,28 +165,32 @@ main(int argc, char* argv[])
     // GlobalValue::Bind ("SimulatorImplementationType", StringValue
     // ("ns3::RealtimeSimulatorImpl"));
 
-    // Creating the reference system. Note, currently the satellite module supports
-    // only one reference system, which is named as "Scenario72". The string is utilized
-    // in mapping the scenario to the needed reference system configuration files. Arbitrary
-    // scenario name results in fatal error.
+    simulationHelper->LoadScenario("geo-33E");
+
+    // Creating the reference system.
     simulationHelper->CreateSatScenario(satScenario);
 
-    Config::SetDefault("ns3::CbrApplication::Interval", TimeValue(Time(interval)));
-    Config::SetDefault("ns3::CbrApplication::PacketSize", UintegerValue(packetSize));
+    simulationHelper->GetTrafficHelper()->AddCbrTraffic(
+        SatTrafficHelper::FWD_LINK,
+        SatTrafficHelper::UDP,
+        Time(interval),
+        packetSize,
+        NodeContainer(Singleton<SatTopology>::Get()->GetGwUserNode(0)),
+        Singleton<SatTopology>::Get()->GetUtUserNodes(),
+        Seconds(3.0),
+        Seconds(5.1),
+        Seconds(0));
 
-    /// Create application on GW user
-    simulationHelper->InstallTrafficModel(SimulationHelper::CBR,
-                                          SimulationHelper::UDP,
-                                          SimulationHelper::FWD_LINK,
-                                          Seconds(3.0),
-                                          Seconds(5.1));
-
-    /// Create application on UT user
-    simulationHelper->InstallTrafficModel(SimulationHelper::CBR,
-                                          SimulationHelper::UDP,
-                                          SimulationHelper::RTN_LINK,
-                                          Seconds(7.0),
-                                          Seconds(9.1));
+    simulationHelper->GetTrafficHelper()->AddCbrTraffic(
+        SatTrafficHelper::RTN_LINK,
+        SatTrafficHelper::UDP,
+        Time(interval),
+        packetSize,
+        NodeContainer(Singleton<SatTopology>::Get()->GetGwUserNode(0)),
+        Singleton<SatTopology>::Get()->GetUtUserNodes(),
+        Seconds(7.0),
+        Seconds(9.1),
+        Seconds(0));
 
     NS_LOG_INFO("--- input-external-fading-example ---");
     NS_LOG_INFO("  Scenario used: " << scenario);

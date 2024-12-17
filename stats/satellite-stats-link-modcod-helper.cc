@@ -38,18 +38,22 @@
 #include <ns3/node-container.h>
 #include <ns3/nstime.h>
 #include <ns3/probe.h>
-#include <ns3/satellite-geo-net-device.h>
 #include <ns3/satellite-helper.h>
 #include <ns3/satellite-id-mapper.h>
 #include <ns3/satellite-net-device.h>
+#include <ns3/satellite-orbiter-net-device.h>
 #include <ns3/satellite-phy.h>
+#include <ns3/satellite-topology.h>
 #include <ns3/scalar-collector.h>
 #include <ns3/singleton.h>
 #include <ns3/string.h>
 #include <ns3/traffic-time-tag.h>
 #include <ns3/unit-conversion-collector.h>
 
+#include <map>
 #include <sstream>
+#include <string>
+#include <utility>
 
 NS_LOG_COMPONENT_DEFINE("SatStatsLinkModcodHelper");
 
@@ -446,26 +450,6 @@ SatStatsLinkModcodHelper::RxLinkModcodCallback(uint32_t modcod, const Address& f
     }
 }
 
-void
-SatStatsLinkModcodHelper::SaveAddressAndIdentifier(Ptr<Node> utNode)
-{
-    NS_LOG_FUNCTION(this << utNode->GetId());
-
-    const SatIdMapper* satIdMapper = Singleton<SatIdMapper>::Get();
-    const Address addr = satIdMapper->GetUtMacWithNode(utNode);
-
-    if (addr.IsInvalid())
-    {
-        NS_LOG_WARN(this << " Node " << utNode->GetId() << " is not a valid UT");
-    }
-    else
-    {
-        const uint32_t identifier = GetIdentifierForUt(utNode);
-        m_identifierMap[addr] = identifier;
-        NS_LOG_INFO(this << " associated address " << addr << " with identifier " << identifier);
-    }
-}
-
 bool
 SatStatsLinkModcodHelper::ConnectProbeToCollector(Ptr<Probe> probe, uint32_t identifier)
 {
@@ -613,19 +597,19 @@ SatStatsFwdFeederLinkModcodHelper::DoInstallProbes()
 {
     NS_LOG_FUNCTION(this);
 
-    NodeContainer sats = GetSatHelper()->GetBeamHelper()->GetGeoSatNodes();
+    NodeContainer sats = Singleton<SatTopology>::Get()->GetOrbiterNodes();
     Callback<void, uint32_t, const Address&> callback =
         MakeCallback(&SatStatsFwdFeederLinkModcodHelper::RxLinkModcodCallback, this);
 
     for (NodeContainer::Iterator it = sats.Begin(); it != sats.End(); ++it)
     {
-        Ptr<NetDevice> dev = GetSatSatGeoNetDevice(*it);
-        Ptr<SatGeoNetDevice> satGeoDev = dev->GetObject<SatGeoNetDevice>();
-        NS_ASSERT(satGeoDev != nullptr);
-        std::map<uint32_t, Ptr<SatPhy>> satGeoFeederPhys = satGeoDev->GetFeederPhy();
+        Ptr<NetDevice> dev = GetSatSatOrbiterNetDevice(*it);
+        Ptr<SatOrbiterNetDevice> satOrbiterDev = dev->GetObject<SatOrbiterNetDevice>();
+        NS_ASSERT(satOrbiterDev != nullptr);
+        std::map<uint32_t, Ptr<SatPhy>> satOrbiterFeederPhys = satOrbiterDev->GetFeederPhy();
         Ptr<SatPhy> satPhy;
-        for (std::map<uint32_t, Ptr<SatPhy>>::iterator it2 = satGeoFeederPhys.begin();
-             it2 != satGeoFeederPhys.end();
+        for (std::map<uint32_t, Ptr<SatPhy>>::iterator it2 = satOrbiterFeederPhys.begin();
+             it2 != satOrbiterFeederPhys.end();
              ++it2)
         {
             satPhy = it2->second;
@@ -636,7 +620,7 @@ SatStatsFwdFeederLinkModcodHelper::DoInstallProbes()
             if (satPhy->TraceConnectWithoutContext("RxLinkModcod", callback))
             {
                 NS_LOG_INFO(this << " successfully connected with node ID " << (*it)->GetId()
-                                 << " device #" << satGeoDev->GetIfIndex());
+                                 << " device #" << satOrbiterDev->GetIfIndex());
 
                 // Enable statistics-related tags and trace sources on the device.
                 satPhy->SetAttribute("EnableStatisticsTags", BooleanValue(true));
@@ -645,12 +629,12 @@ SatStatsFwdFeederLinkModcodHelper::DoInstallProbes()
             {
                 NS_FATAL_ERROR("Error connecting to RxLinkModcod trace source of SatNetDevice"
                                << " at node ID " << (*it)->GetId() << " device #"
-                               << satGeoDev->GetIfIndex());
+                               << satOrbiterDev->GetIfIndex());
             }
         }
-        std::map<uint32_t, Ptr<SatPhy>> satGeoUserPhys = satGeoDev->GetUserPhy();
-        for (std::map<uint32_t, Ptr<SatPhy>>::iterator it2 = satGeoUserPhys.begin();
-             it2 != satGeoUserPhys.end();
+        std::map<uint32_t, Ptr<SatPhy>> satOrbiterUserPhys = satOrbiterDev->GetUserPhy();
+        for (std::map<uint32_t, Ptr<SatPhy>>::iterator it2 = satOrbiterUserPhys.begin();
+             it2 != satOrbiterUserPhys.end();
              ++it2)
         {
             satPhy = it2->second;
@@ -659,7 +643,7 @@ SatStatsFwdFeederLinkModcodHelper::DoInstallProbes()
         }
     } // end of `for (it = sats.Begin(); it != sats.End (); ++it)`
 
-    NodeContainer uts = GetSatHelper()->GetBeamHelper()->GetUtNodes();
+    NodeContainer uts = Singleton<SatTopology>::Get()->GetUtNodes();
 
     for (NodeContainer::Iterator it = uts.Begin(); it != uts.End(); ++it)
     {
@@ -677,7 +661,7 @@ SatStatsFwdFeederLinkModcodHelper::DoInstallProbes()
     } // end of `for (it = uts.Begin(); it != uts.End (); ++it)`
 
     // Enable statistics-related tags on the transmitting device.
-    NodeContainer gws = GetSatHelper()->GetBeamHelper()->GetGwNodes();
+    NodeContainer gws = Singleton<SatTopology>::Get()->GetGwNodes();
     for (NodeContainer::Iterator it = gws.Begin(); it != gws.End(); ++it)
     {
         NetDeviceContainer devs = GetGwSatNetDevice(*it);
@@ -723,28 +707,28 @@ SatStatsFwdUserLinkModcodHelper::DoInstallProbes()
 {
     NS_LOG_FUNCTION(this);
 
-    NodeContainer sats = GetSatHelper()->GetBeamHelper()->GetGeoSatNodes();
+    NodeContainer sats = Singleton<SatTopology>::Get()->GetOrbiterNodes();
     Callback<void, uint32_t, const Address&> callback =
         MakeCallback(&SatStatsFwdUserLinkModcodHelper::RxLinkModcodCallback, this);
 
     for (NodeContainer::Iterator it = sats.Begin(); it != sats.End(); ++it)
     {
-        Ptr<NetDevice> dev = GetSatSatGeoNetDevice(*it);
-        Ptr<SatGeoNetDevice> satGeoDev = dev->GetObject<SatGeoNetDevice>();
-        NS_ASSERT(satGeoDev != nullptr);
-        std::map<uint32_t, Ptr<SatPhy>> satGeoFeederPhys = satGeoDev->GetFeederPhy();
+        Ptr<NetDevice> dev = GetSatSatOrbiterNetDevice(*it);
+        Ptr<SatOrbiterNetDevice> satOrbiterDev = dev->GetObject<SatOrbiterNetDevice>();
+        NS_ASSERT(satOrbiterDev != nullptr);
+        std::map<uint32_t, Ptr<SatPhy>> satOrbiterFeederPhys = satOrbiterDev->GetFeederPhy();
         Ptr<SatPhy> satPhy;
-        for (std::map<uint32_t, Ptr<SatPhy>>::iterator it2 = satGeoFeederPhys.begin();
-             it2 != satGeoFeederPhys.end();
+        for (std::map<uint32_t, Ptr<SatPhy>>::iterator it2 = satOrbiterFeederPhys.begin();
+             it2 != satOrbiterFeederPhys.end();
              ++it2)
         {
             satPhy = it2->second;
             NS_ASSERT(satPhy != nullptr);
             satPhy->SetAttribute("EnableStatisticsTags", BooleanValue(true));
         }
-        std::map<uint32_t, Ptr<SatPhy>> satGeoUserPhys = satGeoDev->GetUserPhy();
-        for (std::map<uint32_t, Ptr<SatPhy>>::iterator it2 = satGeoUserPhys.begin();
-             it2 != satGeoUserPhys.end();
+        std::map<uint32_t, Ptr<SatPhy>> satOrbiterUserPhys = satOrbiterDev->GetUserPhy();
+        for (std::map<uint32_t, Ptr<SatPhy>>::iterator it2 = satOrbiterUserPhys.begin();
+             it2 != satOrbiterUserPhys.end();
              ++it2)
         {
             satPhy = it2->second;
@@ -753,7 +737,7 @@ SatStatsFwdUserLinkModcodHelper::DoInstallProbes()
         }
     } // end of `for (it = sats.Begin(); it != sats.End (); ++it)`
 
-    NodeContainer uts = GetSatHelper()->GetBeamHelper()->GetUtNodes();
+    NodeContainer uts = Singleton<SatTopology>::Get()->GetUtNodes();
 
     for (NodeContainer::Iterator it = uts.Begin(); it != uts.End(); ++it)
     {
@@ -787,7 +771,7 @@ SatStatsFwdUserLinkModcodHelper::DoInstallProbes()
     } // end of `for (it = uts.Begin(); it != uts.End (); ++it)`
 
     // Enable statistics-related tags on the transmitting device.
-    NodeContainer gws = GetSatHelper()->GetBeamHelper()->GetGwNodes();
+    NodeContainer gws = Singleton<SatTopology>::Get()->GetGwNodes();
     for (NodeContainer::Iterator it = gws.Begin(); it != gws.End(); ++it)
     {
         NetDeviceContainer devs = GetGwSatNetDevice(*it);
@@ -833,26 +817,26 @@ SatStatsRtnFeederLinkModcodHelper::DoInstallProbes()
 {
     NS_LOG_FUNCTION(this);
 
-    NodeContainer sats = GetSatHelper()->GetBeamHelper()->GetGeoSatNodes();
+    NodeContainer sats = Singleton<SatTopology>::Get()->GetOrbiterNodes();
 
     for (NodeContainer::Iterator it = sats.Begin(); it != sats.End(); ++it)
     {
         Ptr<SatPhy> satPhy;
-        Ptr<NetDevice> dev = GetSatSatGeoNetDevice(*it);
-        Ptr<SatGeoNetDevice> satGeoDev = dev->GetObject<SatGeoNetDevice>();
-        NS_ASSERT(satGeoDev != nullptr);
-        std::map<uint32_t, Ptr<SatPhy>> satGeoFeederPhys = satGeoDev->GetFeederPhy();
-        for (std::map<uint32_t, Ptr<SatPhy>>::iterator it2 = satGeoFeederPhys.begin();
-             it2 != satGeoFeederPhys.end();
+        Ptr<NetDevice> dev = GetSatSatOrbiterNetDevice(*it);
+        Ptr<SatOrbiterNetDevice> satOrbiterDev = dev->GetObject<SatOrbiterNetDevice>();
+        NS_ASSERT(satOrbiterDev != nullptr);
+        std::map<uint32_t, Ptr<SatPhy>> satOrbiterFeederPhys = satOrbiterDev->GetFeederPhy();
+        for (std::map<uint32_t, Ptr<SatPhy>>::iterator it2 = satOrbiterFeederPhys.begin();
+             it2 != satOrbiterFeederPhys.end();
              ++it2)
         {
             satPhy = it2->second;
             NS_ASSERT(satPhy != nullptr);
             satPhy->SetAttribute("EnableStatisticsTags", BooleanValue(true));
         }
-        std::map<uint32_t, Ptr<SatPhy>> satGeoUserPhys = satGeoDev->GetUserPhy();
-        for (std::map<uint32_t, Ptr<SatPhy>>::iterator it2 = satGeoUserPhys.begin();
-             it2 != satGeoUserPhys.end();
+        std::map<uint32_t, Ptr<SatPhy>> satOrbiterUserPhys = satOrbiterDev->GetUserPhy();
+        for (std::map<uint32_t, Ptr<SatPhy>>::iterator it2 = satOrbiterUserPhys.begin();
+             it2 != satOrbiterUserPhys.end();
              ++it2)
         {
             satPhy = it2->second;
@@ -861,7 +845,7 @@ SatStatsRtnFeederLinkModcodHelper::DoInstallProbes()
         }
     } // end of `for (it = sats.Begin(); it != sats.End (); ++it)`
 
-    NodeContainer uts = GetSatHelper()->GetBeamHelper()->GetUtNodes();
+    NodeContainer uts = Singleton<SatTopology>::Get()->GetUtNodes();
     for (NodeContainer::Iterator it = uts.Begin(); it != uts.End(); ++it)
     {
         // Create a map of UT addresses and identifiers.
@@ -878,7 +862,7 @@ SatStatsRtnFeederLinkModcodHelper::DoInstallProbes()
 
     // Connect to trace sources at GW nodes.
 
-    NodeContainer gws = GetSatHelper()->GetBeamHelper()->GetGwNodes();
+    NodeContainer gws = Singleton<SatTopology>::Get()->GetGwNodes();
     Callback<void, uint32_t, const Address&> callback =
         MakeCallback(&SatStatsRtnFeederLinkModcodHelper::RxLinkModcodCallback, this);
 
@@ -943,28 +927,28 @@ SatStatsRtnUserLinkModcodHelper::DoInstallProbes()
 {
     NS_LOG_FUNCTION(this);
 
-    NodeContainer sats = GetSatHelper()->GetBeamHelper()->GetGeoSatNodes();
+    NodeContainer sats = Singleton<SatTopology>::Get()->GetOrbiterNodes();
     Callback<void, uint32_t, const Address&> callback =
         MakeCallback(&SatStatsRtnUserLinkModcodHelper::RxLinkModcodCallback, this);
 
     for (NodeContainer::Iterator it = sats.Begin(); it != sats.End(); ++it)
     {
-        Ptr<NetDevice> dev = GetSatSatGeoNetDevice(*it);
-        Ptr<SatGeoNetDevice> satGeoDev = dev->GetObject<SatGeoNetDevice>();
-        NS_ASSERT(satGeoDev != nullptr);
-        std::map<uint32_t, Ptr<SatPhy>> satGeoFeederPhys = satGeoDev->GetFeederPhy();
+        Ptr<NetDevice> dev = GetSatSatOrbiterNetDevice(*it);
+        Ptr<SatOrbiterNetDevice> satOrbiterDev = dev->GetObject<SatOrbiterNetDevice>();
+        NS_ASSERT(satOrbiterDev != nullptr);
+        std::map<uint32_t, Ptr<SatPhy>> satOrbiterFeederPhys = satOrbiterDev->GetFeederPhy();
         Ptr<SatPhy> satPhy;
-        for (std::map<uint32_t, Ptr<SatPhy>>::iterator it2 = satGeoFeederPhys.begin();
-             it2 != satGeoFeederPhys.end();
+        for (std::map<uint32_t, Ptr<SatPhy>>::iterator it2 = satOrbiterFeederPhys.begin();
+             it2 != satOrbiterFeederPhys.end();
              ++it2)
         {
             satPhy = it2->second;
             NS_ASSERT(satPhy != nullptr);
             satPhy->SetAttribute("EnableStatisticsTags", BooleanValue(true));
         }
-        std::map<uint32_t, Ptr<SatPhy>> satGeoUserPhys = satGeoDev->GetUserPhy();
-        for (std::map<uint32_t, Ptr<SatPhy>>::iterator it2 = satGeoUserPhys.begin();
-             it2 != satGeoUserPhys.end();
+        std::map<uint32_t, Ptr<SatPhy>> satOrbiterUserPhys = satOrbiterDev->GetUserPhy();
+        for (std::map<uint32_t, Ptr<SatPhy>>::iterator it2 = satOrbiterUserPhys.begin();
+             it2 != satOrbiterUserPhys.end();
              ++it2)
         {
             satPhy = it2->second;
@@ -975,18 +959,18 @@ SatStatsRtnUserLinkModcodHelper::DoInstallProbes()
             if (satPhy->TraceConnectWithoutContext("RxLinkModcod", callback))
             {
                 NS_LOG_INFO(this << " successfully connected with node ID " << (*it)->GetId()
-                                 << " device #" << satGeoDev->GetIfIndex());
+                                 << " device #" << satOrbiterDev->GetIfIndex());
             }
             else
             {
                 NS_FATAL_ERROR("Error connecting to RxLinkModcod trace source of SatNetDevice"
                                << " at node ID " << (*it)->GetId() << " device #"
-                               << satGeoDev->GetIfIndex());
+                               << satOrbiterDev->GetIfIndex());
             }
         }
     } // end of `for (it = sats.Begin(); it != sats.End (); ++it)`
 
-    NodeContainer uts = GetSatHelper()->GetBeamHelper()->GetUtNodes();
+    NodeContainer uts = Singleton<SatTopology>::Get()->GetUtNodes();
     for (NodeContainer::Iterator it = uts.Begin(); it != uts.End(); ++it)
     {
         // Create a map of UT addresses and identifiers.
@@ -1003,7 +987,7 @@ SatStatsRtnUserLinkModcodHelper::DoInstallProbes()
 
     // Connect to trace sources at GW nodes.
 
-    NodeContainer gws = GetSatHelper()->GetBeamHelper()->GetGwNodes();
+    NodeContainer gws = Singleton<SatTopology>::Get()->GetGwNodes();
 
     for (NodeContainer::Iterator it = gws.Begin(); it != gws.End(); ++it)
     {

@@ -26,6 +26,7 @@
 #include "ns3/singleton.h"
 
 #include <fstream>
+#include <stdint.h>
 
 /**
  * \file sat-link-results-plot.cc
@@ -90,7 +91,8 @@ SatLinkResultsPlot::SatLinkResultsPlot()
     m_resolutionDb = 0.01;
     m_minSinrDb = 0.0;
     m_maxSinrDb = 20.0;
-    m_inputPath = Singleton<SatEnvVariables>::Get()->GetDataPath() + "/linkresults/";
+    m_inputPath =
+        Singleton<SatEnvVariables>::Get()->GetDataPath() + "/additional-input/linkresults/";
 }
 
 void

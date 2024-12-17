@@ -20,12 +20,14 @@ set(source_files
     model/lora-periodic-sender.cc
     model/lora-sub-band.cc
     model/lora-tag.cc
+    model/lorawan-ground-mac-gateway.cc
     model/lorawan-mac.cc
     model/lorawan-mac-command.cc
     model/lorawan-mac-end-device.cc
     model/lorawan-mac-end-device-class-a.cc
     model/lorawan-mac-gateway.cc
     model/lorawan-mac-header.cc
+    model/lorawan-orbiter-mac-gateway.cc
     model/satellite-address-tag.cc
     model/satellite-antenna-gain-pattern.cc
     model/satellite-antenna-gain-pattern-container.cc
@@ -71,20 +73,12 @@ set(source_files
     model/satellite-fwd-link-scheduler-time-slicing.cc
     model/satellite-generic-stream-encapsulator-arq.cc
     model/satellite-generic-stream-encapsulator.cc
-    model/satellite-geo-feeder-llc.cc
-    model/satellite-geo-feeder-mac.cc
-    model/satellite-geo-feeder-phy.cc
-    model/satellite-geo-llc.cc
-    model/satellite-geo-mac.cc
-    model/satellite-geo-net-device.cc
-    model/satellite-geo-user-llc.cc
-    model/satellite-geo-user-mac.cc
-    model/satellite-geo-user-phy.cc
     model/satellite-ground-station-address-tag.cc
     model/satellite-gse-header.cc
     model/satellite-gw-llc.cc
     model/satellite-gw-mac.cc
     model/satellite-gw-phy.cc
+    model/satellite-handover-module.cc
     model/satellite-id-mapper.cc
     model/satellite-interference.cc
     model/satellite-interference-elimination.cc
@@ -114,6 +108,17 @@ set(source_files
     model/satellite-net-device.cc
     model/satellite-node-info.cc
     model/satellite-on-off-application.cc
+    model/satellite-orbiter-feeder-llc.cc
+    model/satellite-orbiter-feeder-mac.cc
+    model/satellite-orbiter-feeder-phy.cc
+    model/satellite-orbiter-llc.cc
+    model/satellite-orbiter-mac.cc
+    model/satellite-orbiter-net-device.cc
+    model/satellite-orbiter-net-device-dvb.cc
+    model/satellite-orbiter-net-device-lora.cc
+    model/satellite-orbiter-user-llc.cc
+    model/satellite-orbiter-user-mac.cc
+    model/satellite-orbiter-user-phy.cc
     model/satellite-packet-classifier.cc
     model/satellite-packet-trace.cc
     model/satellite-perfect-interference-elimination.cc
@@ -163,10 +168,10 @@ set(source_files
     model/satellite-superframe-sequence.cc
     model/satellite-tbtp-container.cc
     model/satellite-time-tag.cc
+    model/satellite-topology.cc
     model/satellite-traced-interference.cc
     model/satellite-traced-mobility-model.cc
     model/satellite-uplink-info-tag.cc
-    model/satellite-ut-handover-module.cc
     model/satellite-ut-llc.cc
     model/satellite-ut-mac.cc
     model/satellite-ut-mac-state.cc
@@ -188,17 +193,23 @@ set(source_files
     helper/satellite-beam-user-info.cc
     helper/satellite-cno-helper.cc
     helper/satellite-conf.cc
-    helper/satellite-geo-helper.cc
     helper/satellite-group-helper.cc
     helper/satellite-gw-helper.cc
+    helper/satellite-gw-helper-dvb.cc
+    helper/satellite-gw-helper-lora.cc
     helper/satellite-helper.cc
     helper/satellite-isl-arbiter-unicast-helper.cc
     helper/satellite-lora-conf.cc
     helper/satellite-on-off-helper.cc
+    helper/satellite-orbiter-helper.cc
+    helper/satellite-orbiter-helper-dvb.cc
+    helper/satellite-orbiter-helper-lora.cc
     helper/satellite-point-to-point-isl-helper.cc
     helper/satellite-traffic-helper.cc
     helper/satellite-user-helper.cc
     helper/satellite-ut-helper.cc
+    helper/satellite-ut-helper-dvb.cc
+    helper/satellite-ut-helper-lora.cc
     helper/simulation-helper.cc
     stats/satellite-frame-symbol-load-probe.cc
     stats/satellite-frame-user-load-probe.cc
@@ -259,12 +270,14 @@ set(header_files
     model/lora-periodic-sender.h
     model/lora-sub-band.h
     model/lora-tag.h
+    model/lorawan-ground-mac-gateway.h
     model/lorawan-mac-command.h
     model/lorawan-mac-end-device-class-a.h
     model/lorawan-mac-end-device.h
     model/lorawan-mac-gateway.h
     model/lorawan-mac.h
     model/lorawan-mac-header.h
+    model/lorawan-orbiter-mac-gateway.h
     model/satellite-address-tag.h
     model/satellite-antenna-gain-pattern-container.h
     model/satellite-antenna-gain-pattern.h
@@ -312,20 +325,12 @@ set(header_files
     model/satellite-fwd-link-scheduler-time-slicing.h
     model/satellite-generic-stream-encapsulator-arq.h
     model/satellite-generic-stream-encapsulator.h
-    model/satellite-geo-feeder-llc.h
-    model/satellite-geo-feeder-mac.h
-    model/satellite-geo-feeder-phy.h
-    model/satellite-geo-llc.h
-    model/satellite-geo-mac.h
-    model/satellite-geo-net-device.h
-    model/satellite-geo-user-llc.h
-    model/satellite-geo-user-mac.h
-    model/satellite-geo-user-phy.h
     model/satellite-ground-station-address-tag.h
     model/satellite-gse-header.h
     model/satellite-gw-llc.h
     model/satellite-gw-mac.h
     model/satellite-gw-phy.h
+    model/satellite-handover-module.h
     model/satellite-id-mapper.h
     model/satellite-interference-elimination.h
     model/satellite-interference.h
@@ -355,6 +360,17 @@ set(header_files
     model/satellite-net-device.h
     model/satellite-node-info.h
     model/satellite-on-off-application.h
+    model/satellite-orbiter-feeder-llc.h
+    model/satellite-orbiter-feeder-mac.h
+    model/satellite-orbiter-feeder-phy.h
+    model/satellite-orbiter-llc.h
+    model/satellite-orbiter-mac.h
+    model/satellite-orbiter-net-device.h
+    model/satellite-orbiter-net-device-dvb.h
+    model/satellite-orbiter-net-device-lora.h
+    model/satellite-orbiter-user-llc.h
+    model/satellite-orbiter-user-mac.h
+    model/satellite-orbiter-user-phy.h
     model/satellite-packet-classifier.h
     model/satellite-packet-trace.h
     model/satellite-perfect-interference-elimination.h
@@ -404,11 +420,11 @@ set(header_files
     model/satellite-superframe-sequence.h
     model/satellite-tbtp-container.h
     model/satellite-time-tag.h
+    model/satellite-topology.h
     model/satellite-traced-interference.h
     model/satellite-traced-mobility-model.h
     model/satellite-typedefs.h
     model/satellite-uplink-info-tag.h
-    model/satellite-ut-handover-module.h
     model/satellite-utils.h
     model/satellite-ut-llc.h
     model/satellite-ut-mac.h
@@ -431,17 +447,23 @@ set(header_files
     helper/satellite-beam-user-info.h
     helper/satellite-cno-helper.h
     helper/satellite-conf.h
-    helper/satellite-geo-helper.h
     helper/satellite-group-helper.h
     helper/satellite-gw-helper.h
+    helper/satellite-gw-helper-dvb.h
+    helper/satellite-gw-helper-lora.h
     helper/satellite-helper.h
     helper/satellite-isl-arbiter-unicast-helper.h
     helper/satellite-lora-conf.h
     helper/satellite-on-off-helper.h
+    helper/satellite-orbiter-helper.h
+    helper/satellite-orbiter-helper-dvb.h
+    helper/satellite-orbiter-helper-lora.h
     helper/satellite-point-to-point-isl-helper.h
     helper/satellite-traffic-helper.h
     helper/satellite-user-helper.h
     helper/satellite-ut-helper.h
+    helper/satellite-ut-helper-dvb.h
+    helper/satellite-ut-helper-lora.h
     helper/simulation-helper.h
     stats/satellite-frame-symbol-load-probe.h
     stats/satellite-frame-user-load-probe.h
@@ -492,11 +514,13 @@ set(test_sources
     test/satellite-fading-external-input-trace-test.cc
     test/satellite-frame-allocator-test.cc
     test/satellite-fsl-test.cc
+    test/satellite-handover-test.cc
     test/satellite-geo-coordinate-test.cc
     test/satellite-gse-test.cc
     test/satellite-interference-test.cc
     test/satellite-link-results-test.cc
     test/satellite-lora-test.cc
+    test/satellite-lora-regenerative-test.cc
     test/satellite-mobility-observer-test.cc
     test/satellite-mobility-test.cc
     test/satellite-ncr-test.cc
@@ -512,12 +536,31 @@ set(test_sources
     test/satellite-waveform-conf-test.cc
 )
 
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/data/sgp4)
+MACRO(RESET_IERS_DATA_VARIABLE)
+  set(REFRESH_IERS_DATA FALSE CACHE BOOL "Force a singular CMake invocation to update IERS data for the SGP4 model. Auto-reset to FALSE after each use." FORCE)
+ENDMACRO()
+
+if(NOT DEFINED REFRESH_IERS_DATA)
+  RESET_IERS_DATA_VARIABLE()
+endif()
+
+if(REFRESH_IERS_DATA)
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/data/sgp4)
     if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/data/sgp4/cgen)
-        execute_process(COMMAND ${CMAKE_CXX_COMPILER} ${CMAKE_CXX_FLAGS} ${CMAKE_CURRENT_SOURCE_DIR}/data/sgp4/constants-gen.cc -o ${CMAKE_CURRENT_SOURCE_DIR}/data/sgp4/cgen)
+      execute_process(COMMAND ${CMAKE_CXX_COMPILER} ${CMAKE_CXX_FLAGS} ${CMAKE_CURRENT_SOURCE_DIR}/data/sgp4/constants-gen.cc -o ${CMAKE_CURRENT_SOURCE_DIR}/data/sgp4/cgen)
     endif()
+    file(DOWNLOAD
+      https://maia.usno.navy.mil/ser7/finals2000A.data
+      ${CMAKE_CURRENT_SOURCE_DIR}/data/sgp4/finals.data)
+    file(DOWNLOAD
+      https://maia.usno.navy.mil/ser7/tai-utc.dat
+      ${CMAKE_CURRENT_SOURCE_DIR}/data/sgp4/tai-utc.dat)
     execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/data/sgp4/cgen header ${CMAKE_CURRENT_SOURCE_DIR}/model)
     execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/data/sgp4/cgen source ${CMAKE_CURRENT_SOURCE_DIR}/model)
+  else()
+    message(WARNING "Folder ${CMAKE_CURRENT_SOURCE_DIR}/data/sgp4 not found. Cannot refresh IERS data. Ignoring...")
+  endif()
+  RESET_IERS_DATA_VARIABLE()
 endif()
 
 build_lib(

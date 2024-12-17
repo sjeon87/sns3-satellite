@@ -25,6 +25,7 @@
 #include <ns3/trace-source-accessor.h>
 
 #include <cmath>
+#include <stdint.h>
 
 namespace ns3
 {
@@ -84,6 +85,14 @@ SatMobilityModel::SetGeoPosition(const GeoCoordinate& position)
 {
     m_cartesianPositionOutdated = true;
     DoSetGeoPosition(position);
+}
+
+double
+SatMobilityModel::GetDistanceFrom(Ptr<const SatMobilityModel> other) const
+{
+    Vector oPosition = other->DoGetGeoPosition().ToVector();
+    Vector position = DoGetGeoPosition().ToVector();
+    return CalculateDistance(position, oPosition);
 }
 
 void

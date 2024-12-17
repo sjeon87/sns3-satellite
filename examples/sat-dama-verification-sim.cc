@@ -120,24 +120,24 @@ main(int argc, char* argv[])
     Config::SetDefault("ns3::SatSuperframeConf0::Frame1_AllocatedBandwidthHz", DoubleValue(5e+07));
     Config::SetDefault("ns3::SatSuperframeConf0::Frame2_AllocatedBandwidthHz", DoubleValue(5e+07));
 
-    // Creating the reference system. Note, currently the satellite module supports
-    // only one reference system, which is named as "Scenario72". The string is utilized
-    // in mapping the scenario to the needed reference system configuration files. Arbitrary
-    // scenario name results in fatal error.
+    simulationHelper->LoadScenario("geo-33E");
+
+    // Creating the reference system.
     simulationHelper->CreateSatScenario();
 
     /**
      * Set-up CBR traffic
      */
-    Config::SetDefault("ns3::CbrApplication::Interval", TimeValue(Seconds(intervalSeconds)));
-    Config::SetDefault("ns3::CbrApplication::PacketSize", UintegerValue(packetSize));
-
-    simulationHelper->InstallTrafficModel(SimulationHelper::CBR,
-                                          SimulationHelper::UDP,
-                                          SimulationHelper::RTN_LINK,
-                                          appStartTime,
-                                          Seconds(simLength),
-                                          MilliSeconds(50));
+    simulationHelper->GetTrafficHelper()->AddCbrTraffic(
+        SatTrafficHelper::RTN_LINK,
+        SatTrafficHelper::UDP,
+        Seconds(intervalSeconds),
+        packetSize,
+        NodeContainer(Singleton<SatTopology>::Get()->GetGwUserNode(0)),
+        Singleton<SatTopology>::Get()->GetUtUserNodes(),
+        appStartTime,
+        Seconds(simLength),
+        MilliSeconds(50));
     /**
      * Set-up statistics
      */

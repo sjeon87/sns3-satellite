@@ -32,6 +32,8 @@
 #include "ns3/singleton.h"
 #include "ns3/test.h"
 
+#include <stdint.h>
+
 using namespace ns3;
 
 // #define PRINT_POSITION_INFO // uncomment to see info while executing test
@@ -152,9 +154,9 @@ class GeoCoordinateTestSuite : public TestSuite
 };
 
 GeoCoordinateTestSuite::GeoCoordinateTestSuite()
-    : TestSuite("geo-coordinate-test", UNIT)
+    : TestSuite("geo-coordinate-test", Type::UNIT)
 {
-    AddTestCase(new GeoCoordinateTestCase, TestCase::QUICK);
+    AddTestCase(new GeoCoordinateTestCase, TestCase::Duration::QUICK);
 }
 
 // Do allocate an instance of this TestSuite

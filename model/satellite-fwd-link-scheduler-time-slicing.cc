@@ -22,6 +22,11 @@
 
 #include "satellite-utils.h"
 
+#include <map>
+#include <string>
+#include <utility>
+#include <vector>
+
 NS_LOG_COMPONENT_DEFINE("SatFwdLinkSchedulerTimeSlicing");
 
 namespace ns3
@@ -153,7 +158,7 @@ SatFwdLinkSchedulerTimeSlicing::GetNextFrame()
     if (!m_bbFrameContainers.at(0)->IsEmpty(0, m_bbFrameConf->GetDefaultModCod()))
     {
         frame = m_bbFrameContainers.at(0)->GetNextFrame();
-        if (frame != NULL)
+        if (frame != nullptr)
         {
             frame->SetSliceId(0);
             frameDuration = frame->GetDuration();
@@ -173,7 +178,7 @@ SatFwdLinkSchedulerTimeSlicing::GetNextFrame()
             double maxSymbolRate = m_bbFrameContainers.at(m_lastSliceDequeued)->GetMaxSymbolRate();
 
             frame = m_bbFrameContainers.at(m_lastSliceDequeued)->GetNextFrame();
-            if (frame != NULL)
+            if (frame != nullptr)
             {
                 m_symbolsSent.at(m_lastSliceDequeued) +=
                     ceil(frame->GetDuration().GetSeconds() * m_carrierBandwidthInHz);
@@ -194,11 +199,11 @@ SatFwdLinkSchedulerTimeSlicing::GetNextFrame()
                 m_lastSliceDequeued = -1;
             }
             m_lastSliceDequeued++;
-        } while (frame == NULL && m_lastSliceDequeued != firstDeque);
+        } while (frame == nullptr && m_lastSliceDequeued != firstDeque);
     }
 
     // create dummy frame
-    if (m_dummyFrameSendingEnabled && frame == NULL)
+    if (m_dummyFrameSendingEnabled && frame == nullptr)
     {
         frame = Create<SatBbFrame>(m_bbFrameConf->GetDefaultModCod(),
                                    SatEnums::DUMMY_FRAME,
@@ -225,12 +230,24 @@ SatFwdLinkSchedulerTimeSlicing::GetNextFrame()
         frameDuration = frame->GetDuration();
     }
     // If no bb frame available and dummy frames disabled
-    else if (frame == NULL)
+    else if (frame == nullptr)
     {
         frameDuration = m_bbFrameConf->GetDummyBbFrameDuration();
     }
 
     return std::make_pair(frame, frameDuration);
+}
+
+void
+SatFwdLinkSchedulerTimeSlicing::ClearAllPackets()
+{
+    NS_LOG_FUNCTION(this);
+
+    std::map<uint8_t, Ptr<SatBbFrameContainer>>::iterator it;
+    for (it = m_bbFrameContainers.begin(); it != m_bbFrameContainers.end(); it++)
+    {
+        it->second->ClearAllFrames();
+    }
 }
 
 void

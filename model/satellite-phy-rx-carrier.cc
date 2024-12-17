@@ -48,6 +48,7 @@
 #include <limits>
 #include <ostream>
 #include <utility>
+#include <vector>
 
 NS_LOG_COMPONENT_DEFINE("SatPhyRxCarrier");
 
@@ -257,9 +258,9 @@ SatPhyRxCarrier::DoDispose()
     m_cnoCallback.Nullify();
     m_additionalInterferenceCallback.Nullify();
     m_avgNormalizedOfferedLoadCallback.Nullify();
-    m_satInterference = NULL;
-    m_satInterferenceElimination = NULL;
-    m_uniformVariable = NULL;
+    m_satInterference = nullptr;
+    m_satInterferenceElimination = nullptr;
+    m_uniformVariable = nullptr;
 
     Object::DoDispose();
 }
@@ -389,7 +390,7 @@ SatPhyRxCarrier::StartRx(Ptr<SatSignalParameters> rxParams)
     {
     case IDLE:
     case RX: {
-        auto receiveParamTuple = GetReceiveParams(rxParams);
+        std::pair<bool, SatPhyRxCarrier::rxParams_s> receiveParamTuple = GetReceiveParams(rxParams);
 
         bool receivePacket = receiveParamTuple.first;
         rxParams_s rxParamsStruct = receiveParamTuple.second;
@@ -415,9 +416,10 @@ SatPhyRxCarrier::StartRx(Ptr<SatSignalParameters> rxParams)
             if (IsReceivingDedicatedAccess() &&
                 rxParams->m_txInfo.packetType == SatEnums::PACKET_TYPE_DEDICATED_ACCESS)
             {
-                NS_FATAL_ERROR("Starting reception of a packet when receiving DA transmission! "
-                               "This may be due to a clock drift in UTs too important, or an "
-                               "update period for SGP4 too important.");
+                NS_LOG_WARN("Starting reception of a packet when receiving DA transmission! "
+                            "This may be due to a clock drift in UTs too important, or an "
+                            "update period for SGP4 too important.");
+                return false;
             }
 
             GetInterferenceModel()->NotifyRxStart(rxParamsStruct.interferenceEvent);

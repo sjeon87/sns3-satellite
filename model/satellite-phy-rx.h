@@ -34,6 +34,9 @@
 #include <ns3/nstime.h>
 #include <ns3/packet.h>
 
+#include <stdint.h>
+#include <vector>
+
 namespace ns3
 {
 

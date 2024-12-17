@@ -26,13 +26,15 @@
  * - Budiarto Herman (budiarto.herman@magister.fi)
  */
 
-#include "ns3/satellite-frame-symbol-load-probe.h"
+#include "satellite-frame-symbol-load-probe.h"
 
 #include "ns3/callback.h"
 #include "ns3/config.h"
 #include "ns3/log.h"
 #include "ns3/names.h"
 #include "ns3/simulator.h"
+
+#include <string>
 
 NS_LOG_COMPONENT_DEFINE("SatFrameSymbolLoadProbe");
 

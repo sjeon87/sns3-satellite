@@ -23,8 +23,11 @@
 #ifndef LORA_DEVICE_ADDRESS_GENERATOR_H
 #define LORA_DEVICE_ADDRESS_GENERATOR_H
 
-#include <ns3/lora-device-address.h>
+#include "lora-device-address.h"
+
 #include <ns3/object.h>
+
+#include <stdint.h>
 
 namespace ns3
 {

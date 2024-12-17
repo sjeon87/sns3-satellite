@@ -36,6 +36,7 @@
 #include <ns3/packet.h>
 #include <ns3/ptr.h>
 
+#include <stdint.h>
 #include <string>
 
 namespace ns3
@@ -54,8 +55,8 @@ class SatMac;
  * nodes. This is a pure virtual class and actual implementations are located in:
  * - SatUtPhy
  * - SatGwPhy
- * - SatGeoFeederPhy
- * - SatGeoUserPhy
+ * - SatOrbiterFeederPhy
+ * - SatOrbiterUserPhy
  */
 class SatPhy : public Object
 {
@@ -429,7 +430,7 @@ class SatPhy : public Object
                          SatSignalParameters::txInfo_s txInfo);
 
     /**
-     * \brief Send Pdu to the PHY tx module (for GEO satellite switch packet forwarding)
+     * \brief Send Pdu to the PHY tx module (for satellite switch packet forwarding)
      * \param rxParams Transmission parameters
      */
     virtual void SendPduWithParams(Ptr<SatSignalParameters> rxParams);
@@ -444,7 +445,7 @@ class SatPhy : public Object
      * \brief Set the beamId this PHY is connected with
      * \param beamId Satellite beam id
      */
-    void SetBeamId(uint32_t beamId);
+    bool SetBeamId(uint32_t beamId);
 
     /**
      * \brief Receives packets from lower layer.

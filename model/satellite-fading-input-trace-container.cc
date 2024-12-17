@@ -26,6 +26,12 @@
 #include <ns3/log.h>
 #include <ns3/singleton.h>
 
+#include <ios>
+#include <sstream>
+#include <stdint.h>
+#include <string>
+#include <utility>
+
 NS_LOG_COMPONENT_DEFINE("SatFadingInputTraceContainer");
 
 namespace ns3
@@ -104,14 +110,14 @@ SatFadingInputTraceContainer::AddNode(key_t key)
     {
         if (utId >= 0 && gwId < 0)
         {
-            filename << dataPath << "/fadingtraces/input/BEAM_" << beamId << "_UT_" << utId
-                     << "_channelType_" << SatEnums::GetChannelTypeName(key.second);
+            filename << dataPath << "/additional-input/fadingtraces/input/BEAM_" << beamId << "_UT_"
+                     << utId << "_channelType_" << SatEnums::GetChannelTypeName(key.second);
         }
 
         if (gwId >= 0 && utId < 0)
         {
-            filename << dataPath << "/fadingtraces/input/BEAM_" << beamId << "_GW_" << gwId
-                     << "_channelType_" << SatEnums::GetChannelTypeName(key.second);
+            filename << dataPath << "/additional-input/fadingtraces/input/BEAM_" << beamId << "_GW_"
+                     << gwId << "_channelType_" << SatEnums::GetChannelTypeName(key.second);
         }
         std::pair<container_t::iterator, bool> result = m_container.insert(
             std::make_pair(key,
@@ -131,7 +137,7 @@ SatFadingInputTraceContainer::AddNode(key_t key)
     }
 
     NS_FATAL_ERROR("SatFadingInputTraceContainer::AddNode failed");
-    return NULL;
+    return nullptr;
 }
 
 Ptr<SatInputFileStreamTimeDoubleContainer>

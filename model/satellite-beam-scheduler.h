@@ -26,6 +26,9 @@
 #include "satellite-cno-estimator.h"
 #include "satellite-enums.h"
 #include "satellite-frame-allocator.h"
+#include "satellite-gw-mac.h"
+#include "satellite-net-device.h"
+#include "satellite-orbiter-net-device.h"
 
 #include <ns3/callback.h>
 #include <ns3/nstime.h>
@@ -34,8 +37,12 @@
 #include <ns3/simple-ref-count.h>
 #include <ns3/traced-callback.h>
 
+#include <cmath>
 #include <list>
 #include <map>
+#include <stdint.h>
+#include <string>
+#include <utility>
 #include <vector>
 
 namespace ns3
@@ -124,16 +131,24 @@ class SatBeamScheduler : public Object
 
     /**
      * \param beamId ID of the beam which for callback is set
+     * \param satId ID of the satellite using the beam which for callback is set
+     * \param gwNetDevice GW NetDevice linked to this beam
+     * \param orbiterNetDevice OrbiterNetDevice on satellite linked to this beam
      * \param cb callback to invoke whenever a TBTP is ready for sending and must
      *        be forwarded to the Beam UTs.
      * \param seq Superframe sequence.
      * \param maxFrameSizeInBytes Maximum non fragmented BB frame size with most robust ModCod
+     * \param satAddress Mac address of the satellite responsible for this beam
      * \param gwAddress Mac address of the gateway responsible for this beam
      */
-    void Initialize(uint32_t beamId,
+    void Initialize(uint32_t satId,
+                    uint32_t beamId,
+                    Ptr<SatNetDevice> gwNetDevice,
+                    Ptr<SatOrbiterNetDevice> orbiterNetDevice,
                     SatBeamScheduler::SendCtrlMsgCallback cb,
                     Ptr<SatSuperframeSeq> seq,
                     uint32_t maxFrameSizeInBytes,
+                    Address satAddress,
                     Address gwAddress);
 
     /**
@@ -152,6 +167,13 @@ class SatBeamScheduler : public Object
      * \return Whether or not this UT is in this beam
      */
     bool HasUt(Address utId);
+
+    /**
+     * Check whether an UT is handled by this scheduler
+     *
+     * \return Whether or not at least one UT is handled by this beam
+     */
+    bool HasUt();
 
     /**
      * Update UT C/N0 info with the latest value.
@@ -264,6 +286,34 @@ class SatBeamScheduler : public Object
     void TransferUtToBeam(Address utId, Ptr<SatBeamScheduler> destination);
 
     /**
+     * Connect a new UT address to this scheduler
+     *
+     * \param address The UT address to connect
+     */
+    void ConnectUt(Mac48Address address);
+
+    /**
+     * Disconnect a new UT address from this scheduler
+     *
+     * \param address The UT address to disconnect
+     */
+    void DisconnectUt(Mac48Address address);
+
+    /**
+     * Connect a new GW address to this scheduler
+     *
+     * \param address The GW address to connect
+     */
+    void ConnectGw(Mac48Address address);
+
+    /**
+     * Disconnect a new GW address from this scheduler
+     *
+     * \param address The GW address to disconnect
+     */
+    void DisconnectGw(Mac48Address address);
+
+    /**
      * \brief Remove a UT from its SatBeamScheduler
      * \param utId the terminal that is leaving this beam
      */
@@ -272,12 +322,26 @@ class SatBeamScheduler : public Object
     void ReserveLogonChannel(uint32_t logonChannelId);
 
     /**
+     * \brief Return the address of the satellite responsible of this beam
+     */
+    inline Address GetSatAddress(void) const
+    {
+        return m_satAddress;
+    }
+
+    /**
      * \brief Return the address of the gateway responsible of this beam
      */
     inline Address GetGwAddress(void) const
     {
         return m_gwAddress;
     }
+
+    /**
+     * Set if SNS-3 is used with Lora standard. TBTPs are not sent in this mode.
+     * \param useLora boolean indicating if lora is used.
+     */
+    void SetUseLora(bool useLora);
 
   private:
     /**
@@ -456,9 +520,24 @@ class SatBeamScheduler : public Object
     };
 
     /**
+     * ID of the satellite using this beam
+     */
+    uint32_t m_satId;
+
+    /**
      * ID of the beam
      */
     uint32_t m_beamId;
+
+    /**
+     * GW MAC linked to this beam
+     */
+    Ptr<SatGwMac> m_gwMac;
+
+    /**
+     * OrbiterNetDevice on satellite linked to this beam
+     */
+    Ptr<SatOrbiterNetDevice> m_orbiterNetDevice;
 
     /**
      * Pointer to super frame sequence.
@@ -627,6 +706,8 @@ class SatBeamScheduler : public Object
      */
     void SendCnoToSatellite();
 
+    Address m_satAddress;
+
     Address m_gwAddress;
 
     HandoverInformationForward_t m_handoverStrategy;
@@ -650,6 +731,11 @@ class SatBeamScheduler : public Object
      * Indicates if Cno sample have been received since last C/N0 control message sent
      */
     bool m_receivedSatelliteCnoSample;
+
+    /**
+     * Flag indicating if lora standard is used
+     */
+    bool m_useLora;
 };
 
 } // namespace ns3

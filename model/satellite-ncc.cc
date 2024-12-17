@@ -30,6 +30,10 @@
 #include <ns3/log.h>
 #include <ns3/packet.h>
 
+#include <map>
+#include <tuple>
+#include <utility>
+
 NS_LOG_COMPONENT_DEFINE("SatNcc");
 
 namespace ns3
@@ -316,13 +320,17 @@ SatNcc::UtCrReceived(uint32_t satId, uint32_t beamId, Address utId, Ptr<SatCrMes
 void
 SatNcc::AddBeam(uint32_t satId,
                 uint32_t beamId,
+                Ptr<SatNetDevice> gwNetDevice,
+                Ptr<SatOrbiterNetDevice> orbiterNetDevice,
                 SatNcc::SendCallback cb,
                 SatNcc::SendTbtpCallback tbtpCb,
                 Ptr<SatSuperframeSeq> seq,
                 uint32_t maxFrameSize,
+                Address satAddress,
                 Address gwAddress)
 {
-    NS_LOG_FUNCTION(this << satId << beamId << &cb);
+    NS_LOG_FUNCTION(this << satId << beamId << gwNetDevice << orbiterNetDevice << &cb << &tbtpCb
+                         << seq << maxFrameSize << satAddress << gwAddress);
 
     Ptr<SatBeamScheduler> scheduler;
     std::map<std::pair<uint32_t, uint32_t>, Ptr<SatBeamScheduler>>::iterator iterator =
@@ -334,9 +342,19 @@ SatNcc::AddBeam(uint32_t satId,
     }
 
     scheduler = CreateObject<SatBeamScheduler>();
-    scheduler->Initialize(beamId, cb, seq, maxFrameSize, gwAddress);
+    scheduler->Initialize(satId,
+                          beamId,
+                          gwNetDevice,
+                          orbiterNetDevice,
+                          cb,
+                          seq,
+                          maxFrameSize,
+                          satAddress,
+                          gwAddress);
 
     scheduler->SetSendTbtpCallback(tbtpCb);
+
+    scheduler->SetUseLora(m_useLora);
 
     m_beamSchedulers.insert(std::make_pair(std::make_pair(satId, beamId), scheduler));
 }
@@ -449,16 +467,25 @@ SatNcc::GetBeamScheduler(uint32_t satId, uint32_t beamId) const
 }
 
 void
-SatNcc::DoMoveUtBetweenBeams(Address utId, uint32_t satId, uint32_t srcBeamId, uint32_t destBeamId)
+SatNcc::DoMoveUtBetweenBeams(Address utId,
+                             uint32_t srcSatId,
+                             uint32_t srcBeamId,
+                             uint32_t destSatId,
+                             uint32_t destBeamId)
 {
-    NS_LOG_FUNCTION(this << utId << satId << srcBeamId << destBeamId);
+    NS_LOG_FUNCTION(this << utId << srcSatId << srcBeamId << destSatId << destBeamId);
 
-    Ptr<SatBeamScheduler> srcScheduler = GetBeamScheduler(satId, srcBeamId);
-    Ptr<SatBeamScheduler> destScheduler = GetBeamScheduler(satId, destBeamId);
+    Ptr<SatBeamScheduler> srcScheduler = GetBeamScheduler(srcSatId, srcBeamId);
+    Ptr<SatBeamScheduler> destScheduler = GetBeamScheduler(destSatId, destBeamId);
 
-    if (!srcScheduler || !destScheduler)
+    if (!srcScheduler)
     {
-        NS_FATAL_ERROR("Source or destination beam not configured");
+        NS_FATAL_ERROR("Source beam not configured");
+    }
+
+    if (!destScheduler)
+    {
+        NS_FATAL_ERROR("Destination beam not configured");
     }
 
     srcScheduler->TransferUtToBeam(utId, destScheduler);
@@ -466,12 +493,16 @@ SatNcc::DoMoveUtBetweenBeams(Address utId, uint32_t satId, uint32_t srcBeamId, u
 }
 
 void
-SatNcc::MoveUtBetweenBeams(Address utId, uint32_t satId, uint32_t srcBeamId, uint32_t destBeamId)
+SatNcc::MoveUtBetweenBeams(Address utId,
+                           uint32_t srcSatId,
+                           uint32_t srcBeamId,
+                           uint32_t destSatId,
+                           uint32_t destBeamId)
 {
-    NS_LOG_FUNCTION(this << utId << satId << srcBeamId << destBeamId);
+    NS_LOG_FUNCTION(this << utId << srcSatId << srcBeamId << destSatId << destBeamId);
 
-    Ptr<SatBeamScheduler> scheduler = GetBeamScheduler(satId, srcBeamId);
-    Ptr<SatBeamScheduler> destination = GetBeamScheduler(satId, destBeamId);
+    Ptr<SatBeamScheduler> scheduler = GetBeamScheduler(srcSatId, srcBeamId);
+    Ptr<SatBeamScheduler> destination = GetBeamScheduler(destSatId, destBeamId);
 
     if (!scheduler)
     {
@@ -496,8 +527,9 @@ SatNcc::MoveUtBetweenBeams(Address utId, uint32_t satId, uint32_t srcBeamId, uin
                             &SatNcc::DoMoveUtBetweenBeams,
                             this,
                             utId,
-                            satId,
+                            srcSatId,
                             srcBeamId,
+                            destSatId,
                             destBeamId);
     }
     else if (!scheduler->HasUt(utId) && destination->HasUt(utId))
@@ -561,6 +593,12 @@ SatNcc::SetUseLora(bool useLora)
     NS_LOG_FUNCTION(this << useLora);
 
     m_useLora = useLora;
+
+    for (std::pair<std::pair<uint32_t, uint32_t>, Ptr<SatBeamScheduler>> beamScheduler :
+         m_beamSchedulers)
+    {
+        beamScheduler.second->SetUseLora(m_useLora);
+    }
 }
 
 void

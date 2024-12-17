@@ -36,6 +36,7 @@
 #include <ns3/simulator.h>
 
 #include <cmath>
+#include <ostream>
 
 NS_LOG_COMPONENT_DEFINE("SatPhyTx");
 
@@ -93,16 +94,17 @@ operator<<(std::ostream& os, SatPhyTx::State s)
 TypeId
 SatPhyTx::GetTypeId(void)
 {
-    static TypeId tid = TypeId("ns3::SatPhyTx")
-                            .SetParent<Object>()
-                            .AddAttribute("TxMode",
-                                          "Tx mode of this Phy Tx.",
-                                          EnumValue(SatPhyTx::NORMAL),
-                                          MakeEnumAccessor(&SatPhyTx::m_txMode),
-                                          MakeEnumChecker(SatPhyTx::NORMAL,
-                                                          "Normal Tx mode",
-                                                          SatPhyTx::TRANSPARENT,
-                                                          "Transparent Tx mode"));
+    static TypeId tid =
+        TypeId("ns3::SatPhyTx")
+            .SetParent<Object>()
+            .AddAttribute("TxMode",
+                          "Tx mode of this Phy Tx.",
+                          EnumValue(SatPhyTx::NORMAL),
+                          MakeEnumAccessor<SatPhyTx::SatPhyTxMode_t>(&SatPhyTx::m_txMode),
+                          MakeEnumChecker(SatPhyTx::NORMAL,
+                                          "Normal Tx mode",
+                                          SatPhyTx::TRANSPARENT,
+                                          "Transparent Tx mode"));
     return tid;
 }
 
@@ -122,7 +124,7 @@ SatPhyTx::GetAntennaGain(Ptr<MobilityModel> mobility)
     double gain_W(m_maxAntennaGain);
 
     // Get the transmit antenna gain at the receiver position.
-    // E.g. GEO satellite transmits to the UT receiver.
+    // E.g. Satellite transmits to the UT receiver.
     if (m_antennaGainPattern)
     {
         Ptr<SatMobilityModel> m = DynamicCast<SatMobilityModel>(mobility);
@@ -213,7 +215,7 @@ SatPhyTx::ClearChannel()
     NS_LOG_FUNCTION(this);
     NS_ASSERT(m_channel != nullptr);
 
-    m_channel = NULL;
+    m_channel = nullptr;
     ChangeState(RECONFIGURING);
 }
 

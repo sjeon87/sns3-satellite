@@ -133,18 +133,15 @@ main(int argc, char* argv[])
     // GlobalValue::Bind ("SimulatorImplementationType", StringValue
     // ("ns3::RealtimeSimulatorImpl"));
 
-    // create satellite helper with given scenario default=simple
+    simulationHelper->LoadScenario("geo-33E");
 
-    // Creating the reference system. Note, currently the satellite module supports
-    // only one reference system, which is named as "Scenario72". The string is utilized
-    // in mapping the scenario to the needed reference system configuration files. Arbitrary
-    // scenario name results in fatal error.
+    // Creating the reference system.
     Config::SetDefault("ns3::SatHelper::ScenarioCreationTraceEnabled", BooleanValue(true));
     Ptr<SatHelper> helper = simulationHelper->CreateSatScenario(satScenario);
 
     // get users
-    // NodeContainer utUsers = helper->GetUtUsers ();
-    NodeContainer gwUsers = helper->GetGwUsers();
+    // NodeContainer utUsers = Singleton<SatTopology>::Get()->GetUtUserNodes();
+    NodeContainer gwUsers = Singleton<SatTopology>::Get()->GetGwUserNodes();
 
     // uint16_t port = 9;
     // const std::string protocol = "ns3::UdpSocketFactory";
@@ -155,19 +152,27 @@ main(int argc, char* argv[])
 
     for (uint32_t i = 0; i < gwUsers.GetN(); i++)
     {
-        simulationHelper->SetGwUserId(i);
-        simulationHelper->InstallTrafficModel(SimulationHelper::CBR,
-                                              SimulationHelper::UDP,
-                                              SimulationHelper::FWD_LINK,
-                                              Seconds(0.1),
-                                              Seconds(duration),
-                                              Seconds(0.001));
-        simulationHelper->InstallTrafficModel(SimulationHelper::CBR,
-                                              SimulationHelper::UDP,
-                                              SimulationHelper::RTN_LINK,
-                                              Seconds(0.1),
-                                              Seconds(duration),
-                                              Seconds(0.001));
+        simulationHelper->GetTrafficHelper()->AddCbrTraffic(
+            SatTrafficHelper::FWD_LINK,
+            SatTrafficHelper::UDP,
+            Time(interval),
+            packetSize,
+            Singleton<SatTopology>::Get()->GetGwUserNode(i),
+            Singleton<SatTopology>::Get()->GetUtUserNodes(),
+            Seconds(0.1),
+            Seconds(duration),
+            Seconds(0.001));
+
+        simulationHelper->GetTrafficHelper()->AddCbrTraffic(
+            SatTrafficHelper::RTN_LINK,
+            SatTrafficHelper::UDP,
+            Time(interval),
+            packetSize,
+            Singleton<SatTopology>::Get()->GetGwUserNode(i),
+            Singleton<SatTopology>::Get()->GetUtUserNodes(),
+            Seconds(0.1),
+            Seconds(duration),
+            Seconds(0.001));
     }
 
     simulationHelper->EnableProgressLogs();

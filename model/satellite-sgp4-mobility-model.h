@@ -33,6 +33,9 @@
 #include <ns3/nstime.h>
 #include <ns3/vector.h>
 
+#include <stdint.h>
+#include <string>
+
 namespace ns3
 {
 
@@ -64,6 +67,13 @@ class SatSGP4MobilityModel : public SatMobilityModel
      * @brief Destructor.
      */
     virtual ~SatSGP4MobilityModel();
+
+    /**
+     * Set the simulation absolute start time in string format.
+     *
+     * \param startStr Start time of simulation, on format "YYYY-MM-DD hh:mm:ss"
+     */
+    void SetStartDate(std::string startStr);
 
     /**
      * @brief Get the time instant considered as the simulation start.

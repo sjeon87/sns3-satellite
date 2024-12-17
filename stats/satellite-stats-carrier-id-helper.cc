@@ -38,11 +38,14 @@
 #include <ns3/satellite-phy-rx-carrier.h>
 #include <ns3/satellite-phy-rx.h>
 #include <ns3/satellite-phy.h>
+#include <ns3/satellite-topology.h>
 #include <ns3/scalar-collector.h>
 #include <ns3/singleton.h>
 #include <ns3/string.h>
 
+#include <map>
 #include <sstream>
+#include <string>
 
 NS_LOG_COMPONENT_DEFINE("SatStatsCarrierIdHelper");
 
@@ -213,7 +216,7 @@ SatStatsCarrierIdHelper::DoInstall()
     }
 
     // Create a map of UT addresses and identifiers.
-    NodeContainer uts = GetSatHelper()->GetBeamHelper()->GetUtNodes();
+    NodeContainer uts = Singleton<SatTopology>::Get()->GetUtNodes();
     for (NodeContainer::Iterator it = uts.Begin(); it != uts.End(); ++it)
     {
         SaveAddressAndIdentifier(*it);
@@ -221,7 +224,7 @@ SatStatsCarrierIdHelper::DoInstall()
 
     // Connect to trace sources at GW nodes.
 
-    NodeContainer gws = GetSatHelper()->GetBeamHelper()->GetGwNodes();
+    NodeContainer gws = Singleton<SatTopology>::Get()->GetGwNodes();
     Callback<void, uint32_t, const Address&> callback =
         MakeCallback(&SatStatsCarrierIdHelper::CarrierIdRxCallback, this);
 
@@ -336,26 +339,6 @@ SatStatsCarrierIdHelper::CarrierIdRxCallback(uint32_t carrierId, const Address& 
         NS_FATAL_ERROR(GetOutputTypeName(GetOutputType())
                        << " is not a valid output type for this statistics.");
         break;
-    }
-}
-
-void
-SatStatsCarrierIdHelper::SaveAddressAndIdentifier(Ptr<Node> utNode)
-{
-    NS_LOG_FUNCTION(this << utNode->GetId());
-
-    const SatIdMapper* satIdMapper = Singleton<SatIdMapper>::Get();
-    const Address addr = satIdMapper->GetUtMacWithNode(utNode);
-
-    if (addr.IsInvalid())
-    {
-        NS_LOG_WARN(this << " Node " << utNode->GetId() << " is not a valid UT");
-    }
-    else
-    {
-        const uint32_t identifier = GetIdentifierForUt(utNode);
-        m_identifierMap[addr] = identifier;
-        NS_LOG_INFO(this << " associated address " << addr << " with identifier " << identifier);
     }
 }
 

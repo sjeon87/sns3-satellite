@@ -24,6 +24,9 @@
 
 #include <ns3/log.h>
 
+#include <cmath>
+#include <list>
+
 namespace ns3
 {
 
@@ -42,20 +45,22 @@ LoraAdrComponent::GetTypeId(void)
         TypeId("ns3::LoraAdrComponent")
             .AddConstructor<LoraAdrComponent>()
             .SetParent<LoraNetworkControllerComponent>()
-            .AddAttribute("MultipleGwCombiningMethod",
-                          "Whether to average the received power of gateways or to use the maximum",
-                          EnumValue(LoraAdrComponent::AVERAGE),
-                          MakeEnumAccessor(&LoraAdrComponent::tpAveraging),
-                          MakeEnumChecker(LoraAdrComponent::AVERAGE,
-                                          "avg",
-                                          LoraAdrComponent::MAXIMUM,
-                                          "max",
-                                          LoraAdrComponent::MINIMUM,
-                                          "min"))
+            .AddAttribute(
+                "MultipleGwCombiningMethod",
+                "Whether to average the received power of gateways or to use the maximum",
+                EnumValue(LoraAdrComponent::AVERAGE),
+                MakeEnumAccessor<LoraAdrComponent::CombiningMethod>(&LoraAdrComponent::tpAveraging),
+                MakeEnumChecker(LoraAdrComponent::AVERAGE,
+                                "avg",
+                                LoraAdrComponent::MAXIMUM,
+                                "max",
+                                LoraAdrComponent::MINIMUM,
+                                "min"))
             .AddAttribute("MultiplePacketsCombiningMethod",
                           "Whether to average SNRs from multiple packets or to use the maximum",
                           EnumValue(LoraAdrComponent::AVERAGE),
-                          MakeEnumAccessor(&LoraAdrComponent::historyAveraging),
+                          MakeEnumAccessor<LoraAdrComponent::CombiningMethod>(
+                              &LoraAdrComponent::historyAveraging),
                           MakeEnumChecker(LoraAdrComponent::AVERAGE,
                                           "avg",
                                           LoraAdrComponent::MAXIMUM,

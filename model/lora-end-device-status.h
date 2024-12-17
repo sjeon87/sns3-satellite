@@ -34,6 +34,11 @@
 #include <ns3/pointer.h>
 
 #include <iostream>
+#include <list>
+#include <map>
+#include <ostream>
+#include <stdint.h>
+#include <utility>
 
 namespace ns3
 {
@@ -342,6 +347,7 @@ class LoraEndDeviceStatus : public Object
     // Receive window data
     uint8_t m_modcod;
     uint8_t m_beamId;
+    Address m_utAddress;
     uint8_t m_firstReceiveWindowSpreadingFactor = 0;
     double m_firstReceiveWindowFrequency = 0;
     uint8_t m_secondReceiveWindowOffset = 0;

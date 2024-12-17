@@ -152,9 +152,6 @@ main(int argc, char* argv[])
     Config::SetDefault("ns3::SatBeamHelper::RaCollisionModel",
                        EnumValue(SatPhyRxCarrierConf::RA_COLLISION_CHECK_AGAINST_SINR));
     Config::SetDefault("ns3::SatBeamHelper::ReturnLinkLinkResults", EnumValue(SatEnums::LR_FSIM));
-    Config::SetDefault("ns3::SatWaveformConf::DefaultWfId", UintegerValue(2));
-    Config::SetDefault("ns3::SatHelper::RtnLinkWaveformConfFileName",
-                       StringValue("fSimWaveforms.txt"));
 
     Config::SetDefault("ns3::SatPhyRxCarrierPerWindow::WindowDuration", StringValue("600ms"));
     Config::SetDefault("ns3::SatPhyRxCarrierPerWindow::WindowStep", StringValue("200ms"));
@@ -197,20 +194,22 @@ main(int argc, char* argv[])
     simulationHelper->SetUserCountPerUt(nbEndUsersPerUt);
     simulationHelper->SetBeams(beams);
 
+    simulationHelper->LoadScenario("geo-33E-fsim");
+
     simulationHelper->CreateSatScenario();
 
-    Config::SetDefault("ns3::OnOffApplication::PacketSize", UintegerValue(packetSize));
-    Config::SetDefault("ns3::OnOffApplication::DataRate", StringValue(dataRate));
-    Config::SetDefault("ns3::OnOffApplication::OnTime",
-                       StringValue("ns3::ConstantRandomVariable[Constant=" + onTime + "]"));
-    Config::SetDefault("ns3::OnOffApplication::OffTime",
-                       StringValue("ns3::ConstantRandomVariable[Constant=" + offTime + "]"));
-
-    simulationHelper->InstallTrafficModel(SimulationHelper::ONOFF,
-                                          SimulationHelper::UDP,
-                                          SimulationHelper::RTN_LINK,
-                                          appStartTime,
-                                          simLength);
+    simulationHelper->GetTrafficHelper()->AddOnOffTraffic(
+        SatTrafficHelper::RTN_LINK,
+        SatTrafficHelper::UDP,
+        dataRate,
+        packetSize,
+        NodeContainer(Singleton<SatTopology>::Get()->GetGwUserNode(0)),
+        Singleton<SatTopology>::Get()->GetUtUserNodes(),
+        "ns3::ConstantRandomVariable[Constant=" + onTime + "]",
+        "ns3::ConstantRandomVariable[Constant=" + offTime + "]",
+        appStartTime,
+        simLength,
+        Seconds(0));
 
     // Outputs
     simulationHelper->EnableProgressLogs();

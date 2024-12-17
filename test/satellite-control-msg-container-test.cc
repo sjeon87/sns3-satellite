@@ -175,8 +175,8 @@ SatCtrlMsgContDelOnTestCase::DoRun(void)
     // After simulation check that messages are what expected
 
     // ref messages created successfully
-    NS_TEST_ASSERT_MSG_EQ((crMsg == NULL), false, "CR message creation failed");
-    NS_TEST_ASSERT_MSG_EQ((tbtpMsg == NULL), false, "TBTP message failed");
+    NS_TEST_ASSERT_MSG_EQ((crMsg == nullptr), false, "CR message creation failed");
+    NS_TEST_ASSERT_MSG_EQ((tbtpMsg == nullptr), false, "TBTP message failed");
 
     // container content correct at points messages got
     NS_TEST_ASSERT_MSG_EQ((m_msgsRead[0] == crMsg), true, "first message incorrect");
@@ -278,8 +278,8 @@ SatCtrlMsgContDelOffTestCase::DoRun(void)
     // After simulation check that messages are what expected
 
     // ref messages created successfully
-    NS_TEST_ASSERT_MSG_EQ((crMsg == NULL), false, "CR message creation failed");
-    NS_TEST_ASSERT_MSG_EQ((tbtpMsg == NULL), false, "TBTP message failed");
+    NS_TEST_ASSERT_MSG_EQ((crMsg == nullptr), false, "CR message creation failed");
+    NS_TEST_ASSERT_MSG_EQ((tbtpMsg == nullptr), false, "TBTP message failed");
 
     // container content correct at points messages got
     NS_TEST_ASSERT_MSG_EQ((m_msgsRead[0] == crMsg), true, "first message incorrect");
@@ -303,10 +303,10 @@ class SatCtrlMsgContainerTestSuite : public TestSuite
 };
 
 SatCtrlMsgContainerTestSuite::SatCtrlMsgContainerTestSuite()
-    : TestSuite("sat-ctrl-msg-container-unit-test", UNIT)
+    : TestSuite("sat-ctrl-msg-container-unit-test", Type::UNIT)
 {
-    AddTestCase(new SatCtrlMsgContDelOnTestCase, TestCase::QUICK);
-    AddTestCase(new SatCtrlMsgContDelOffTestCase, TestCase::QUICK);
+    AddTestCase(new SatCtrlMsgContDelOnTestCase, TestCase::Duration::QUICK);
+    AddTestCase(new SatCtrlMsgContDelOffTestCase, TestCase::Duration::QUICK);
 }
 
 // Do allocate an instance of this TestSuite

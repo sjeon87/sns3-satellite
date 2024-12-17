@@ -28,15 +28,20 @@
 #include <ns3/double.h>
 #include <ns3/enum.h>
 #include <ns3/log.h>
+#include <ns3/satellite-env-variables.h>
+#include <ns3/singleton.h>
 #include <ns3/uinteger.h>
 
 #include <algorithm>
+#include <cmath>
 #include <fstream>
 #include <iostream>
 #include <limits>
 #include <map>
 #include <sstream>
+#include <string>
 #include <utility>
+#include <vector>
 
 NS_LOG_COMPONENT_DEFINE("SatWaveformConf");
 
@@ -192,7 +197,7 @@ SatWaveformConf::SatWaveformConf()
     NS_ASSERT(false);
 }
 
-SatWaveformConf::SatWaveformConf(std::string filePathName)
+SatWaveformConf::SatWaveformConf(std::string directoryPathName)
     : m_waveforms(),
       m_targetBLER(0.00001),
       m_acmEnabled(false),
@@ -202,9 +207,19 @@ SatWaveformConf::SatWaveformConf(std::string filePathName)
       m_burstLength(SatEnums::UNKNOWN_BURST)
 {
     NS_LOG_FUNCTION(this);
-    ReadFromFile(filePathName);
 
     ObjectBase::ConstructSelf(AttributeConstructionList());
+
+    if (!Singleton<SatEnvVariables>::Get()->IsValidDirectory(directoryPathName))
+    {
+        NS_FATAL_ERROR("No such directory: " << directoryPathName);
+    }
+
+    std::string waveformsFilePathName = directoryPathName + "/waveforms.txt";
+    std::string defaultWaveform = directoryPathName + "/default_waveform.txt";
+
+    ReadFromFile(waveformsFilePathName);
+    ReadFromFileDefaultWaveform(defaultWaveform);
 
     switch (m_burstLength)
     {
@@ -238,15 +253,11 @@ SatWaveformConf::GetTypeId(void)
                                           BooleanValue(false),
                                           MakeBooleanAccessor(&SatWaveformConf::m_acmEnabled),
                                           MakeBooleanChecker())
-                            .AddAttribute("DefaultWfId",
-                                          "Default waveform id",
-                                          UintegerValue(3),
-                                          MakeUintegerAccessor(&SatWaveformConf::m_defaultWfId),
-                                          MakeUintegerChecker<uint32_t>(1, 22))
                             .AddAttribute("BurstLength",
                                           "Default burst length",
                                           EnumValue(SatEnums::SHORT_AND_LONG_BURST),
-                                          MakeEnumAccessor(&SatWaveformConf::m_burstLength),
+                                          MakeEnumAccessor<SatEnums::SatWaveFormBurstLength_t>(
+                                              &SatWaveformConf::m_burstLength),
                                           MakeEnumChecker(SatEnums::SHORT_BURST,
                                                           "ShortBurst",
                                                           SatEnums::LONG_BURST,
@@ -268,6 +279,38 @@ SatWaveformConf::GetInstanceTypeId(void) const
 SatWaveformConf::~SatWaveformConf()
 {
     NS_LOG_FUNCTION(this);
+}
+
+void
+SatWaveformConf::ReadFromFileDefaultWaveform(std::string filePathName)
+{
+    NS_LOG_FUNCTION(this << filePathName);
+
+    // READ FROM THE SPECIFIED INPUT FILE
+    std::ifstream* ifs = new std::ifstream(filePathName.c_str(), std::ifstream::in);
+
+    if (!ifs->is_open())
+    {
+        // script might be launched by test.py, try a different base path
+        delete ifs;
+        filePathName = "../../" + filePathName;
+        ifs = new std::ifstream(filePathName.c_str(), std::ifstream::in);
+
+        if (!ifs->is_open())
+        {
+            NS_FATAL_ERROR("The file " << filePathName << " is not found.");
+        }
+    }
+
+    // Read line by line
+    std::string line;
+    std::getline(*ifs, line);
+    std::istringstream line_ss(line);
+    if (!(line_ss >> m_defaultWfId))
+    {
+        NS_FATAL_ERROR("SatWaveformConf::ReadFromFileDefaultWaveform - Waveform conf vector has "
+                       "unexpected amount of elements!");
+    }
 }
 
 void

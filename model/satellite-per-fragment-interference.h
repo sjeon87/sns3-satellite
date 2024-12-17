@@ -23,6 +23,10 @@
 
 #include "satellite-per-packet-interference.h"
 
+#include <stdint.h>
+#include <utility>
+#include <vector>
+
 namespace ns3
 {
 

@@ -44,13 +44,17 @@
 #include <ns3/satellite-net-device.h>
 #include <ns3/satellite-phy.h>
 #include <ns3/satellite-time-tag.h>
+#include <ns3/satellite-topology.h>
 #include <ns3/scalar-collector.h>
 #include <ns3/singleton.h>
 #include <ns3/string.h>
 #include <ns3/traffic-time-tag.h>
 #include <ns3/unit-conversion-collector.h>
 
+#include <map>
 #include <sstream>
+#include <string>
+#include <utility>
 
 NS_LOG_COMPONENT_DEFINE("SatStatsPltHelper");
 
@@ -442,26 +446,6 @@ SatStatsPltHelper::RxPltCallback(const Time& plt, const Address& from)
     }
 }
 
-void
-SatStatsPltHelper::SaveAddressAndIdentifier(Ptr<Node> utNode)
-{
-    NS_LOG_FUNCTION(this << utNode->GetId());
-
-    const SatIdMapper* satIdMapper = Singleton<SatIdMapper>::Get();
-    const Address addr = satIdMapper->GetUtMacWithNode(utNode);
-
-    if (addr.IsInvalid())
-    {
-        NS_LOG_WARN(this << " Node " << utNode->GetId() << " is not a valid UT");
-    }
-    else
-    {
-        const uint32_t identifier = GetIdentifierForUt(utNode);
-        m_identifierMap[addr] = identifier;
-        NS_LOG_INFO(this << " associated address " << addr << " with identifier " << identifier);
-    }
-}
-
 bool
 SatStatsPltHelper::ConnectProbeToCollector(Ptr<Probe> probe, uint32_t identifier)
 {
@@ -522,6 +506,72 @@ SatStatsPltHelper::ConnectProbeToCollector(Ptr<Probe> probe, uint32_t identifier
     else
     {
         NS_LOG_WARN(this << " unable to connect probe " << probe->GetName() << " to collector "
+                         << identifier);
+    }
+
+    return ret;
+}
+
+bool
+SatStatsPltHelper::DisconnectProbeFromCollector(Ptr<Probe> probe, uint32_t identifier)
+{
+    NS_LOG_FUNCTION(this << probe << probe->GetName() << identifier);
+
+    bool ret = false;
+    switch (GetOutputType())
+    {
+    case SatStatsHelper::OUTPUT_SCALAR_FILE:
+    case SatStatsHelper::OUTPUT_SCALAR_PLOT:
+        ret = m_terminalCollectors.DisconnectWithProbe(probe,
+                                                       "OutputSeconds",
+                                                       identifier,
+                                                       &ScalarCollector::TraceSinkDouble);
+        break;
+
+    case SatStatsHelper::OUTPUT_SCATTER_FILE:
+    case SatStatsHelper::OUTPUT_SCATTER_PLOT:
+        ret = m_terminalCollectors.DisconnectWithProbe(probe,
+                                                       "OutputSeconds",
+                                                       identifier,
+                                                       &UnitConversionCollector::TraceSinkDouble);
+        break;
+
+    case SatStatsHelper::OUTPUT_HISTOGRAM_FILE:
+    case SatStatsHelper::OUTPUT_HISTOGRAM_PLOT:
+    case SatStatsHelper::OUTPUT_PDF_FILE:
+    case SatStatsHelper::OUTPUT_PDF_PLOT:
+    case SatStatsHelper::OUTPUT_CDF_FILE:
+    case SatStatsHelper::OUTPUT_CDF_PLOT:
+        if (m_averagingMode)
+        {
+            ret = m_terminalCollectors.DisconnectWithProbe(probe,
+                                                           "OutputSeconds",
+                                                           identifier,
+                                                           &ScalarCollector::TraceSinkDouble);
+        }
+        else
+        {
+            ret = m_terminalCollectors.DisconnectWithProbe(probe,
+                                                           "OutputSeconds",
+                                                           identifier,
+                                                           &DistributionCollector::TraceSinkDouble);
+        }
+        break;
+
+    default:
+        NS_FATAL_ERROR(GetOutputTypeName(GetOutputType())
+                       << " is not a valid output type for this statistics.");
+        break;
+    }
+
+    if (ret)
+    {
+        NS_LOG_INFO(this << " probe " << probe->GetName() << ", disconnected from collector "
+                         << identifier);
+    }
+    else
+    {
+        NS_LOG_WARN(this << " unable to disconnect probe " << probe->GetName() << " from collector "
                          << identifier);
     }
 
@@ -609,7 +659,7 @@ void
 SatStatsFwdAppPltHelper::DoInstallProbes()
 {
     NS_LOG_FUNCTION(this);
-    NodeContainer utUsers = GetSatHelper()->GetUtUsers();
+    NodeContainer utUsers = Singleton<SatTopology>::Get()->GetUtUserNodes();
 
     for (NodeContainer::Iterator it = utUsers.Begin(); it != utUsers.End(); ++it)
     {
@@ -636,7 +686,8 @@ SatStatsFwdAppPltHelper::DoInstallProbes()
                 if (probe->ConnectByObject("RxPlt", app))
                 {
                     isConnected = ConnectProbeToCollector(probe, identifier);
-                    m_probes.push_back(probe->GetObject<Probe>());
+                    m_probes.insert(
+                        std::make_pair(probe->GetObject<Probe>(), std::make_pair(*it, identifier)));
                 }
             }
 
@@ -661,6 +712,35 @@ SatStatsFwdAppPltHelper::DoInstallProbes()
     } // end of `for (it = utUsers.Begin(); it != utUsers.End (); ++it)`
 
 } // end of `void DoInstallProbes ();`
+
+void
+SatStatsFwdAppPltHelper::UpdateIdentifierOnProbes()
+{
+    NS_LOG_FUNCTION(this);
+
+    std::map<Ptr<Probe>, std::pair<Ptr<Node>, uint32_t>>::iterator it;
+
+    for (it = m_probes.begin(); it != m_probes.end(); it++)
+    {
+        Ptr<Probe> probe = it->first;
+        Ptr<Node> node = it->second.first;
+        uint32_t identifier = it->second.second;
+
+        if (!DisconnectProbeFromCollector(probe, identifier))
+        {
+            NS_FATAL_ERROR("Error disconnecting trace file on handover");
+        }
+
+        identifier = GetIdentifierForUt(node);
+
+        if (!ConnectProbeToCollector(probe, identifier))
+        {
+            NS_FATAL_ERROR("Error connecting trace file on handover");
+        }
+
+        it->second.second = identifier;
+    }
+} // end of `void UpdateIdentifierOnProbes ();`
 
 // RETURN LINK APPLICATION-LEVEL //////////////////////////////////////////////
 
@@ -690,7 +770,7 @@ SatStatsRtnAppPltHelper::DoInstallProbes()
     NS_LOG_FUNCTION(this);
 
     // Connect to trace sources at GW user node's applications.
-    NodeContainer gwUsers = GetSatHelper()->GetGwUsers();
+    NodeContainer gwUsers = Singleton<SatTopology>::Get()->GetGwUserNodes();
     Callback<void, const Time&, const Address&> rxPltCallback =
         MakeCallback(&SatStatsRtnAppPltHelper::Ipv4Callback, this);
 

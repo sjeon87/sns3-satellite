@@ -138,8 +138,8 @@ SatFrameAllocatorTestCase::SatFrameAllocatorTestCase()
     m_cnoValues[9] = SatUtils::DbToLinear(60.0);
 
     std::string dataPath = Singleton<SatEnvVariables>::Get()->GetDataPath();
-    std::string fileNameWithPath = dataPath + "/dvbRcs2Waveforms.txt";
-    m_waveFormConf = CreateObject<SatWaveformConf>(fileNameWithPath);
+    std::string folderNameWithPath = dataPath + "/scenarios/geo-33E/waveforms";
+    m_waveFormConf = CreateObject<SatWaveformConf>(folderNameWithPath);
 }
 
 SatFrameAllocatorTestCase::~SatFrameAllocatorTestCase()
@@ -807,9 +807,9 @@ class SatFrameAllocatorTestSuite : public TestSuite
 };
 
 SatFrameAllocatorTestSuite::SatFrameAllocatorTestSuite()
-    : TestSuite("sat-frame-allocator-test", UNIT)
+    : TestSuite("sat-frame-allocator-test", Type::UNIT)
 {
-    AddTestCase(new SatFrameAllocatorTestCase, TestCase::QUICK);
+    AddTestCase(new SatFrameAllocatorTestCase, TestCase::Duration::QUICK);
 }
 
 // Do allocate an instance of this TestSuite

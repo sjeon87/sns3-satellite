@@ -29,7 +29,10 @@
 #include <ns3/object.h>
 
 #include <map>
+#include <stdint.h>
 #include <string>
+#include <utility>
+#include <vector>
 
 namespace ns3
 {

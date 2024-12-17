@@ -31,6 +31,8 @@
 #include <ns3/string.h>
 
 #include <sstream>
+#include <string>
+#include <utility>
 
 NS_LOG_COMPONENT_DEFINE("SatLinkResults");
 
@@ -47,7 +49,8 @@ SatLinkResults::SatLinkResults()
     : m_isInitialized(false)
 {
     std::string dataPath = Singleton<SatEnvVariables>::Get()->GetDataPath();
-    m_inputPath = Singleton<SatEnvVariables>::Get()->LocateDirectory(dataPath + "/linkresults/");
+    m_inputPath = Singleton<SatEnvVariables>::Get()->LocateDirectory(
+        dataPath + "/additional-input/linkresults/");
 }
 
 TypeId

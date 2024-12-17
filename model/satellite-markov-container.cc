@@ -24,6 +24,8 @@
 
 #include <ns3/log.h>
 
+#include <vector>
+
 namespace ns3
 {
 
@@ -45,10 +47,10 @@ SatMarkovContainer::GetTypeId(void)
 }
 
 SatMarkovContainer::SatMarkovContainer()
-    : m_markovModel(NULL),
-      m_markovConf(NULL),
-      m_fader_up(NULL),
-      m_fader_down(NULL),
+    : m_markovModel(nullptr),
+      m_markovConf(nullptr),
+      m_fader_up(nullptr),
+      m_fader_down(nullptr),
       m_numOfStates(),
       m_numOfSets(),
       m_currentSet(),
@@ -72,10 +74,10 @@ SatMarkovContainer::SatMarkovContainer()
 SatMarkovContainer::SatMarkovContainer(Ptr<SatMarkovConf> markovConf,
                                        SatBaseFading::ElevationCallback elevation,
                                        SatBaseFading::VelocityCallback velocity)
-    : m_markovModel(NULL),
+    : m_markovModel(nullptr),
       m_markovConf(markovConf),
-      m_fader_up(NULL),
-      m_fader_down(NULL),
+      m_fader_up(nullptr),
+      m_fader_down(nullptr),
       m_numOfStates(markovConf->GetStateCount()),
       m_numOfSets(markovConf->GetNumOfSets()),
       m_currentState(markovConf->GetInitialState()),
@@ -137,10 +139,10 @@ SatMarkovContainer::Reset()
 {
     NS_LOG_FUNCTION(this);
 
-    m_markovConf = NULL;
-    m_fader_up = NULL;
-    m_fader_down = NULL;
-    m_markovModel = NULL;
+    m_markovConf = nullptr;
+    m_fader_up = nullptr;
+    m_fader_down = nullptr;
+    m_markovModel = nullptr;
 
     m_currentElevation.Nullify();
     m_velocity.Nullify();

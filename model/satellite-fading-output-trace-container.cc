@@ -28,6 +28,13 @@
 #include <ns3/singleton.h>
 #include <ns3/string.h>
 
+#include <ios>
+#include <sstream>
+#include <stdint.h>
+#include <string>
+#include <utility>
+#include <vector>
+
 NS_LOG_COMPONENT_DEFINE("SatFadingOutputTraceContainer");
 
 namespace ns3
@@ -103,7 +110,7 @@ SatFadingOutputTraceContainer::AddNode(key_t key)
 
     if (beamId < 0 || (utId < 0 && gwId < 0))
     {
-        return NULL;
+        return nullptr;
     }
     else
     {
@@ -186,7 +193,7 @@ SatFadingOutputTraceContainer::AddToContainer(key_t key, std::vector<double> new
 
     Ptr<SatOutputFileStreamDoubleContainer> node = FindNode(key);
 
-    if (node != NULL)
+    if (node != nullptr)
     {
         node->AddToContainer(newItem);
     }

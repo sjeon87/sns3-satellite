@@ -26,6 +26,8 @@
 #include "ns3/satellite-module.h"
 #include "ns3/traffic-module.h"
 
+#include <stdint.h>
+
 using namespace ns3;
 
 /**
@@ -50,6 +52,8 @@ main(int argc, char* argv[])
     Ptr<SimulationHelper> simulationHelper = CreateObject<SimulationHelper>("generic-launcher");
     simulationHelper->DisableAllCapacityAssignmentCategories();
     simulationHelper->EnableCrdsa();
+
+    simulationHelper->LoadScenario("geo-33E");
 
     CommandLine cmd;
     simulationHelper->AddDefaultUiArguments(cmd, inputFileNameWithPath);

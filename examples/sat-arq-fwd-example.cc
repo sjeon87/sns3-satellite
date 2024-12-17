@@ -100,10 +100,9 @@ main(int argc, char* argv[])
     Config::SetDefault("ns3::SatGenericStreamEncapsulatorArq::RxWaitingTime",
                        TimeValue(Seconds(1.8)));
 
-    // Creating the reference system. Note, currently the satellite module supports
-    // only one reference system, which is named as "Scenario72". The string is utilized
-    // in mapping the scenario to the needed reference system configuration files. Arbitrary
-    // scenario name results in fatal error.
+    simulationHelper->LoadScenario("geo-33E");
+
+    // Creating the reference system.
     simulationHelper->CreateSatScenario();
 
     //---- Start CBR application definitions
@@ -112,16 +111,17 @@ main(int argc, char* argv[])
 
     if (endUsersPerUt * utsPerBeam > 0)
     {
-        Config::SetDefault("ns3::CbrApplication::Interval", TimeValue(Time(interval)));
-        Config::SetDefault("ns3::CbrApplication::PacketSize", UintegerValue(packetSize));
-
         /// Create applicationa on GW user
-        simulationHelper->InstallTrafficModel(SimulationHelper::CBR,
-                                              SimulationHelper::UDP,
-                                              SimulationHelper::FWD_LINK,
-                                              appStartTime,
-                                              simLength,
-                                              Seconds(0.001));
+        simulationHelper->GetTrafficHelper()->AddCbrTraffic(
+            SatTrafficHelper::FWD_LINK,
+            SatTrafficHelper::UDP,
+            interval,
+            packetSize,
+            NodeContainer(Singleton<SatTopology>::Get()->GetGwUserNode(0)),
+            Singleton<SatTopology>::Get()->GetUtUserNodes(),
+            appStartTime,
+            simLength,
+            Seconds(0.001));
     }
     //---- Stop CBR application definitions
 

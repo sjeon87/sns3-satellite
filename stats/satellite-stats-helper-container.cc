@@ -22,39 +22,46 @@
 
 #include "satellite-stats-helper-container.h"
 
+#include "satellite-stats-antenna-gain-helper.h"
+#include "satellite-stats-backlogged-request-helper.h"
+#include "satellite-stats-beam-service-time-helper.h"
+#include "satellite-stats-capacity-request-helper.h"
+#include "satellite-stats-carrier-id-helper.h"
+#include "satellite-stats-composite-sinr-helper.h"
+#include "satellite-stats-delay-helper.h"
+#include "satellite-stats-frame-load-helper.h"
+#include "satellite-stats-frame-type-usage-helper.h"
+#include "satellite-stats-fwd-link-scheduler-symbol-rate-helper.h"
+#include "satellite-stats-jitter-helper.h"
+#include "satellite-stats-link-delay-helper.h"
+#include "satellite-stats-link-jitter-helper.h"
+#include "satellite-stats-link-modcod-helper.h"
+#include "satellite-stats-link-rx-power-helper.h"
+#include "satellite-stats-link-sinr-helper.h"
+#include "satellite-stats-marsala-correlation-helper.h"
+#include "satellite-stats-packet-collision-helper.h"
+#include "satellite-stats-packet-drop-rate-helper.h"
+#include "satellite-stats-packet-error-helper.h"
+#include "satellite-stats-plt-helper.h"
+#include "satellite-stats-queue-helper.h"
+#include "satellite-stats-rbdc-request-helper.h"
+#include "satellite-stats-resources-granted-helper.h"
+#include "satellite-stats-satellite-queue-helper.h"
+#include "satellite-stats-signalling-load-helper.h"
+#include "satellite-stats-throughput-helper.h"
+#include "satellite-stats-waveform-usage-helper.h"
+#include "satellite-stats-window-load-helper.h"
+
 #include <ns3/enum.h>
 #include <ns3/log.h>
 #include <ns3/satellite-helper.h>
-#include <ns3/satellite-stats-antenna-gain-helper.h>
-#include <ns3/satellite-stats-backlogged-request-helper.h>
-#include <ns3/satellite-stats-beam-service-time-helper.h>
-#include <ns3/satellite-stats-capacity-request-helper.h>
-#include <ns3/satellite-stats-carrier-id-helper.h>
-#include <ns3/satellite-stats-composite-sinr-helper.h>
-#include <ns3/satellite-stats-delay-helper.h>
-#include <ns3/satellite-stats-frame-load-helper.h>
-#include <ns3/satellite-stats-frame-type-usage-helper.h>
-#include <ns3/satellite-stats-fwd-link-scheduler-symbol-rate-helper.h>
-#include <ns3/satellite-stats-jitter-helper.h>
-#include <ns3/satellite-stats-link-delay-helper.h>
-#include <ns3/satellite-stats-link-jitter-helper.h>
-#include <ns3/satellite-stats-link-modcod-helper.h>
-#include <ns3/satellite-stats-link-rx-power-helper.h>
-#include <ns3/satellite-stats-link-sinr-helper.h>
-#include <ns3/satellite-stats-marsala-correlation-helper.h>
-#include <ns3/satellite-stats-packet-collision-helper.h>
-#include <ns3/satellite-stats-packet-drop-rate-helper.h>
-#include <ns3/satellite-stats-packet-error-helper.h>
-#include <ns3/satellite-stats-plt-helper.h>
-#include <ns3/satellite-stats-queue-helper.h>
-#include <ns3/satellite-stats-rbdc-request-helper.h>
-#include <ns3/satellite-stats-resources-granted-helper.h>
-#include <ns3/satellite-stats-satellite-queue-helper.h>
-#include <ns3/satellite-stats-signalling-load-helper.h>
-#include <ns3/satellite-stats-throughput-helper.h>
-#include <ns3/satellite-stats-waveform-usage-helper.h>
-#include <ns3/satellite-stats-window-load-helper.h>
+#include <ns3/satellite-topology.h>
+#include <ns3/satellite-ut-mac.h>
+#include <ns3/singleton.h>
 #include <ns3/string.h>
+
+#include <list>
+#include <string>
 
 NS_LOG_COMPONENT_DEFINE("SatStatsHelperContainer");
 
@@ -63,10 +70,29 @@ namespace ns3
 
 NS_OBJECT_ENSURE_REGISTERED(SatStatsHelperContainer);
 
-SatStatsHelperContainer::SatStatsHelperContainer(Ptr<const SatHelper> satHelper)
+SatStatsHelperContainer::SatStatsHelperContainer(Ptr<SatHelper> satHelper)
     : m_satHelper(satHelper)
 {
     NS_LOG_FUNCTION(this);
+
+    NodeContainer uts = Singleton<SatTopology>::Get()->GetUtNodes();
+    for (NodeContainer::Iterator it = uts.Begin(); it != uts.End(); it++)
+    {
+        Ptr<Node> ut = *it;
+        for (uint32_t i = 0; i < ut->GetNDevices(); i++)
+        {
+            Ptr<SatNetDevice> netDevice = DynamicCast<SatNetDevice>(ut->GetDevice(i));
+            if (netDevice)
+            {
+                Ptr<SatUtMac> utMac = DynamicCast<SatUtMac>(netDevice->GetMac());
+                if (utMac != nullptr)
+                {
+                    utMac->SetUpdateAddressAndIdentifierCallback(
+                        MakeCallback(&SatStatsHelperContainer::UpdateAddressAndIdentifier, this));
+                }
+            }
+        }
+    }
 }
 
 void
@@ -163,7 +189,7 @@ SatStatsHelperContainer::DoDispose()
   .AddAttribute (# id,                                                \
       std::string ("Enable the output of ") + desc,                   \
       EnumValue (SatStatsHelper::OUTPUT_NONE),                        \
-      MakeEnumAccessor (&SatStatsHelperContainer::Add ## id),
+      MakeEnumAccessor<SatStatsHelper::OutputType_t> (&SatStatsHelperContainer::Add ## id),
 
 #define ADD_SAT_STATS_ATTRIBUTES_BASIC_SET(id, desc)                                               \
     ADD_SAT_STATS_ATTRIBUTE_HEAD(Global##id, std::string("global ") + desc)                        \
@@ -2434,6 +2460,19 @@ SatStatsHelperContainer::GetOutputTypeSuffix(SatStatsHelper::OutputType_t output
 
   NS_FATAL_ERROR("SatStatsHelperContainer - Invalid output type");
   return "";
+}
+
+void
+SatStatsHelperContainer::UpdateAddressAndIdentifier(Ptr<Node> utNode)
+{
+  NS_LOG_FUNCTION(this << utNode->GetId());
+
+  std::list<Ptr<SatStatsHelper>>::iterator it;
+  for (it = m_stats.begin(); it != m_stats.end(); it++)
+  {
+      (*it)->UpdateAddressAndIdentifier(utNode);
+      (*it)->UpdateIdentifierOnProbes();
+  }
 }
 
 } // end of namespace ns3

@@ -300,14 +300,15 @@ SatPerPacketFwdLinkUserTestCase::DoRun(void)
 
     Config::SetDefault("ns3::SatHelper::UtCount", UintegerValue(1));
     Config::SetDefault("ns3::SatHelper::UtUsers", UintegerValue(1));
-    Config::SetDefault("ns3::SatGeoHelper::DaFwdLinkInterferenceModel",
+    Config::SetDefault("ns3::SatOrbiterHelper::DaFwdLinkInterferenceModel",
                        EnumValue(SatPhyRxCarrierConf::IF_PER_PACKET));
     Config::SetDefault("ns3::SatUtHelper::DaFwdLinkInterferenceModel",
                        EnumValue(SatPhyRxCarrierConf::IF_PER_PACKET));
     Config::SetDefault("ns3::SatPhyRxCarrierConf::EnableIntfOutputTrace", BooleanValue(true));
 
     // Creating the reference system.
-    Ptr<SatHelper> helper = CreateObject<SatHelper>();
+    Ptr<SatHelper> helper = CreateObject<SatHelper>(
+        Singleton<SatEnvVariables>::Get()->LocateDataDirectory() + "/scenarios/geo-33E");
 
     // create user defined scenario with beams 1 and 5
     SatBeamUserInfo beamInfo = SatBeamUserInfo(1, 1);
@@ -328,8 +329,8 @@ SatPerPacketFwdLinkUserTestCase::DoRun(void)
     Config::Connect("/NodeList/*/DeviceList/*/FeederPhy/*/PhyRx/RxCarrierList/*/LinkBudgetTrace",
                     MakeCallback(&LinkBudgetTraceCb));
 
-    NodeContainer utUsers = helper->GetUtUsers();
-    NodeContainer gwUsers = helper->GetGwUsers();
+    NodeContainer utUsers = Singleton<SatTopology>::Get()->GetUtUserNodes();
+    NodeContainer gwUsers = Singleton<SatTopology>::Get()->GetGwUserNodes();
     uint16_t port = 9;
 
     // create Sink helper
@@ -495,14 +496,15 @@ SatPerPacketFwdLinkFullTestCase::DoRun(void)
 
     Config::SetDefault("ns3::SatHelper::UtCount", UintegerValue(1));
     Config::SetDefault("ns3::SatHelper::UtUsers", UintegerValue(1));
-    Config::SetDefault("ns3::SatGeoHelper::DaFwdLinkInterferenceModel",
+    Config::SetDefault("ns3::SatOrbiterHelper::DaFwdLinkInterferenceModel",
                        EnumValue(SatPhyRxCarrierConf::IF_PER_PACKET));
     Config::SetDefault("ns3::SatUtHelper::DaFwdLinkInterferenceModel",
                        EnumValue(SatPhyRxCarrierConf::IF_PER_PACKET));
     Config::SetDefault("ns3::SatPhyRxCarrierConf::EnableIntfOutputTrace", BooleanValue(true));
 
     // Creating the reference system.
-    Ptr<SatHelper> helper = CreateObject<SatHelper>();
+    Ptr<SatHelper> helper = CreateObject<SatHelper>(
+        Singleton<SatEnvVariables>::Get()->LocateDataDirectory() + "/scenarios/geo-33E");
 
     helper->CreatePredefinedScenario(SatHelper::FULL);
 
@@ -517,8 +519,8 @@ SatPerPacketFwdLinkFullTestCase::DoRun(void)
     Config::Connect("/NodeList/*/DeviceList/*/FeederPhy/*/PhyRx/RxCarrierList/*/LinkBudgetTrace",
                     MakeCallback(&LinkBudgetTraceCb));
 
-    NodeContainer utUsers = helper->GetUtUsers();
-    NodeContainer gwUsers = helper->GetGwUsers();
+    NodeContainer utUsers = Singleton<SatTopology>::Get()->GetUtUserNodes();
+    NodeContainer gwUsers = Singleton<SatTopology>::Get()->GetGwUserNodes();
     uint16_t port = 9;
 
     // create Sink helper
@@ -686,15 +688,16 @@ SatPerPacketRtnLinkUserTestCase::DoRun(void)
     Config::SetDefault("ns3::SatSuperframeConf0::Frame0_AllocatedBandwidthHz", DoubleValue(1.25e6));
     Config::SetDefault("ns3::SatSuperframeConf0::Frame0_CarrierAllocatedBandwidthHz",
                        DoubleValue(1.25e6));
-    Config::SetDefault("ns3::SatWaveformConf::DefaultWfId", UintegerValue(13));
+    // Config::SetDefault("ns3::SatWaveformConf::DefaultWfId", UintegerValue(13));
     Config::SetDefault("ns3::SatGwHelper::DaRtnLinkInterferenceModel",
                        EnumValue(SatPhyRxCarrierConf::IF_PER_PACKET));
-    Config::SetDefault("ns3::SatGeoHelper::DaRtnLinkInterferenceModel",
+    Config::SetDefault("ns3::SatOrbiterHelper::DaRtnLinkInterferenceModel",
                        EnumValue(SatPhyRxCarrierConf::IF_PER_PACKET));
     Config::SetDefault("ns3::SatPhyRxCarrierConf::EnableIntfOutputTrace", BooleanValue(true));
 
     // Creating the reference system.
-    Ptr<SatHelper> helper = CreateObject<SatHelper>();
+    Ptr<SatHelper> helper = CreateObject<SatHelper>(
+        Singleton<SatEnvVariables>::Get()->LocateDataDirectory() + "/scenarios/geo-33E");
 
     // create user defined scenario with beams 1 and 5
     SatBeamUserInfo beamInfo = SatBeamUserInfo(1, 1);
@@ -715,8 +718,8 @@ SatPerPacketRtnLinkUserTestCase::DoRun(void)
     Config::Connect("/NodeList/*/DeviceList/*/FeederPhy/*/PhyRx/RxCarrierList/*/LinkBudgetTrace",
                     MakeCallback(&LinkBudgetTraceCb));
 
-    NodeContainer utUsers = helper->GetUtUsers();
-    NodeContainer gwUsers = helper->GetGwUsers();
+    NodeContainer utUsers = Singleton<SatTopology>::Get()->GetUtUserNodes();
+    NodeContainer gwUsers = Singleton<SatTopology>::Get()->GetGwUserNodes();
     uint16_t port = 9;
 
     // create Sink helper
@@ -851,15 +854,16 @@ SatPerPacketRtnLinkFullTestCase::DoRun(void)
     Config::SetDefault("ns3::SatSuperframeConf0::Frame0_AllocatedBandwidthHz", DoubleValue(1.25e6));
     Config::SetDefault("ns3::SatSuperframeConf0::Frame0_CarrierAllocatedBandwidthHz",
                        DoubleValue(1.25e6));
-    Config::SetDefault("ns3::SatWaveformConf::DefaultWfId", UintegerValue(13));
+    // Config::SetDefault("ns3::SatWaveformConf::DefaultWfId", UintegerValue(13));
     Config::SetDefault("ns3::SatGwHelper::DaRtnLinkInterferenceModel",
                        EnumValue(SatPhyRxCarrierConf::IF_PER_PACKET));
-    Config::SetDefault("ns3::SatGeoHelper::DaRtnLinkInterferenceModel",
+    Config::SetDefault("ns3::SatOrbiterHelper::DaRtnLinkInterferenceModel",
                        EnumValue(SatPhyRxCarrierConf::IF_PER_PACKET));
     Config::SetDefault("ns3::SatPhyRxCarrierConf::EnableIntfOutputTrace", BooleanValue(true));
 
     // Creating the reference system.
-    Ptr<SatHelper> helper = CreateObject<SatHelper>();
+    Ptr<SatHelper> helper = CreateObject<SatHelper>(
+        Singleton<SatEnvVariables>::Get()->LocateDataDirectory() + "/scenarios/geo-33E");
     helper->CreatePredefinedScenario(SatHelper::FULL);
 
     // set callback traces where we want results out
@@ -873,8 +877,8 @@ SatPerPacketRtnLinkFullTestCase::DoRun(void)
     Config::Connect("/NodeList/*/DeviceList/*/FeederPhy/*/PhyRx/RxCarrierList/*/LinkBudgetTrace",
                     MakeCallback(&LinkBudgetTraceCb));
 
-    NodeContainer utUsers = helper->GetUtUsers();
-    NodeContainer gwUsers = helper->GetGwUsers();
+    NodeContainer utUsers = Singleton<SatTopology>::Get()->GetUtUserNodes();
+    NodeContainer gwUsers = Singleton<SatTopology>::Get()->GetGwUserNodes();
     uint16_t port = 9;
 
     // create Sink helper
@@ -925,30 +929,30 @@ class SatPerPacketIfTestSuite : public TestSuite
 };
 
 SatPerPacketIfTestSuite::SatPerPacketIfTestSuite()
-    : TestSuite("sat-per-packet-if-test", SYSTEM)
+    : TestSuite("sat-per-packet-if-test", Type::SYSTEM)
 {
-    AddTestCase(new SatPerPacketFwdLinkUserTestCase, TestCase::QUICK);
+    AddTestCase(new SatPerPacketFwdLinkUserTestCase, TestCase::Duration::QUICK);
     AddTestCase(new SatPerPacketFwdLinkUserTestCase("DummyFrames.", SatEnums::FADING_OFF, true),
-                TestCase::QUICK);
+                TestCase::Duration::QUICK);
     AddTestCase(
         new SatPerPacketFwdLinkUserTestCase("Markov_Fading.", SatEnums::FADING_MARKOV, false),
-        TestCase::QUICK);
+        TestCase::Duration::QUICK);
     AddTestCase(new SatPerPacketFwdLinkUserTestCase("Markov_Fading, DummyFrames.",
                                                     SatEnums::FADING_MARKOV,
                                                     true),
-                TestCase::QUICK);
-    AddTestCase(new SatPerPacketFwdLinkFullTestCase, TestCase::QUICK);
+                TestCase::Duration::QUICK);
+    AddTestCase(new SatPerPacketFwdLinkFullTestCase, TestCase::Duration::QUICK);
 
     AddTestCase(
         new SatPerPacketFwdLinkFullTestCase("Markov_Fading.", SatEnums::FADING_MARKOV, false),
-        TestCase::QUICK);
-    AddTestCase(new SatPerPacketRtnLinkUserTestCase, TestCase::QUICK);
+        TestCase::Duration::QUICK);
+    AddTestCase(new SatPerPacketRtnLinkUserTestCase, TestCase::Duration::QUICK);
     AddTestCase(new SatPerPacketRtnLinkUserTestCase("Markov_Fading.", SatEnums::FADING_MARKOV),
-                TestCase::QUICK);
+                TestCase::Duration::QUICK);
 
-    AddTestCase(new SatPerPacketRtnLinkFullTestCase, TestCase::QUICK);
+    AddTestCase(new SatPerPacketRtnLinkFullTestCase, TestCase::Duration::QUICK);
     AddTestCase(new SatPerPacketRtnLinkFullTestCase("Markov_Fading.", SatEnums::FADING_MARKOV),
-                TestCase::QUICK);
+                TestCase::Duration::QUICK);
 }
 
 // Do allocate an instance of this TestSuite

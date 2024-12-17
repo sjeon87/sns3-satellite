@@ -36,6 +36,11 @@
 #include <ns3/uinteger.h>
 
 #include <algorithm>
+#include <iostream>
+#include <stdint.h>
+#include <string>
+#include <utility>
+#include <vector>
 
 NS_LOG_COMPONENT_DEFINE("SatFwdLinkScheduler");
 
@@ -123,7 +128,8 @@ SatFwdLinkScheduler::GetTypeId(void)
             .AddAttribute("AdditionalSortCriteria",
                           "Sorting criteria after priority for scheduling objects from LLC.",
                           EnumValue(SatFwdLinkScheduler::NO_SORT),
-                          MakeEnumAccessor(&SatFwdLinkScheduler::m_additionalSortCriteria),
+                          MakeEnumAccessor<SatFwdLinkScheduler::ScheduleSortingCriteria_t>(
+                              &SatFwdLinkScheduler::m_additionalSortCriteria),
                           MakeEnumChecker(SatFwdLinkScheduler::NO_SORT,
                                           "NoSorting",
                                           SatFwdLinkScheduler::BUFFERING_DELAY_SORT,
@@ -133,7 +139,8 @@ SatFwdLinkScheduler::GetTypeId(void)
             .AddAttribute("CnoEstimationMode",
                           "Mode of the C/N0 estimator",
                           EnumValue(SatCnoEstimator::LAST),
-                          MakeEnumAccessor(&SatFwdLinkScheduler::m_cnoEstimatorMode),
+                          MakeEnumAccessor<SatCnoEstimator::EstimationMode_t>(
+                              &SatFwdLinkScheduler::m_cnoEstimatorMode),
                           MakeEnumChecker(SatCnoEstimator::LAST,
                                           "LastValueInWindow",
                                           SatCnoEstimator::MINIMUM,
@@ -237,7 +244,7 @@ SatFwdLinkScheduler::GetNextFrame()
 {
     NS_FATAL_ERROR("SatFwdLinkScheduler::GetNextFrame: should not be here");
 
-    Ptr<SatBbFrame> f = NULL;
+    Ptr<SatBbFrame> f = nullptr;
 
     return std::make_pair(f, m_bbFrameConf->GetDummyBbFrameDuration());
 }
@@ -279,6 +286,14 @@ void
 SatFwdLinkScheduler::SetDummyFrameSendingEnabled(bool dummyFrameSendingEnabled)
 {
     m_dummyFrameSendingEnabled = dummyFrameSendingEnabled;
+}
+
+void
+SatFwdLinkScheduler::ClearAllPackets()
+{
+    NS_LOG_FUNCTION(this);
+
+    NS_FATAL_ERROR("Must use subclasses");
 }
 
 void
@@ -381,7 +396,7 @@ SatFwdLinkScheduler::CreateCnoEstimator()
 {
     NS_LOG_FUNCTION(this);
 
-    Ptr<SatCnoEstimator> estimator = NULL;
+    Ptr<SatCnoEstimator> estimator = nullptr;
 
     switch (m_cnoEstimatorMode)
     {

@@ -33,6 +33,9 @@
 #include <ns3/simulator.h>
 
 #include <algorithm>
+#include <limits>
+#include <map>
+#include <utility>
 
 NS_LOG_COMPONENT_DEFINE("SatReturnLinkEncapsulatorArq");
 
@@ -518,7 +521,7 @@ SatReturnLinkEncapsulatorArq::ReceivePdu(Ptr<Packet> p)
                     NS_LOG_INFO("Context NOT found for SeqNo: " << i);
 
                     Ptr<SatArqBufferContext> arqContext = CreateObject<SatArqBufferContext>();
-                    arqContext->m_pdu = NULL;
+                    arqContext->m_pdu = nullptr;
                     arqContext->m_rxStatus = false;
                     arqContext->m_seqNo = i;
                     arqContext->m_retransmissionCount = 0;
@@ -605,7 +608,7 @@ SatReturnLinkEncapsulatorArq::ReassembleAndReceive()
                                       << ", status: " << it->second->m_rxStatus);
 
         // If timer is running, cancel it.
-        if (it->second->m_waitingTimer.IsRunning())
+        if (it->second->m_waitingTimer.IsPending())
         {
             it->second->m_waitingTimer.Cancel();
         }

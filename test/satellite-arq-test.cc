@@ -181,7 +181,7 @@ SatRtnArqTestCase::~SatRtnArqTestCase()
     if (m_rle)
     {
         m_rle->DoDispose();
-        m_rle = NULL;
+        m_rle = nullptr;
     }
 }
 
@@ -482,7 +482,7 @@ SatFwdArqTestCase::~SatFwdArqTestCase()
     if (m_gse)
     {
         m_gse->DoDispose();
-        m_gse = NULL;
+        m_gse = nullptr;
     }
 }
 
@@ -694,10 +694,10 @@ class SatArqTestSuite : public TestSuite
 };
 
 SatArqTestSuite::SatArqTestSuite()
-    : TestSuite("sat-arq-test", UNIT)
+    : TestSuite("sat-arq-test", Type::UNIT)
 {
-    AddTestCase(new SatRtnArqTestCase, TestCase::QUICK);
-    AddTestCase(new SatFwdArqTestCase, TestCase::QUICK);
+    AddTestCase(new SatRtnArqTestCase, TestCase::Duration::QUICK);
+    AddTestCase(new SatFwdArqTestCase, TestCase::Duration::QUICK);
 }
 
 // Do allocate an instance of this TestSuite

@@ -21,6 +21,8 @@
 
 #include "satellite-stats-packet-error-helper.h"
 
+#include "satellite-phy-rx-carrier-packet-probe.h"
+
 #include <ns3/boolean.h>
 #include <ns3/callback.h>
 #include <ns3/data-collection-object.h>
@@ -32,19 +34,22 @@
 #include <ns3/multi-file-aggregator.h>
 #include <ns3/node-container.h>
 #include <ns3/object-vector.h>
-#include <ns3/satellite-geo-net-device.h>
 #include <ns3/satellite-helper.h>
 #include <ns3/satellite-id-mapper.h>
 #include <ns3/satellite-net-device.h>
-#include <ns3/satellite-phy-rx-carrier-packet-probe.h>
+#include <ns3/satellite-orbiter-net-device.h>
 #include <ns3/satellite-phy-rx-carrier.h>
 #include <ns3/satellite-phy-rx.h>
 #include <ns3/satellite-phy.h>
+#include <ns3/satellite-topology.h>
 #include <ns3/scalar-collector.h>
 #include <ns3/singleton.h>
 #include <ns3/string.h>
 
+#include <map>
 #include <sstream>
+#include <string>
+#include <utility>
 
 NS_LOG_COMPONENT_DEFINE("SatStatsPacketErrorHelper");
 
@@ -230,7 +235,7 @@ SatStatsPacketErrorHelper::DoInstall()
     {
     case SatEnums::FORWARD_USER_CH: {
         // Connect to trace sources at UT nodes.
-        NodeContainer uts = GetSatHelper()->GetBeamHelper()->GetUtNodes();
+        NodeContainer uts = Singleton<SatTopology>::Get()->GetUtNodes();
         for (NodeContainer::Iterator it = uts.Begin(); it != uts.End(); ++it)
         {
             InstallProbeOnUt(*it);
@@ -241,14 +246,14 @@ SatStatsPacketErrorHelper::DoInstall()
 
     case SatEnums::FORWARD_FEEDER_CH: {
         // Create a map of UT addresses and identifiers.
-        NodeContainer uts = GetSatHelper()->GetBeamHelper()->GetUtNodes();
+        NodeContainer uts = Singleton<SatTopology>::Get()->GetUtNodes();
         for (NodeContainer::Iterator it = uts.Begin(); it != uts.End(); ++it)
         {
             SaveAddressAndIdentifier(*it);
         }
 
         // Connect to trace sources at SAT nodes.
-        NodeContainer sats = GetSatHelper()->GetBeamHelper()->GetGeoSatNodes();
+        NodeContainer sats = Singleton<SatTopology>::Get()->GetOrbiterNodes();
         for (NodeContainer::Iterator it = sats.Begin(); it != sats.End(); ++it)
         {
             InstallProbeOnSatFeeder(*it);
@@ -259,14 +264,14 @@ SatStatsPacketErrorHelper::DoInstall()
 
     case SatEnums::RETURN_FEEDER_CH: {
         // Create a map of UT addresses and identifiers.
-        NodeContainer uts = GetSatHelper()->GetBeamHelper()->GetUtNodes();
+        NodeContainer uts = Singleton<SatTopology>::Get()->GetUtNodes();
         for (NodeContainer::Iterator it = uts.Begin(); it != uts.End(); ++it)
         {
             SaveAddressAndIdentifier(*it);
         }
 
         // Connect to trace sources at GW nodes.
-        NodeContainer gws = GetSatHelper()->GetBeamHelper()->GetGwNodes();
+        NodeContainer gws = Singleton<SatTopology>::Get()->GetGwNodes();
         for (NodeContainer::Iterator it = gws.Begin(); it != gws.End(); ++it)
         {
             InstallProbeOnGw(*it);
@@ -277,14 +282,14 @@ SatStatsPacketErrorHelper::DoInstall()
 
     case SatEnums::RETURN_USER_CH: {
         // Create a map of UT addresses and identifiers.
-        NodeContainer uts = GetSatHelper()->GetBeamHelper()->GetUtNodes();
+        NodeContainer uts = Singleton<SatTopology>::Get()->GetUtNodes();
         for (NodeContainer::Iterator it = uts.Begin(); it != uts.End(); ++it)
         {
             SaveAddressAndIdentifier(*it);
         }
 
         // Connect to trace sources at SAT nodes.
-        NodeContainer sats = GetSatHelper()->GetBeamHelper()->GetGeoSatNodes();
+        NodeContainer sats = Singleton<SatTopology>::Get()->GetOrbiterNodes();
         for (NodeContainer::Iterator it = sats.Begin(); it != sats.End(); ++it)
         {
             InstallProbeOnSatUser(*it);
@@ -395,25 +400,126 @@ SatStatsPacketErrorHelper::ErrorRxCallback(uint32_t nPackets, const Address& fro
 
 } // end of `void ErrorRxCallback (uint32_t, const Address &, bool);`
 
-void
-SatStatsPacketErrorHelper::SaveAddressAndIdentifier(Ptr<Node> utNode)
+bool
+SatStatsPacketErrorHelper::ConnectProbeToCollector(Ptr<Probe> probe, uint32_t identifier)
 {
-    NS_LOG_FUNCTION(this << utNode->GetId());
+    NS_LOG_FUNCTION(this << probe << probe->GetName() << identifier);
 
-    const SatIdMapper* satIdMapper = Singleton<SatIdMapper>::Get();
-    const Address addr = satIdMapper->GetUtMacWithNode(utNode);
-
-    if (addr.IsInvalid())
+    // Connect the probe to the right collector.
+    bool ret = false;
+    switch (GetOutputType())
     {
-        NS_LOG_WARN(this << " Node " << utNode->GetId() << " is not a valid UT");
+    case SatStatsHelper::OUTPUT_SCALAR_FILE:
+    case SatStatsHelper::OUTPUT_SCALAR_PLOT:
+        ret = m_terminalCollectors.ConnectWithProbe(probe->GetObject<Probe>(),
+                                                    "OutputBool",
+                                                    identifier,
+                                                    &ScalarCollector::TraceSinkBoolean);
+        break;
+
+    case SatStatsHelper::OUTPUT_SCATTER_FILE:
+    case SatStatsHelper::OUTPUT_SCATTER_PLOT:
+        ret = m_terminalCollectors.ConnectWithProbe(probe->GetObject<Probe>(),
+                                                    "OutputBool",
+                                                    identifier,
+                                                    &IntervalRateCollector::TraceSinkBoolean);
+        break;
+
+    default:
+        NS_FATAL_ERROR(GetOutputTypeName(GetOutputType())
+                       << " is not a valid output type for this statistics.");
+        break;
+
+    } // end of `switch (GetOutputType ())`
+
+    if (ret)
+    {
+        NS_LOG_INFO(this << " created probe " << probe->GetName() << ", connected to collector "
+                         << identifier);
     }
     else
     {
-        const uint32_t identifier = GetIdentifierForUt(utNode);
-        m_identifierMap[addr] = identifier;
-        NS_LOG_INFO(this << " associated address " << addr << " with identifier " << identifier);
+        NS_LOG_WARN(this << " unable to connect probe " << probe->GetName() << " to collector "
+                         << identifier);
     }
+
+    return ret;
 }
+
+bool
+SatStatsPacketErrorHelper::DisconnectProbeFromCollector(Ptr<Probe> probe, uint32_t identifier)
+{
+    NS_LOG_FUNCTION(this << probe << probe->GetName() << identifier);
+
+    // Connect the probe to the right collector.
+    bool ret = false;
+    switch (GetOutputType())
+    {
+    case SatStatsHelper::OUTPUT_SCALAR_FILE:
+    case SatStatsHelper::OUTPUT_SCALAR_PLOT:
+        ret = m_terminalCollectors.DisconnectWithProbe(probe->GetObject<Probe>(),
+                                                       "OutputBool",
+                                                       identifier,
+                                                       &ScalarCollector::TraceSinkBoolean);
+        break;
+
+    case SatStatsHelper::OUTPUT_SCATTER_FILE:
+    case SatStatsHelper::OUTPUT_SCATTER_PLOT:
+        ret = m_terminalCollectors.DisconnectWithProbe(probe->GetObject<Probe>(),
+                                                       "OutputBool",
+                                                       identifier,
+                                                       &IntervalRateCollector::TraceSinkBoolean);
+        break;
+
+    default:
+        NS_FATAL_ERROR(GetOutputTypeName(GetOutputType())
+                       << " is not a valid output type for this statistics.");
+        break;
+
+    } // end of `switch (GetOutputType ())`
+
+    if (ret)
+    {
+        NS_LOG_INFO(this << " probe " << probe->GetName() << ", disconnected from collector "
+                         << identifier);
+    }
+    else
+    {
+        NS_LOG_WARN(this << " unable to disconnect probe " << probe->GetName() << " from collector "
+                         << identifier);
+    }
+
+    return ret;
+}
+
+void
+SatStatsPacketErrorHelper::UpdateIdentifierOnProbes()
+{
+    NS_LOG_FUNCTION(this);
+
+    std::map<Ptr<Probe>, std::pair<Ptr<Node>, uint32_t>>::iterator it;
+
+    for (it = m_probes.begin(); it != m_probes.end(); it++)
+    {
+        Ptr<Probe> probe = it->first;
+        Ptr<Node> node = it->second.first;
+        uint32_t identifier = it->second.second;
+
+        if (!DisconnectProbeFromCollector(probe, identifier))
+        {
+            NS_FATAL_ERROR("Error disconnecting trace file on handover");
+        }
+
+        identifier = GetIdentifierForUtUser(node);
+
+        if (!ConnectProbeToCollector(probe, identifier))
+        {
+            NS_FATAL_ERROR("Error connecting trace file on handover");
+        }
+
+        it->second.second = identifier;
+    }
+} // end of `void UpdateIdentifierOnProbes ();`
 
 void
 SatStatsPacketErrorHelper::InstallProbeOnGw(Ptr<Node> gwNode)
@@ -473,16 +579,16 @@ SatStatsPacketErrorHelper::InstallProbeOnSatFeeder(Ptr<Node> satNode)
 {
     NS_LOG_FUNCTION(this << satNode->GetId());
 
-    Ptr<NetDevice> dev = GetSatSatGeoNetDevice(satNode);
+    Ptr<NetDevice> dev = GetSatSatOrbiterNetDevice(satNode);
     Callback<void, uint32_t, const Address&, bool> callback =
         MakeCallback(&SatStatsPacketErrorHelper::ErrorRxCallback, this);
 
     Ptr<SatPhy> satPhy;
-    Ptr<SatGeoNetDevice> satGeoDev = dev->GetObject<SatGeoNetDevice>();
-    NS_ASSERT(satGeoDev != nullptr);
-    std::map<uint32_t, Ptr<SatPhy>> satGeoFeederPhys = satGeoDev->GetFeederPhy();
-    for (std::map<uint32_t, Ptr<SatPhy>>::iterator itPhy = satGeoFeederPhys.begin();
-         itPhy != satGeoFeederPhys.end();
+    Ptr<SatOrbiterNetDevice> satOrbiterDev = dev->GetObject<SatOrbiterNetDevice>();
+    NS_ASSERT(satOrbiterDev != nullptr);
+    std::map<uint32_t, Ptr<SatPhy>> satOrbiterFeederPhys = satOrbiterDev->GetFeederPhy();
+    for (std::map<uint32_t, Ptr<SatPhy>>::iterator itPhy = satOrbiterFeederPhys.begin();
+         itPhy != satOrbiterFeederPhys.end();
          ++itPhy)
     {
         satPhy = itPhy->second;
@@ -522,7 +628,7 @@ SatStatsPacketErrorHelper::InstallProbeOnSatFeeder(Ptr<Node> satNode)
 
         } // end of `for (ObjectVectorValue::Iterator itCarrier = carriers)`
 
-    } // end of `for (std::map<uint32_t, Ptr<SatPhy>>::iterator itPhy = satGeoFeederPhys)`
+    } // end of `for (std::map<uint32_t, Ptr<SatPhy>>::iterator itPhy = satOrbiterFeederPhys)`
 
 } // end of `void InstallProbeOnSatFeeder (Ptr<Node>)`
 
@@ -531,16 +637,16 @@ SatStatsPacketErrorHelper::InstallProbeOnSatUser(Ptr<Node> satNode)
 {
     NS_LOG_FUNCTION(this << satNode->GetId());
 
-    Ptr<NetDevice> dev = GetSatSatGeoNetDevice(satNode);
+    Ptr<NetDevice> dev = GetSatSatOrbiterNetDevice(satNode);
     Callback<void, uint32_t, const Address&, bool> callback =
         MakeCallback(&SatStatsPacketErrorHelper::ErrorRxCallback, this);
 
     Ptr<SatPhy> satPhy;
-    Ptr<SatGeoNetDevice> satGeoDev = dev->GetObject<SatGeoNetDevice>();
-    NS_ASSERT(satGeoDev != nullptr);
-    std::map<uint32_t, Ptr<SatPhy>> satGeoUserPhys = satGeoDev->GetUserPhy();
-    for (std::map<uint32_t, Ptr<SatPhy>>::iterator itPhy = satGeoUserPhys.begin();
-         itPhy != satGeoUserPhys.end();
+    Ptr<SatOrbiterNetDevice> satOrbiterDev = dev->GetObject<SatOrbiterNetDevice>();
+    NS_ASSERT(satOrbiterDev != nullptr);
+    std::map<uint32_t, Ptr<SatPhy>> satOrbiterUserPhys = satOrbiterDev->GetUserPhy();
+    for (std::map<uint32_t, Ptr<SatPhy>>::iterator itPhy = satOrbiterUserPhys.begin();
+         itPhy != satOrbiterUserPhys.end();
          ++itPhy)
     {
         satPhy = itPhy->second;
@@ -580,7 +686,7 @@ SatStatsPacketErrorHelper::InstallProbeOnSatUser(Ptr<Node> satNode)
 
         } // end of `for (ObjectVectorValue::Iterator itCarrier = carriers)`
 
-    } // end of `for (std::map<uint32_t, Ptr<SatPhy>>::iterator itPhy = satGeoUserPhys)`
+    } // end of `for (std::map<uint32_t, Ptr<SatPhy>>::iterator itPhy = satOrbiterUserPhys)`
 
 } // end of `void InstallProbeOnSatUser (Ptr<Node>)`
 
@@ -620,47 +726,11 @@ SatStatsPacketErrorHelper::InstallProbeOnUt(Ptr<Node> utNode)
             continue;
         }
         // Connect the object to the probe.
-        if (probe->ConnectByObject(GetTraceSourceName(), itCarrier->second))
+        if (probe->ConnectByObject(GetTraceSourceName(), itCarrier->second) &&
+            ConnectProbeToCollector(probe, identifier))
         {
-            // Connect the probe to the right collector.
-            bool ret = false;
-            switch (GetOutputType())
-            {
-            case SatStatsHelper::OUTPUT_SCALAR_FILE:
-            case SatStatsHelper::OUTPUT_SCALAR_PLOT:
-                ret = m_terminalCollectors.ConnectWithProbe(probe->GetObject<Probe>(),
-                                                            "OutputBool",
-                                                            identifier,
-                                                            &ScalarCollector::TraceSinkBoolean);
-                break;
-
-            case SatStatsHelper::OUTPUT_SCATTER_FILE:
-            case SatStatsHelper::OUTPUT_SCATTER_PLOT:
-                ret =
-                    m_terminalCollectors.ConnectWithProbe(probe->GetObject<Probe>(),
-                                                          "OutputBool",
-                                                          identifier,
-                                                          &IntervalRateCollector::TraceSinkBoolean);
-                break;
-
-            default:
-                NS_FATAL_ERROR(GetOutputTypeName(GetOutputType())
-                               << " is not a valid output type for this statistics.");
-                break;
-
-            } // end of `switch (GetOutputType ())`
-
-            if (ret)
-            {
-                NS_LOG_INFO(this << " created probe " << probeName.str()
-                                 << ", connected to collector " << identifier);
-                m_probes.push_back(probe->GetObject<Probe>());
-            }
-            else
-            {
-                NS_LOG_WARN(this << " unable to connect probe " << probeName.str()
-                                 << " to collector " << identifier);
-            }
+            m_probes.insert(
+                std::make_pair(probe->GetObject<Probe>(), std::make_pair(utNode, identifier)));
 
         } // end of `if (probe->ConnectByObject (GetTraceSourceName (), itCarrier->second))`
         else

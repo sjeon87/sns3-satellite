@@ -24,15 +24,17 @@
  * \brief Test cases to unit test Satellite Free Space Loss model.
  */
 
-#include "../helper/satellite-helper.h"
-#include "../model/satellite-free-space-loss.h"
-#include "../model/satellite-mobility-model.h"
-#include "../utils/satellite-env-variables.h"
+#include <ns3/log.h>
+#include <ns3/satellite-env-variables.h>
+#include <ns3/satellite-free-space-loss.h>
+#include <ns3/satellite-helper.h>
+#include <ns3/satellite-mobility-model.h>
+#include <ns3/satellite-topology.h>
+#include <ns3/simulator.h>
+#include <ns3/singleton.h>
+#include <ns3/test.h>
 
-#include "ns3/log.h"
-#include "ns3/simulator.h"
-#include "ns3/singleton.h"
-#include "ns3/test.h"
+#include <stdint.h>
 
 using namespace ns3;
 
@@ -82,27 +84,28 @@ SatFreeSpaceLossTestCase::DoRun(void)
     // Create simple scenario
 
     // Creating the reference system.
-    Ptr<SatHelper> helper = CreateObject<SatHelper>();
+    Ptr<SatHelper> helper = CreateObject<SatHelper>(
+        Singleton<SatEnvVariables>::Get()->LocateDataDirectory() + "/scenarios/geo-33E");
 
     helper->CreatePredefinedScenario(SatHelper::SIMPLE);
 
-    NodeContainer gw = helper->GwNodes();
-    NodeContainer ut = helper->UtNodes();
-    Ptr<Node> geo = helper->GeoSatNodes().Get(0);
+    NodeContainer gw = Singleton<SatTopology>::Get()->GetGwNodes();
+    NodeContainer ut = Singleton<SatTopology>::Get()->GetUtNodes();
+    Ptr<Node> sat = Singleton<SatTopology>::Get()->GetOrbiterNode(0);
 
     // get mobilities
     Ptr<SatMobilityModel> gwMob = gw.Get(0)->GetObject<SatMobilityModel>();
     Ptr<SatMobilityModel> utMob = ut.Get(0)->GetObject<SatMobilityModel>();
-    Ptr<SatMobilityModel> geoMob = geo->GetObject<SatMobilityModel>();
+    Ptr<SatMobilityModel> satMob = sat->GetObject<SatMobilityModel>();
 
     // set reference positions for test
     gwMob->SetGeoPosition(GeoCoordinate(25.28, 54.689444, 0.0));
     utMob->SetGeoPosition(GeoCoordinate(25.00, -26.20, 230.0));
-    geoMob->SetGeoPosition(GeoCoordinate(0.0, 33.0, 35786000.0));
+    satMob->SetGeoPosition(GeoCoordinate(0.0, 33.0, 35786000.0));
 
     // test fsl calculation in path UT - Geo Satellite
-    //  double fsl_ratio = fsl.GetFsl(utMob, geoMob, frequency);
-    double fsl_dB = fsl.GetFsldB(utMob, geoMob, frequency);
+    //  double fsl_ratio = fsl.GetFsl(utMob, satMob, frequency);
+    double fsl_dB = fsl.GetFsldB(utMob, satMob, frequency);
 
     // Calculations with big double numbers there will produce results
     // with different precisions when compiled with optimized and debug flags.
@@ -112,8 +115,8 @@ SatFreeSpaceLossTestCase::DoRun(void)
     NS_TEST_ASSERT_MSG_EQ_TOL(fsl_dB, 209.460211515483, 0.1, "FSL (UT-GEO) in dBs incorrect");
 
     // test fsl calculation in path GW - Geo Satellite
-    //  fsl_ratio = fsl.GetFsl(gwMob, geoMob, frequency);
-    fsl_dB = fsl.GetFsldB(gwMob, geoMob, frequency);
+    //  fsl_ratio = fsl.GetFsl(gwMob, satMob, frequency);
+    fsl_dB = fsl.GetFsldB(gwMob, satMob, frequency);
 
     // Calculations with big double numbers there will produce results
     // with different precisions when compiled with optimized and debug flags.
@@ -137,9 +140,9 @@ class SatFreeSpaceLossTestSuite : public TestSuite
 };
 
 SatFreeSpaceLossTestSuite::SatFreeSpaceLossTestSuite()
-    : TestSuite("sat-fsl-test", UNIT)
+    : TestSuite("sat-fsl-test", Type::UNIT)
 {
-    AddTestCase(new SatFreeSpaceLossTestCase, TestCase::QUICK);
+    AddTestCase(new SatFreeSpaceLossTestCase, TestCase::Duration::QUICK);
 }
 
 // Do allocate an instance of this TestSuite

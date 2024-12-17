@@ -22,6 +22,9 @@
 
 #include <ns3/log.h>
 
+#include <utility>
+#include <vector>
+
 NS_LOG_COMPONENT_DEFINE("SatFwdLinkSchedulerDefault");
 
 namespace ns3
@@ -102,7 +105,7 @@ SatFwdLinkSchedulerDefault::DoDispose()
 {
     NS_LOG_FUNCTION(this);
     SatFwdLinkScheduler::DoDispose();
-    m_bbFrameContainer = NULL;
+    m_bbFrameContainer = nullptr;
 }
 
 std::pair<Ptr<SatBbFrame>, const Time>
@@ -118,13 +121,13 @@ SatFwdLinkSchedulerDefault::GetNextFrame()
     Ptr<SatBbFrame> frame = m_bbFrameContainer->GetNextFrame();
     Time frameDuration;
 
-    if (frame != NULL)
+    if (frame != nullptr)
     {
         m_symbolsSent += ceil(frame->GetDuration().GetSeconds() * m_carrierBandwidthInHz);
     }
 
     // create dummy frame
-    if (m_dummyFrameSendingEnabled && frame == NULL)
+    if (m_dummyFrameSendingEnabled && frame == nullptr)
     {
         frame = Create<SatBbFrame>(m_bbFrameConf->GetDefaultModCod(),
                                    SatEnums::DUMMY_FRAME,
@@ -151,18 +154,26 @@ SatFwdLinkSchedulerDefault::GetNextFrame()
         frameDuration = frame->GetDuration();
     }
     // If no bb frame available and dummy frames disabled
-    else if (frame == NULL)
+    else if (frame == nullptr)
     {
         frameDuration = m_bbFrameConf->GetDummyBbFrameDuration();
     }
 
-    if (frame != NULL)
+    if (frame != nullptr)
     {
         frameDuration = frame->GetDuration();
         frame->SetSliceId(0);
     }
 
     return std::make_pair(frame, frameDuration);
+}
+
+void
+SatFwdLinkSchedulerDefault::ClearAllPackets()
+{
+    NS_LOG_FUNCTION(this);
+
+    m_bbFrameContainer->ClearAllFrames();
 }
 
 void

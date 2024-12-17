@@ -21,10 +21,13 @@
  *
  */
 
-#include "ns3/satellite-point-to-point-isl-channel.h"
+#include "satellite-point-to-point-isl-channel.h"
+
+#include "satellite-const-variables.h"
 
 #include "ns3/core-module.h"
-#include "ns3/satellite-const-variables.h"
+
+#include <cstddef>
 
 NS_LOG_COMPONENT_DEFINE("PointToPointIslChannel");
 
@@ -134,7 +137,8 @@ PointToPointIslChannel::GetDelay(Ptr<MobilityModel> a, Ptr<MobilityModel> b) con
 {
     NS_LOG_FUNCTION(this << a << b);
 
-    double distance = a->GetDistanceFrom(b);
+    double distance =
+        DynamicCast<SatMobilityModel>(a)->GetDistanceFrom(DynamicCast<SatMobilityModel>(b));
     double seconds = distance / m_propagationSpeed;
     return Seconds(seconds);
 }

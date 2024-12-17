@@ -24,6 +24,12 @@
 
 #include <ns3/log.h>
 
+#include <ios>
+#include <stdint.h>
+#include <string>
+#include <utility>
+#include <vector>
+
 NS_LOG_COMPONENT_DEFINE("SatPositionInputTraceContainer");
 
 namespace ns3

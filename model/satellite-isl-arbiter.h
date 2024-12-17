@@ -24,11 +24,13 @@
 #ifndef SATELLITE_ISL_ARBITER_H
 #define SATELLITE_ISL_ARBITER_H
 
+#include "satellite-orbiter-net-device.h"
+
 #include <ns3/mac48-address.h>
 #include <ns3/node.h>
 #include <ns3/packet.h>
-#include <ns3/satellite-geo-net-device.h>
 
+#include <stdint.h>
 #include <string>
 
 namespace ns3

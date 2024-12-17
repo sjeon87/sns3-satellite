@@ -43,7 +43,11 @@
 #include <ns3/traced-callback.h>
 
 #include <cstring>
+#include <map>
 #include <math.h>
+#include <stdint.h>
+#include <utility>
+#include <vector>
 
 namespace ns3
 {
@@ -225,6 +229,11 @@ class SatFwdLinkScheduler : public Object
      * \brief Set the value of m_dummyFrameSendingEnabled.
      */
     void SetDummyFrameSendingEnabled(bool dummyFrameSendingEnabled);
+
+    /**
+     * Remove all packets being treated.
+     */
+    virtual void ClearAllPackets();
 
   protected:
     typedef std::map<Mac48Address, Ptr<SatCnoEstimator>> CnoEstimatorMap_t;

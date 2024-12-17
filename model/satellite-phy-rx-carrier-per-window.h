@@ -28,6 +28,11 @@
 
 #include <ns3/singleton.h>
 
+#include <list>
+#include <stdint.h>
+#include <utility>
+#include <vector>
+
 namespace ns3
 {
 

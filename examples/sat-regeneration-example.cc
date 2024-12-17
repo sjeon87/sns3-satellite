@@ -100,8 +100,8 @@ main(int argc, char* argv[])
                        EnumValue(forwardLinkRegenerationMode));
     Config::SetDefault("ns3::SatConf::ReturnLinkRegenerationMode",
                        EnumValue(returnLinkRegenerationMode));
-    Config::SetDefault("ns3::SatGeoFeederPhy::QueueSize", UintegerValue(100000));
-    Config::SetDefault("ns3::SatGeoUserPhy::QueueSize", UintegerValue(100000));
+    Config::SetDefault("ns3::SatOrbiterFeederPhy::QueueSize", UintegerValue(100000));
+    Config::SetDefault("ns3::SatOrbiterUserPhy::QueueSize", UintegerValue(100000));
 
     /// Enable ACM
     Config::SetDefault("ns3::SatBbFrameConf::AcmEnabled", BooleanValue(true));
@@ -124,21 +124,31 @@ main(int argc, char* argv[])
 
     LogComponentEnable("sat-regeneration-example", LOG_LEVEL_INFO);
 
-    Ptr<SatHelper> helper = simulationHelper->CreateSatScenario(satScenario);
+    simulationHelper->LoadScenario("geo-33E");
 
-    Config::SetDefault("ns3::CbrApplication::Interval", StringValue(interval));
-    Config::SetDefault("ns3::CbrApplication::PacketSize", UintegerValue(packetSize));
+    simulationHelper->CreateSatScenario(satScenario);
 
-    simulationHelper->InstallTrafficModel(SimulationHelper::CBR,
-                                          SimulationHelper::UDP,
-                                          SimulationHelper::FWD_LINK,
-                                          Seconds(1.0),
-                                          Seconds(29.0));
-    simulationHelper->InstallTrafficModel(SimulationHelper::CBR,
-                                          SimulationHelper::UDP,
-                                          SimulationHelper::RTN_LINK,
-                                          Seconds(1.0),
-                                          Seconds(29.0));
+    simulationHelper->GetTrafficHelper()->AddCbrTraffic(
+        SatTrafficHelper::FWD_LINK,
+        SatTrafficHelper::UDP,
+        Time(interval),
+        packetSize,
+        NodeContainer(Singleton<SatTopology>::Get()->GetGwUserNode(0)),
+        Singleton<SatTopology>::Get()->GetUtUserNodes(),
+        Seconds(1.0),
+        Seconds(29.0),
+        Seconds(0));
+
+    simulationHelper->GetTrafficHelper()->AddCbrTraffic(
+        SatTrafficHelper::RTN_LINK,
+        SatTrafficHelper::UDP,
+        Time(interval),
+        packetSize,
+        NodeContainer(Singleton<SatTopology>::Get()->GetGwUserNode(0)),
+        Singleton<SatTopology>::Get()->GetUtUserNodes(),
+        Seconds(1.0),
+        Seconds(29.0),
+        Seconds(0));
 
     NS_LOG_INFO("--- sat-regeneration-example ---");
     NS_LOG_INFO("  Scenario used: " << scenario);

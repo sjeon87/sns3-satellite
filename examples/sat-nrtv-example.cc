@@ -99,15 +99,14 @@ main(int argc, char* argv[])
     // GlobalValue::Bind ("SimulatorImplementationType", StringValue
     // ("ns3::RealtimeSimulatorImpl"));
 
-    // Creating the reference system. Note, currently the satellite module supports
-    // only one reference system, which is named as "Scenario72". The string is utilized
-    // in mapping the scenario to the needed reference system configuration files. Arbitrary
-    // scenario name results in fatal error.
-    Ptr<SatHelper> helper = simulationHelper->CreateSatScenario(satScenario);
+    simulationHelper->LoadScenario("geo-33E");
+
+    // Creating the reference system.
+    simulationHelper->CreateSatScenario(satScenario);
 
     // get users
-    NodeContainer utUsers = helper->GetUtUsers();
-    NodeContainer gwUsers = helper->GetGwUsers();
+    NodeContainer utUsers = Singleton<SatTopology>::Get()->GetUtUserNodes();
+    NodeContainer gwUsers = Singleton<SatTopology>::Get()->GetGwUserNodes();
 
     NrtvHelper nrtvHelper(TypeId::LookupByName("ns3::TcpSocketFactory"));
     nrtvHelper.InstallUsingIpv4(gwUsers.Get(0), utUsers);

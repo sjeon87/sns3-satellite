@@ -38,11 +38,14 @@
 #include <ns3/satellite-helper.h>
 #include <ns3/satellite-mac.h>
 #include <ns3/satellite-net-device.h>
+#include <ns3/satellite-topology.h>
 #include <ns3/scalar-collector.h>
+#include <ns3/singleton.h>
 #include <ns3/string.h>
 #include <ns3/unit-conversion-collector.h>
 
 #include <sstream>
+#include <string>
 
 NS_LOG_COMPONENT_DEFINE("SatStatsFwdLinkSchedulerSymbolRateHelper");
 
@@ -78,7 +81,7 @@ SatStatsFwdLinkSchedulerSymbolRateHelper::SymbolRateCallback(uint8_t sliceId, do
 {
     NS_LOG_FUNCTION(this << sliceId << " " << symbolRate);
 
-    Ptr<DataCollectionObject> collector = NULL;
+    Ptr<DataCollectionObject> collector = nullptr;
 
     switch (GetIdentifierType())
     {
@@ -334,7 +337,7 @@ SatStatsFwdLinkSchedulerSymbolRateHelper::InstallProbes()
     NS_LOG_FUNCTION(this);
 
     // Connect to trace sources at GW nodes.
-    NodeContainer gws = GetSatHelper()->GetBeamHelper()->GetGwNodes();
+    NodeContainer gws = Singleton<SatTopology>::Get()->GetGwNodes();
 
     for (NodeContainer::Iterator it = gws.Begin(); it != gws.End(); ++it)
     {

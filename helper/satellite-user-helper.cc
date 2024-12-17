@@ -35,8 +35,16 @@
 #include <ns3/satellite-mobility-observer.h>
 #include <ns3/satellite-net-device.h>
 #include <ns3/satellite-simple-net-device.h>
+#include <ns3/satellite-topology.h>
 #include <ns3/satellite-typedefs.h>
 #include <ns3/singleton.h>
+
+#include <iostream>
+#include <map>
+#include <sstream>
+#include <string>
+#include <utility>
+#include <vector>
 
 NS_LOG_COMPONENT_DEFINE("SatUserHelper");
 
@@ -52,19 +60,21 @@ SatUserHelper::GetTypeId(void)
         TypeId("ns3::SatUserHelper")
             .SetParent<Object>()
             .AddConstructor<SatUserHelper>()
-            .AddAttribute("BackboneNetworkType",
-                          "Network used between GW and Router, and between Router and Users in "
-                          "operator network",
-                          EnumValue(SatUserHelper::NETWORK_TYPE_SAT_SIMPLE),
-                          MakeEnumAccessor(&SatUserHelper::m_backboneNetworkType),
-                          MakeEnumChecker(SatUserHelper::NETWORK_TYPE_SAT_SIMPLE,
-                                          "SatSimple",
-                                          SatUserHelper::NETWORK_TYPE_CSMA,
-                                          "Csma"))
+            .AddAttribute(
+                "BackboneNetworkType",
+                "Network used between GW and Router, and between Router and Users in "
+                "operator network",
+                EnumValue(SatUserHelper::NETWORK_TYPE_SAT_SIMPLE),
+                MakeEnumAccessor<SatUserHelper::NetworkType>(&SatUserHelper::m_backboneNetworkType),
+                MakeEnumChecker(SatUserHelper::NETWORK_TYPE_SAT_SIMPLE,
+                                "SatSimple",
+                                SatUserHelper::NETWORK_TYPE_CSMA,
+                                "Csma"))
             .AddAttribute("SubscriberNetworkType",
                           "Network used between UTs and Users in subscriber network",
                           EnumValue(SatUserHelper::NETWORK_TYPE_CSMA),
-                          MakeEnumAccessor(&SatUserHelper::m_subscriberNetworkType),
+                          MakeEnumAccessor<SatUserHelper::NetworkType>(
+                              &SatUserHelper::m_subscriberNetworkType),
                           MakeEnumChecker(SatUserHelper::NETWORK_TYPE_SAT_SIMPLE,
                                           "SatSimple",
                                           SatUserHelper::NETWORK_TYPE_CSMA,
@@ -224,31 +234,26 @@ SatUserHelper::InstallUt(Ptr<Node> ut, uint32_t userCount)
 
     m_ipv4Ut.NewNetwork();
 
-    std::pair<UtUsersContainer_t::const_iterator, bool> result =
-        m_utUsers.insert(std::make_pair(ut, users));
-
-    if (result.second == false)
+    for (NodeContainer::Iterator it = users.Begin(); it != users.End(); it++)
     {
-        NS_FATAL_ERROR("UT is already installed.");
+        Singleton<SatTopology>::Get()->AddUtUserNode(*it, ut);
     }
-
-    m_allUtUsers.Add(users);
 
     return users;
 }
 
-NodeContainer
-SatUserHelper::InstallGw(NodeContainer gw, uint32_t userCount)
+void
+SatUserHelper::InstallGw(uint32_t userCount)
 {
     NS_LOG_FUNCTION(this << userCount);
 
     InternetStackHelper internet;
 
-    if (m_router == NULL)
+    if (m_router == nullptr)
     {
         m_router = CreateObject<Node>();
         internet.Install(m_router);
-        InstallRouter(gw, m_router);
+        InstallRouter(m_router);
     }
 
     // create users and csma links between Router and users and add IP routes
@@ -285,20 +290,11 @@ SatUserHelper::InstallGw(NodeContainer gw, uint32_t userCount)
         Ptr<Ipv4StaticRouting> routing = ipv4RoutingHelper.GetStaticRouting(ipv4);
         routing->SetDefaultRoute(addresses.GetAddress(0), 1);
         NS_LOG_INFO("User default route: " << addresses.GetAddress(0));
+
+        Singleton<SatTopology>::Get()->AddGwUserNode(*i);
     }
 
-    m_gwUsers.Add(users);
     m_ipv4Gw.NewNetwork();
-
-    return m_gwUsers;
-}
-
-NodeContainer
-SatUserHelper::GetGwUsers() const
-{
-    NS_LOG_FUNCTION(this);
-
-    return m_gwUsers;
 }
 
 bool
@@ -308,8 +304,9 @@ SatUserHelper::IsGwUser(Ptr<Node> node) const
 
     bool isGwUser = false;
 
-    for (NodeContainer::Iterator it = m_gwUsers.Begin(); ((it != m_gwUsers.End()) && !isGwUser);
-         it++)
+    NodeContainer gwUsers = Singleton<SatTopology>::Get()->GetGwUserNodes();
+
+    for (NodeContainer::Iterator it = gwUsers.Begin(); ((it != gwUsers.End()) && !isGwUser); it++)
     {
         if (*it == node)
         {
@@ -318,87 +315,6 @@ SatUserHelper::IsGwUser(Ptr<Node> node) const
     }
 
     return isGwUser;
-}
-
-NodeContainer
-SatUserHelper::GetUtUsers() const
-{
-    NS_LOG_FUNCTION(this);
-
-    return m_allUtUsers;
-}
-
-NodeContainer
-SatUserHelper::GetUtUsers(Ptr<Node> ut) const
-{
-    NS_LOG_FUNCTION(this);
-
-    UtUsersContainer_t::const_iterator it = m_utUsers.find(ut);
-
-    if (it == m_utUsers.end())
-    {
-        NS_FATAL_ERROR("UT which users are requested in not installed!!!");
-    }
-
-    return it->second;
-}
-
-uint32_t
-SatUserHelper::GetGwUserCount() const
-{
-    NS_LOG_FUNCTION(this);
-
-    return m_gwUsers.GetN();
-}
-
-uint32_t
-SatUserHelper::GetUtUserCount() const
-{
-    NS_LOG_FUNCTION(this);
-
-    return m_allUtUsers.GetN();
-}
-
-uint32_t
-SatUserHelper::GetUtUserCount(Ptr<Node> ut) const
-{
-    NS_LOG_FUNCTION(this);
-
-    UtUsersContainer_t::const_iterator it = m_utUsers.find(ut);
-
-    if (it == m_utUsers.end())
-    {
-        NS_FATAL_ERROR("UT which user count is requested in not installed!!!");
-    }
-
-    return it->second.GetN();
-}
-
-Ptr<Node>
-SatUserHelper::GetUtNode(Ptr<Node> utUserNode) const
-{
-    std::map<Ptr<Node>, Ptr<Node>>::const_iterator it = m_utMap.find(utUserNode);
-
-    if (it == m_utMap.end())
-    {
-        return 0;
-    }
-    else
-    {
-        return it->second;
-    }
-}
-
-NodeContainer
-SatUserHelper::GetUtNodes() const
-{
-    NodeContainer nodes;
-    for (auto& nodeInfo : m_utUsers)
-    {
-        nodes.Add(nodeInfo.first);
-    }
-
-    return nodes;
 }
 
 void
@@ -410,11 +326,13 @@ SatUserHelper::EnableCreationTraces(Ptr<OutputStreamWrapper> stream, CallbackBas
 }
 
 void
-SatUserHelper::InstallRouter(NodeContainer gw, Ptr<Node> router)
+SatUserHelper::InstallRouter(Ptr<Node> router)
 {
     NS_LOG_FUNCTION(this);
 
-    for (NodeContainer::Iterator i = gw.Begin(); i != gw.End(); i++)
+    NodeContainer gwNodes = Singleton<SatTopology>::Get()->GetGwNodes();
+
+    for (NodeContainer::Iterator i = gwNodes.Begin(); i != gwNodes.End(); i++)
     {
         NodeContainer gwRouter = NodeContainer((*i), router);
 
@@ -660,7 +578,7 @@ SatUserHelper::UpdateUtRoutes(Address utAddress, Address gwAddress)
     NS_ASSERT_MSG(gwNdIterator != m_gwDevices.end(), "Unknown GW with MAC address " << gwAddress);
 
     Ptr<SatNetDevice> gwNd = DynamicCast<SatNetDevice>(gwNdIterator->second);
-    NS_ASSERT(gwNd != NULL);
+    NS_ASSERT(gwNd != nullptr);
     Ipv4Address ip =
         gwNd->GetNode()->GetObject<Ipv4L3Protocol>()->GetAddress(gwNd->GetIfIndex(), 0).GetLocal();
 
@@ -673,7 +591,7 @@ SatUserHelper::UpdateUtRoutes(Address utAddress, Address gwAddress)
                   "ARP cache not found to gateway " << gwAddress);
 
     Ptr<SatNetDevice> utNd = DynamicCast<SatNetDevice>(utNdIterator->second);
-    NS_ASSERT(utNd != NULL);
+    NS_ASSERT(utNd != nullptr);
     Ptr<Ipv4L3Protocol> protocol = utNd->GetNode()->GetObject<Ipv4L3Protocol>();
     uint32_t utIfIndex = utNdIterator->second->GetIfIndex();
 
@@ -683,7 +601,10 @@ SatUserHelper::UpdateUtRoutes(Address utAddress, Address gwAddress)
 
     Ipv4StaticRoutingHelper ipv4RoutingHelper;
     Ptr<Ipv4StaticRouting> routing = ipv4RoutingHelper.GetStaticRouting(protocol);
+    routing->RemoveRoute(routing->GetNRoutes() - 1);
     routing->SetDefaultRoute(ip, utIfIndex);
+
+    NS_LOG_INFO("Set default route on UT to " << ip);
 
     uint32_t satId = gwNd->GetMac()->GetSatId();
     uint32_t beamId = gwNd->GetMac()->GetBeamId();

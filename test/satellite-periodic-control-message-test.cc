@@ -27,9 +27,6 @@
  * defined in TN6.
  */
 
-#include "../helper/satellite-helper.h"
-#include "../utils/satellite-env-variables.h"
-
 #include "ns3/cbr-application.h"
 #include "ns3/cbr-helper.h"
 #include "ns3/config.h"
@@ -37,6 +34,9 @@
 #include "ns3/log.h"
 #include "ns3/packet-sink-helper.h"
 #include "ns3/packet-sink.h"
+#include "ns3/satellite-env-variables.h"
+#include "ns3/satellite-helper.h"
+#include "ns3/satellite-topology.h"
 #include "ns3/simulator.h"
 #include "ns3/singleton.h"
 #include "ns3/string.h"
@@ -137,12 +137,13 @@ SatPeriodicControlMessageTest1::DoRun(void)
                        BooleanValue(true));
 
     // Creating the reference system.
-    Ptr<SatHelper> helper = CreateObject<SatHelper>();
+    Ptr<SatHelper> helper = CreateObject<SatHelper>(
+        Singleton<SatEnvVariables>::Get()->LocateDataDirectory() + "/scenarios/geo-33E");
     helper->CreatePredefinedScenario(SatHelper::SIMPLE);
 
     // >>> Start of actual test using Simple scenario >>>
 
-    NodeContainer gwUsers = helper->GetGwUsers();
+    NodeContainer gwUsers = Singleton<SatTopology>::Get()->GetGwUserNodes();
 
     // Create the Cbr application to send UDP datagrams of size
     // 512 bytes at a rate of 500 Kb/s (defaults), one packet send (interval 1s)
@@ -151,7 +152,7 @@ SatPeriodicControlMessageTest1::DoRun(void)
                   Address(InetSocketAddress(helper->GetUserAddress(gwUsers.Get(0)), port)));
     cbr.SetAttribute("Interval", StringValue("1s"));
 
-    ApplicationContainer utApps = cbr.Install(helper->GetUtUsers());
+    ApplicationContainer utApps = cbr.Install(Singleton<SatTopology>::Get()->GetUtUserNodes());
     utApps.Start(Seconds(1.0));
     utApps.Stop(Seconds(2.1));
 
@@ -182,8 +183,8 @@ SatPeriodicControlMessageTest1::DoRun(void)
 }
 
 // The TestSuite class names the TestSuite as sat-periodic-control-message-test, identifies what
-// type of TestSuite (SYSTEM), and enables the TestCases to be run.  Typically, only the constructor
-// for this class must be defined
+// type of TestSuite (Type::SYSTEM), and enables the TestCases to be run.  Typically, only the
+// constructor for this class must be defined
 //
 class SatPeriodicControlMessageTestSuite : public TestSuite
 {
@@ -192,9 +193,9 @@ class SatPeriodicControlMessageTestSuite : public TestSuite
 };
 
 SatPeriodicControlMessageTestSuite::SatPeriodicControlMessageTestSuite()
-    : TestSuite("sat-periodic-control-message-test", SYSTEM)
+    : TestSuite("sat-periodic-control-message-test", Type::SYSTEM)
 {
-    AddTestCase(new SatPeriodicControlMessageTest1, TestCase::QUICK);
+    AddTestCase(new SatPeriodicControlMessageTest1, TestCase::Duration::QUICK);
 }
 
 // Allocate an instance of this TestSuite

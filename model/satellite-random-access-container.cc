@@ -24,6 +24,10 @@
 
 #include <ns3/log.h>
 
+#include <map>
+#include <set>
+#include <utility>
+
 NS_LOG_COMPONENT_DEFINE("SatRandomAccess");
 
 namespace ns3
@@ -67,7 +71,7 @@ SatRandomAccess::SatRandomAccess(Ptr<SatRandomAccessConf> randomAccessConf,
 
     m_uniformRandomVariable = CreateObject<UniformRandomVariable>();
 
-    if (m_randomAccessConf == NULL)
+    if (m_randomAccessConf == nullptr)
     {
         NS_FATAL_ERROR("SatRandomAccess::SatRandomAccess - Configuration object is NULL");
     }
@@ -79,8 +83,8 @@ SatRandomAccess::~SatRandomAccess()
 {
     NS_LOG_FUNCTION(this);
 
-    m_uniformRandomVariable = NULL;
-    m_randomAccessConf = NULL;
+    m_uniformRandomVariable = nullptr;
+    m_randomAccessConf = nullptr;
 
     if (!m_isDamaAvailableCb.IsNull())
     {

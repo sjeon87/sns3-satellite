@@ -22,7 +22,10 @@
  *
  */
 
-#include "ns3/satellite-point-to-point-isl-net-device.h"
+#include "satellite-point-to-point-isl-net-device.h"
+
+#include "satellite-ground-station-address-tag.h"
+#include "satellite-point-to-point-isl-channel.h"
 
 #include "ns3/drop-tail-queue.h"
 #include "ns3/error-model.h"
@@ -31,10 +34,10 @@
 #include "ns3/mac48-address.h"
 #include "ns3/pointer.h"
 #include "ns3/ppp-header.h"
-#include "ns3/satellite-ground-station-address-tag.h"
-#include "ns3/satellite-point-to-point-isl-channel.h"
 #include "ns3/simulator.h"
 #include "ns3/uinteger.h"
+
+#include <cstddef>
 
 NS_LOG_COMPONENT_DEFINE("PointToPointIslNetDevice");
 
@@ -246,16 +249,17 @@ PointToPointIslNetDevice::Receive(Ptr<Packet> packet)
             NS_FATAL_ERROR("SatGroundStationAddressTag not found");
         }
 
-        m_geoNetDevice->ReceiveFromIsl(packet, groundStationAddressTag.GetGroundStationAddress());
+        m_orbiterNetDevice->ReceiveFromIsl(packet,
+                                           groundStationAddressTag.GetGroundStationAddress());
     }
 }
 
 void
-PointToPointIslNetDevice::SetGeoNetDevice(Ptr<SatGeoNetDevice> geoNetDevice)
+PointToPointIslNetDevice::SetOrbiterNetDevice(Ptr<SatOrbiterNetDevice> orbiterNetDevice)
 {
     NS_LOG_FUNCTION(this);
 
-    m_geoNetDevice = geoNetDevice;
+    m_orbiterNetDevice = orbiterNetDevice;
 }
 
 Ptr<DropTailQueue<Packet>>

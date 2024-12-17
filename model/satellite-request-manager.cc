@@ -33,7 +33,12 @@
 #include <ns3/nstime.h>
 #include <ns3/simulator.h>
 
+#include <algorithm>
 #include <cmath>
+#include <deque>
+#include <sstream>
+#include <utility>
+#include <vector>
 
 NS_LOG_COMPONENT_DEFINE("SatRequestManager");
 
@@ -142,12 +147,14 @@ SatRequestManager::GetTypeId(void)
             .AddAttribute("RbdcCapacityRequestAlgorithm",
                           "Algorithm to calculate RBDC capacity requests.",
                           EnumValue(SatEnums::CR_RBDC_LEGACY),
-                          MakeEnumAccessor(&SatRequestManager::m_rbdcCapacityRequestAlgorithm),
+                          MakeEnumAccessor<SatEnums::RbdcCapacityRequestAlgorithm_t>(
+                              &SatRequestManager::m_rbdcCapacityRequestAlgorithm),
                           MakeEnumChecker(SatEnums::CR_RBDC_LEGACY, "Legacy"))
             .AddAttribute("VbdcCapacityRequestAlgorithm",
                           "Algorithm to calculate VBDC capacity requests.",
                           EnumValue(SatEnums::CR_VBDC_LEGACY),
-                          MakeEnumAccessor(&SatRequestManager::m_vbdcCapacityRequestAlgorithm),
+                          MakeEnumAccessor<SatEnums::VbdcCapacityRequestAlgorithm_t>(
+                              &SatRequestManager::m_vbdcCapacityRequestAlgorithm),
                           MakeEnumChecker(SatEnums::CR_VBDC_LEGACY, "Legacy"))
             .AddTraceSource("CrTrace",
                             "Capacity request trace",
@@ -197,7 +204,7 @@ SatRequestManager::DoDispose()
     m_ctrlMsgTxPossibleCallback.Nullify();
     m_logonMsgTxPossibleCallback.Nullify();
 
-    m_llsConf = NULL;
+    m_llsConf = nullptr;
 
     Object::DoDispose();
 }
@@ -890,7 +897,7 @@ SatRequestManager::SendCnoReport()
 }
 
 void
-SatRequestManager::SendHandoverRecommendation(uint32_t beamId)
+SatRequestManager::SendHandoverRecommendation(uint32_t satId, uint32_t beamId)
 {
     NS_LOG_FUNCTION(this << beamId);
 
@@ -902,6 +909,7 @@ SatRequestManager::SendHandoverRecommendation(uint32_t beamId)
         Ptr<SatHandoverRecommendationMessage> hoRecommendation =
             CreateObject<SatHandoverRecommendationMessage>();
         hoRecommendation->SetRecommendedBeamId(beamId);
+        hoRecommendation->SetRecommendedSatId(satId);
 
         m_ctrlCallback(hoRecommendation, m_gwAddress);
     }

@@ -22,10 +22,11 @@
 #ifndef SATELLITE_STATS_LINK_MODCOD_HELPER_H
 #define SATELLITE_STATS_LINK_MODCOD_HELPER_H
 
+#include "satellite-stats-helper.h"
+
 #include <ns3/address.h>
 #include <ns3/collector-map.h>
 #include <ns3/ptr.h>
-#include <ns3/satellite-stats-helper.h>
 
 #include <list>
 #include <map>
@@ -98,18 +99,6 @@ class SatStatsLinkModcodHelper : public SatStatsHelper
     virtual void DoInstallProbes() = 0;
 
     /**
-     * \brief Save the address and the proper identifier from the given UT node.
-     * \param utNode a UT node.
-     *
-     * The address of the given node will be saved in the #m_identifierMap
-     * member variable.
-     *
-     * Used in return link statistics. DoInstallProbes() is expected to pass the
-     * the UT node of interest into this method.
-     */
-    void SaveAddressAndIdentifier(Ptr<Node> utNode);
-
-    /**
      * \brief Connect the probe to the right collector.
      * \param probe
      * \param identifier
@@ -132,9 +121,6 @@ class SatStatsLinkModcodHelper : public SatStatsHelper
 
     /// The aggregator created by this helper.
     Ptr<DataCollectionObject> m_aggregator;
-
-    /// Map of address and the identifier associated with it (for return link).
-    std::map<const Address, uint32_t> m_identifierMap;
 
   private:
     bool m_averagingMode; ///< `AveragingMode` attribute.
@@ -180,10 +166,6 @@ class SatStatsFwdFeederLinkModcodHelper : public SatStatsLinkModcodHelper
     // inherited from SatStatsLinkModcodHelper base class
     void DoInstallProbes();
 
-  private:
-    /// Maintains a list of probes created by this helper.
-    std::list<Ptr<Probe>> m_probes;
-
 }; // end of class SatStatsFwdFeederLinkModcodHelper
 
 // FORWARD USER LINK /////////////////////////////////////////////////////
@@ -224,10 +206,6 @@ class SatStatsFwdUserLinkModcodHelper : public SatStatsLinkModcodHelper
   protected:
     // inherited from SatStatsLinkModcodHelper base class
     void DoInstallProbes();
-
-  private:
-    /// Maintains a list of probes created by this helper.
-    std::list<Ptr<Probe>> m_probes;
 
 }; // end of class SatStatsFwdUserLinkModcodHelper
 
@@ -310,10 +288,6 @@ class SatStatsRtnUserLinkModcodHelper : public SatStatsLinkModcodHelper
   protected:
     // inherited from SatStatsLinkModcodHelper base class
     void DoInstallProbes();
-
-  private:
-    /// Maintains a list of probes created by this helper.
-    std::list<Ptr<Probe>> m_probes;
 
 }; // end of class SatStatsRtnUserLinkModcodHelper
 

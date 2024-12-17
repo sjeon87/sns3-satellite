@@ -45,7 +45,7 @@ main(int argc, char* argv[])
     std::string beams = "3 4 5 6";
     // std::string beams = "8";
     uint32_t nbGwUser = 1;
-    uint32_t nbUtsPerBeam = 100;
+    uint32_t nbUtsPerBeam = 5;
     uint32_t nbEndUsersPerUt = 1;
 
     Time appStartTime = Seconds(0.001);
@@ -119,11 +119,9 @@ main(int argc, char* argv[])
                        EnumValue(SatEnums::TRANSPARENT));
 
     // Enable Lora
-    Config::SetDefault("ns3::SatHelper::Standard", EnumValue(SatEnums::LORA));
     Config::SetDefault("ns3::LorawanMacEndDevice::DataRate", UintegerValue(5));
     Config::SetDefault("ns3::LorawanMacEndDevice::MType",
                        EnumValue(LorawanMacHeader::CONFIRMED_DATA_UP));
-    Config::SetDefault("ns3::SatLorawanNetDevice::ForwardToUtUsers", BooleanValue(true));
 
     // Config::SetDefault ("ns3::SatLoraConf::Standard", EnumValue (SatLoraConf::EU863_870));
     Config::SetDefault("ns3::SatLoraConf::Standard", EnumValue(SatLoraConf::SATELLITE));
@@ -189,9 +187,9 @@ main(int argc, char* argv[])
                        BooleanValue(false));
 
     // Configure RA
-    Config::SetDefault("ns3::SatGeoHelper::FwdLinkErrorModel",
+    Config::SetDefault("ns3::SatOrbiterHelper::FwdLinkErrorModel",
                        EnumValue(SatPhyRxCarrierConf::EM_AVI));
-    Config::SetDefault("ns3::SatGeoHelper::RtnLinkErrorModel",
+    Config::SetDefault("ns3::SatOrbiterHelper::RtnLinkErrorModel",
                        EnumValue(SatPhyRxCarrierConf::EM_AVI));
     Config::SetDefault("ns3::SatBeamHelper::RandomAccessModel", EnumValue(SatEnums::RA_MODEL_ESSA));
     if (interferenceModePerPacket)
@@ -209,9 +207,6 @@ main(int argc, char* argv[])
     Config::SetDefault("ns3::SatBeamHelper::RaCollisionModel",
                        EnumValue(SatPhyRxCarrierConf::RA_COLLISION_CHECK_AGAINST_SINR));
     Config::SetDefault("ns3::SatBeamHelper::ReturnLinkLinkResults", EnumValue(SatEnums::LR_LORA));
-    Config::SetDefault("ns3::SatWaveformConf::DefaultWfId", UintegerValue(2));
-    Config::SetDefault("ns3::SatHelper::RtnLinkWaveformConfFileName",
-                       StringValue("loraWaveforms.txt"));
 
     Config::SetDefault("ns3::SatPhyRxCarrierPerWindow::WindowDuration", StringValue("600ms"));
     Config::SetDefault("ns3::SatPhyRxCarrierPerWindow::WindowStep", StringValue("200ms"));
@@ -254,23 +249,25 @@ main(int argc, char* argv[])
     simulationHelper->SetUserCountPerUt(nbEndUsersPerUt);
     simulationHelper->SetBeams(beams);
 
+    simulationHelper->LoadScenario("geo-33E-lora");
+
     simulationHelper->CreateSatScenario();
 
-    Config::SetDefault("ns3::CbrApplication::Interval", StringValue(interval));
-    Config::SetDefault("ns3::CbrApplication::PacketSize", UintegerValue(packetSize));
+    simulationHelper->GetTrafficHelper()->AddLoraCbrTraffic(
+        loraInterval,
+        packetSize,
+        Singleton<SatTopology>::Get()->GetGwUserNodes(),
+        Singleton<SatTopology>::Get()->GetUtUserNodes(),
+        appStartTime,
+        simLength,
+        Seconds(1));
 
-    simulationHelper->InstallLoraTrafficModel(SimulationHelper::LORA_CBR,
-                                              loraInterval,
-                                              packetSize,
-                                              appStartTime,
-                                              simLength,
-                                              Seconds(1));
-
-    /*simulationHelper->InstallLoraTrafficModel (
-      SimulationHelper::PERIODIC,
-      loraInterval,
-      packetSize,
-      appStartTime, simLength, Seconds (1));*/
+    /*simulationHelper->GetTrafficHelper()->AddLoraPeriodicTraffic(loraInterval,
+                                                                 packetSize,
+                                                                 Singleton<SatTopology>::Get()->GetUtNodes(),
+                                                                 appStartTime,
+                                                                 simLength,
+                                                                 Seconds(1));*/
 
     // Outputs
     simulationHelper->EnableProgressLogs();

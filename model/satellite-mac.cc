@@ -23,6 +23,7 @@
 #include "satellite-address-tag.h"
 #include "satellite-mac-tag.h"
 #include "satellite-time-tag.h"
+#include "satellite-topology.h"
 #include "satellite-typedefs.h"
 
 #include <ns3/boolean.h>
@@ -31,6 +32,7 @@
 #include <ns3/packet.h>
 #include <ns3/pointer.h>
 #include <ns3/simulator.h>
+#include <ns3/singleton.h>
 #include <ns3/trace-source-accessor.h>
 #include <ns3/uinteger.h>
 
@@ -95,11 +97,13 @@ SatMac::SatMac()
       m_ncrV2(false),
       m_routingUpdateCallback(),
       m_nodeInfo(),
+      m_handoverModule(nullptr),
       m_txEnabled(true),
       m_beamEnabledTime(Seconds(0)),
       m_lastDelay(0),
-      m_forwardLinkRegenerationMode(SatEnums::TRANSPARENT),
-      m_returnLinkRegenerationMode(SatEnums::TRANSPARENT),
+      m_forwardLinkRegenerationMode(
+          Singleton<SatTopology>::Get()->GetForwardLinkRegenerationMode()),
+      m_returnLinkRegenerationMode(Singleton<SatTopology>::Get()->GetReturnLinkRegenerationMode()),
       m_isRegenerative(false),
       m_satelliteAddress(),
       m_lastLinkDelay(0)
@@ -108,21 +112,20 @@ SatMac::SatMac()
     NS_ASSERT(false); // this version of the constructor should not been used
 }
 
-SatMac::SatMac(uint32_t satId,
-               uint32_t beamId,
-               SatEnums::RegenerationMode_t forwardLinkRegenerationMode,
-               SatEnums::RegenerationMode_t returnLinkRegenerationMode)
+SatMac::SatMac(uint32_t satId, uint32_t beamId)
     : m_isStatisticsTagsEnabled(false),
       m_ncrV2(false),
       m_routingUpdateCallback(),
       m_nodeInfo(),
       m_satId(satId),
       m_beamId(beamId),
+      m_handoverModule(nullptr),
       m_txEnabled(true),
       m_beamEnabledTime(Seconds(0)),
       m_lastDelay(0),
-      m_forwardLinkRegenerationMode(forwardLinkRegenerationMode),
-      m_returnLinkRegenerationMode(returnLinkRegenerationMode),
+      m_forwardLinkRegenerationMode(
+          Singleton<SatTopology>::Get()->GetForwardLinkRegenerationMode()),
+      m_returnLinkRegenerationMode(Singleton<SatTopology>::Get()->GetReturnLinkRegenerationMode()),
       m_isRegenerative(false),
       m_satelliteAddress(),
       m_lastLinkDelay(0)
@@ -140,7 +143,9 @@ SatMac::DoDispose()
 {
     NS_LOG_FUNCTION(this);
     if (m_txEnabled)
+    {
         m_beamServiceTrace(Simulator::Now() - m_beamEnabledTime);
+    }
 
     m_txCallback.Nullify();
     m_rxCallback.Nullify();
@@ -148,6 +153,7 @@ SatMac::DoDispose()
     m_reserveCtrlCallback.Nullify();
     m_sendCtrlCallback.Nullify();
     m_routingUpdateCallback.Nullify();
+    m_beamSchedulerCallback.Nullify();
 
     Object::DoDispose();
 }
@@ -398,6 +404,14 @@ SatMac::RxTraces(SatPhy::PacketContainer_t packets)
 }
 
 void
+SatMac::SetHandoverModule(Ptr<SatHandoverModule> handoverModule)
+{
+    NS_LOG_INFO(this << handoverModule);
+
+    m_handoverModule = handoverModule;
+}
+
+void
 SatMac::SetTransmitCallback(SatMac::TransmitCallback cb)
 {
     NS_LOG_FUNCTION(this << &cb);
@@ -444,6 +458,21 @@ SatMac::SetRoutingUpdateCallback(SatMac::RoutingUpdateCallback cb)
 {
     NS_LOG_FUNCTION(this << &cb);
     m_routingUpdateCallback = cb;
+}
+
+void
+SatMac::SetBeamSchedulerCallback(SatMac::BeamSchedulerCallback cb)
+{
+    NS_LOG_FUNCTION(this << &cb);
+
+    m_beamSchedulerCallback = cb;
+}
+
+void
+SatMac::SetUpdateIslCallback(SatMac::UpdateIslCallback cb)
+{
+    NS_LOG_FUNCTION(this << &cb);
+    m_updateIslCallback = cb;
 }
 
 } // namespace ns3

@@ -40,6 +40,8 @@
 #include <deque>
 #include <list>
 #include <map>
+#include <stdint.h>
+#include <utility>
 #include <vector>
 
 namespace ns3

@@ -26,6 +26,7 @@
 
 #include <cmath>
 #include <fstream>
+#include <string>
 
 NS_LOG_COMPONENT_DEFINE("SatChannelEstimationError");
 
@@ -73,7 +74,7 @@ SatChannelEstimationError::DoDispose()
 {
     NS_LOG_FUNCTION(this);
 
-    m_normalRandomVariable = NULL;
+    m_normalRandomVariable = nullptr;
     Object::DoDispose();
 }
 

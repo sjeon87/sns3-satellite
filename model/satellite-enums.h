@@ -132,9 +132,10 @@ class SatEnums
     {
         DVB_GW,
         DVB_UT,
+        DVB_ORBITER,
         LORA_GW,
         LORA_UT,
-        GEO
+        LORA_ORBITER
     } SatLoraNodeType_t;
 
     /**

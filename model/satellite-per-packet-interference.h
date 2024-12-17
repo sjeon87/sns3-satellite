@@ -29,6 +29,10 @@
 
 #include <map>
 #include <set>
+#include <stdint.h>
+#include <tuple>
+#include <utility>
+#include <vector>
 
 namespace ns3
 {

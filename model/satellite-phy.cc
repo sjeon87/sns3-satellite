@@ -96,10 +96,15 @@ SatPhy::SatPhy(CreateParam_t& params)
 
     switch (params.m_standard)
     {
-    case SatEnums::GEO:
+    case SatEnums::DVB_ORBITER:
     case SatEnums::DVB_UT:
     case SatEnums::DVB_GW: {
         m_phyTx = CreateObject<SatPhyTx>();
+        m_phyRx = CreateObject<SatPhyRx>();
+        break;
+    }
+    case SatEnums::LORA_ORBITER: {
+        m_phyTx = CreateObject<SatLoraPhyTx>();
         m_phyRx = CreateObject<SatPhyRx>();
         break;
     }
@@ -432,13 +437,19 @@ SatPhy::SetSatId(uint32_t satId)
     m_phyRx->SetSatId(satId);
 }
 
-void
+bool
 SatPhy::SetBeamId(uint32_t beamId)
 {
     NS_LOG_FUNCTION(this << beamId);
+
+    bool connect = m_beamId == 0 && beamId != 0;
+    bool disconnect = m_beamId != 0 && beamId == 0;
+
     m_beamId = beamId;
     m_phyTx->SetBeamId(beamId);
     m_phyRx->SetBeamId(beamId);
+
+    return connect || disconnect;
 }
 
 void

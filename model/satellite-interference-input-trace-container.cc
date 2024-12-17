@@ -26,6 +26,12 @@
 #include <ns3/log.h>
 #include <ns3/singleton.h>
 
+#include <ios>
+#include <sstream>
+#include <stdint.h>
+#include <string>
+#include <utility>
+
 NS_LOG_COMPONENT_DEFINE("SatInterferenceInputTraceContainer");
 
 namespace ns3
@@ -97,20 +103,22 @@ SatInterferenceInputTraceContainer::AddNode(key_t key)
 
     if (beamId < 0 || (utId < 0 && gwId < 0))
     {
-        return NULL;
+        return nullptr;
     }
     else
     {
         if (utId >= 0 && gwId < 0)
         {
-            filename << dataPath << "/interferencetraces/input/BEAM_" << beamId << "_UT_" << utId
-                     << "_channelType_" << SatEnums::GetChannelTypeName(key.second);
+            filename << dataPath << "/additional-input/interferencetraces/input/BEAM_" << beamId
+                     << "_UT_" << utId << "_channelType_"
+                     << SatEnums::GetChannelTypeName(key.second);
         }
 
         if (gwId >= 0 && utId < 0)
         {
-            filename << dataPath << "/interferencetraces/input/BEAM_" << beamId << "_GW_" << gwId
-                     << "_channelType_" << SatEnums::GetChannelTypeName(key.second);
+            filename << dataPath << "/additional-input/interferencetraces/input/BEAM_" << beamId
+                     << "_GW_" << gwId << "_channelType_"
+                     << SatEnums::GetChannelTypeName(key.second);
         }
 
         std::pair<container_t::iterator, bool> result = m_container.insert(
@@ -131,7 +139,7 @@ SatInterferenceInputTraceContainer::AddNode(key_t key)
     }
 
     NS_FATAL_ERROR("SatInterferenceInputTraceContainer::AddNode failed");
-    return NULL;
+    return nullptr;
 }
 
 Ptr<SatInputFileStreamTimeDoubleContainer>

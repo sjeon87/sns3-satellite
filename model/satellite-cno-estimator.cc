@@ -23,8 +23,11 @@
 #include <ns3/log.h>
 #include <ns3/simulator.h>
 
+#include <cmath>
 #include <math.h>
 #include <numeric>
+#include <stdint.h>
+#include <utility>
 
 NS_LOG_COMPONENT_DEFINE("SatCnoEstimator");
 

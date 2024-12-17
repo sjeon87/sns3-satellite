@@ -25,6 +25,9 @@
 
 #include <ns3/ptr.h>
 
+#include <stdint.h>
+#include <vector>
+
 namespace ns3
 {
 
@@ -44,17 +47,9 @@ class SatGwLlc : public SatLlc
     static TypeId GetTypeId(void);
 
     /**
-     * Construct a SatGwLlc, should not be used
+     * Construct a SatGwLlc
      */
     SatGwLlc();
-
-    /**
-     * Construct a SatGwLlc
-     * \param forwardLinkRegenerationMode Forward link regeneration model
-     * \param returnLinkRegenerationMode Return link regeneration model
-     */
-    SatGwLlc(SatEnums::RegenerationMode_t forwardLinkRegenerationMode,
-             SatEnums::RegenerationMode_t returnLinkRegenerationMode);
 
     /**
      * Destroy a SatGwLlc
@@ -117,6 +112,11 @@ class SatGwLlc : public SatLlc
      *         associated with the UT.
      */
     virtual uint32_t GetNPacketsInQueue(Mac48Address utAddress) const;
+
+    /**
+     * Remove all packets from the queues. Called when performing handovers.
+     */
+    virtual void ClearQueues();
 
   protected:
     /**

@@ -74,14 +74,14 @@ main(int argc, char* argv[])
     LogComponentEnable("SatInterference", LOG_LEVEL_INFO);
     // LogComponentEnable ("SatBeamScheduler", LOG_LEVEL_INFO);
 
-    auto sh = CreateObject<SimulationHelper>("example-random-access-slotted-aloha");
+    auto simulationHelper = CreateObject<SimulationHelper>("example-random-access-slotted-aloha");
     Config::SetDefault("ns3::SatHelper::PacketTraceEnabled", BooleanValue(true));
 
     // Read command line parameters given by user
     CommandLine cmd;
     cmd.AddValue("endUsersPerUt", "Number of end users per UT", endUsersPerUt);
     cmd.AddValue("utsPerBeam", "Number of UTs per spot-beam", utsPerBeam);
-    sh->AddDefaultUiArguments(cmd);
+    simulationHelper->AddDefaultUiArguments(cmd);
     cmd.Parse(argc, argv);
 
     // Configure error model
@@ -162,24 +162,26 @@ main(int argc, char* argv[])
     Config::SetDefault("ns3::SatLowerLayerServiceConf::DaService3_VolumeAllowed",
                        BooleanValue(false));
 
-    // Creating the reference system. Note, currently the satellite module supports
-    // only one reference system, which is named as "Scenario72". The string is utilized
-    // in mapping the scenario to the needed reference system configuration files. Arbitrary
-    // scenario name results in fatal error.
-    sh->SetSimulationTime(simLength);
-    sh->SetUserCountPerUt(endUsersPerUt);
-    sh->SetUtCountPerBeam(utsPerBeam);
-    sh->SetBeamSet({beamId});
-    sh->CreateSatScenario();
+    // Creating the reference system.
+    simulationHelper->SetSimulationTime(simLength);
+    simulationHelper->SetUserCountPerUt(endUsersPerUt);
+    simulationHelper->SetUtCountPerBeam(utsPerBeam);
+    simulationHelper->SetBeamSet({beamId});
 
-    Config::SetDefault("ns3::CbrApplication::Interval", TimeValue(interval));
-    Config::SetDefault("ns3::CbrApplication::PacketSize", UintegerValue(packetSize));
-    sh->InstallTrafficModel(SimulationHelper::CBR,
-                            SimulationHelper::UDP,
-                            SimulationHelper::RTN_LINK,
-                            appStartTime,
-                            simLength + Seconds(1),
-                            Seconds(0.05));
+    simulationHelper->LoadScenario("geo-33E");
+
+    simulationHelper->CreateSatScenario();
+
+    simulationHelper->GetTrafficHelper()->AddCbrTraffic(
+        SatTrafficHelper::RTN_LINK,
+        SatTrafficHelper::UDP,
+        interval,
+        packetSize,
+        NodeContainer(Singleton<SatTopology>::Get()->GetGwUserNode(0)),
+        Singleton<SatTopology>::Get()->GetUtUserNodes(),
+        appStartTime,
+        simLength + Seconds(1),
+        Seconds(0.05));
 
     NS_LOG_INFO("--- Cbr-user-defined-example ---");
     NS_LOG_INFO("  Packet size in bytes: " << packetSize);
@@ -189,6 +191,6 @@ main(int argc, char* argv[])
     NS_LOG_INFO("  Number of end users per UT: " << endUsersPerUt);
     NS_LOG_INFO("  ");
 
-    sh->RunSimulation();
+    simulationHelper->RunSimulation();
     return 0;
 }

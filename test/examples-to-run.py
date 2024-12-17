@@ -10,7 +10,8 @@
 # See test.py for more information.
 cpp_examples = [
     ("sat-arq-fwd-example", "True", "True"),
-    ("sat-arq-rtn-example", "False", "False"),
+    ("sat-arq-rtn-example", "True", "True"),
+    ("sat-beam-position-tracer", "True", "True"),
     ("sat-cbr-example", "True", "True"),
     ("sat-cbr-full-example", "True", "True"),
     ("sat-cbr-stats-example", "True", "True"),
@@ -26,6 +27,7 @@ cpp_examples = [
     ("sat-fwd-link-beam-hopping-example", "True", "True"),
     ("sat-fwd-system-test-example", "True", "True"),
     ("sat-group-example", "True", "True"),
+    ("sat-gw-handover-example", "True", "True"),
     ("sat-handover-example", "True", "True"),
     ("sat-http-example", "True", "True"),
     ("sat-iot-example", "True", "True"),
@@ -35,7 +37,10 @@ cpp_examples = [
     ("sat-log-example", "True", "True"),
     ("sat-logon-example", "True", "True"),
     ("sat-loo-example", "True", "True"),
+    ("sat-lora-constellation-example", "True", "True"),
     ("sat-lora-example", "True", "True"),
+    ("sat-lora-handover-example", "True", "True"),
+    ("sat-lora-regenerative-example", "True", "True"),
     ("sat-markov-fading-trace-example", "True", "True"),
     ("sat-markov-logic-example", "True", "True"),
     ("sat-mobility-beam-tracer", "True", "True"),

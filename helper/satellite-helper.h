@@ -39,9 +39,15 @@
 #include <ns3/satellite-position-allocator.h>
 #include <ns3/satellite-rx-power-input-trace-container.h>
 #include <ns3/satellite-rx-power-output-trace-container.h>
+#include <ns3/satellite-stats-helper-container.h>
 #include <ns3/trace-helper.h>
 
+#include <map>
+#include <set>
+#include <stdint.h>
 #include <string>
+#include <utility>
+#include <vector>
 
 namespace ns3
 {
@@ -85,14 +91,16 @@ class SatHelper : public Object
     TypeId GetInstanceTypeId(void) const;
 
     /**
-     * \brief Create a base SatHelper for creating customized Satellite topologies.
+     * \brief Default constructor. Not in use.
      */
     SatHelper();
 
     /**
      * \brief Create a base SatHelper for creating customized Satellite topologies.
+     *
+     * \param scenarioPath Scenario folder path
      */
-    SatHelper(std::string scenarioName);
+    SatHelper(std::string scenarioPath);
 
     /**
      * Destructor for SatHelper
@@ -126,27 +134,29 @@ class SatHelper : public Object
      *
      * \param satId The ID of the satellite
      * \param info information of the beams, and beam UTs and users in beams
+     * \param inputFileUtListPositions Path to the list of UT positions
      * \param checkBeam Check that positions (set through SatConf) match with given beam
      * (the beam is the best according to configured antenna patterns).
      */
     void CreateUserDefinedScenarioFromListPositions(uint32_t satId,
                                                     BeamUserInfoMap_t& info,
+                                                    std::string inputFileUtListPositions,
                                                     bool checkBeam);
 
     /**
-     * Creates satellite objects according to constellation parameters.
+     * Load satellite objects according to constellation parameters.
      *
      * \param infoList information of the enabled beams. UT information is given in parameters
      * files. \param getNextUtUserCountCallback Callback to get number of users per UT.
      */
-    void CreateConstellationScenario(BeamUserInfoMap_t& info,
-                                     GetNextUtUserCountCallback getNextUtUserCountCallback);
+    void LoadConstellationScenario(BeamUserInfoMap_t& info,
+                                   GetNextUtUserCountCallback getNextUtUserCountCallback);
 
     /**
      * Set the value of GW address for each UT.
      * This method is called when using constellations.
      */
-    void SetGwAddressInUt();
+    void SetGwAddressInUts();
 
     /**
      * Populate the routes, when using constellations.
@@ -154,40 +164,11 @@ class SatHelper : public Object
     void SetBeamRoutingConstellations();
 
     /**
-     * Get closest satellite to a ground station
-     * \param position The position of the ground station
-     * \return The ID of the closest satellite
-     */
-    uint32_t GetClosestSat(GeoCoordinate position);
-
-    /**
      * \param  node pointer to user node.
      *
      * \return address of the user.
      */
     Ipv4Address GetUserAddress(Ptr<Node> node);
-
-    /**
-     * \return container having UT users
-     */
-    NodeContainer GetUtUsers() const;
-
-    /**
-     * \param utNode Pointer to UT node, which user nodes are requested.
-     * \return A container having UT specific user nodes in satellite network.
-     */
-    NodeContainer GetUtUsers(Ptr<Node> utNode) const;
-
-    /**
-     * \param utNodes Container to UT nodes, which user nodes are requested.
-     * \return A container having UT specific user nodes in satellite network.
-     */
-    NodeContainer GetUtUsers(NodeContainer utNodes) const;
-
-    /**
-     * \return container having GW users.
-     */
-    NodeContainer GetGwUsers() const;
 
     /**
      * \return pointer to beam helper.
@@ -245,18 +226,22 @@ class SatHelper : public Object
      * \brief Load UTs with a SatTracedMobilityModel associated to them from the
      * files found in the given folder. Each UT will be associated to the beam it
      * is at it's starting position.
-     * \param satId ID of satellite
      * \param folderName Name of the folder to search for mobility trace files
      * \param utUsers Stream to generate the number of users associated to each loaded UT
      */
-    void LoadMobileUTsFromFolder(uint32_t satId,
-                                 const std::string& folderName,
-                                 Ptr<RandomVariableStream> utUsers);
+    void LoadMobileUTsFromFolder(const std::string& folderName, Ptr<RandomVariableStream> utUsers);
 
     /**
      * \brief Load an UT with a SatTracedMobilityModel associated to
      * them from the given file.
-     * \param satId ID of satellite
+     * \param filename Name of the trace file containing UT positions
+     */
+    Ptr<Node> LoadMobileUtFromFile(const std::string& filename);
+
+    /**
+     * \brief Load an UT with a SatTracedMobilityModel associated to
+     * them from the given file.
+     * \param satId Satellite ID
      * \param filename Name of the trace file containing UT positions
      */
     Ptr<Node> LoadMobileUtFromFile(uint32_t satId, const std::string& filename);
@@ -273,21 +258,6 @@ class SatHelper : public Object
                                  NodeContainer receivers,
                                  Ipv4Address sourceAddress,
                                  Ipv4Address groupAddress);
-
-    inline NodeContainer GwNodes()
-    {
-        return m_beamHelper->GetGwNodes();
-    }
-
-    inline NodeContainer UtNodes()
-    {
-        return m_beamHelper->GetUtNodes();
-    }
-
-    inline NodeContainer GeoSatNodes()
-    {
-        return m_beamHelper->GetGeoSatNodes();
-    }
 
     /**
      * Dispose of this class instance
@@ -307,12 +277,6 @@ class SatHelper : public Object
         return m_satConstellationEnabled;
     }
 
-    /**
-     * Print all the satellite topology
-     * \param os output stream in which the data should be printed
-     */
-    void PrintTopology(std::ostream& os) const;
-
   private:
     static const uint16_t MIN_ADDRESS_PREFIX_LENGTH = 1;
     static const uint16_t MAX_ADDRESS_PREFIX_LENGTH = 31;
@@ -321,33 +285,24 @@ class SatHelper : public Object
     typedef SatBeamHelper::MulticastBeamInfo_t MulticastBeamInfo_t;
 
     /**
+     * Scenario folder path
+     */
+    std::string m_scenarioPath;
+
+    /**
      * Configuration file names as attributes of this class
      */
     std::string m_rtnConfFileName;
     std::string m_fwdConfFileName;
     std::string m_gwPosFileName;
-    std::string m_geoPosFileName;
-    std::string m_waveformConfFileName;
-
-    /**
-     * The satellite moves following a SGP4 model
-     */
-    bool m_satMobilitySGP4Enabled;
-
-    /**
-     * TLE input filename used for SGP4 mobility
-     */
-    std::string m_satMobilitySGP4TleFileName;
+    std::string m_satPosFileName;
+    std::string m_utPosFileName;
+    std::string m_waveformConfDirectoryName;
 
     /**
      * Use a constellation of satellites
      */
     bool m_satConstellationEnabled;
-
-    /**
-     * Folder where are stored satellite constellation data
-     */
-    std::string m_satConstellationFolder;
 
     /*
      * The global standard used. Can be either DVB or Lora
@@ -368,11 +323,6 @@ class SatHelper : public Object
      * Group helper
      */
     Ptr<SatGroupHelper> m_groupHelper;
-
-    /**
-     * Gateway container
-     */
-    NodeContainer m_gwUser;
 
     /**
      * Configuration for satellite network.
@@ -409,6 +359,11 @@ class SatHelper : public Object
     Ipv4Mask m_beamNetworkMask; ///< Network mask number of satellite devices.
     Ipv4Mask m_gwNetworkMask;   ///< Network mask number of GW, router, and GW users.
     Ipv4Mask m_utNetworkMask;   ///< Network mask number of UT and UT users.
+
+    /**
+     * Enable handovers for all UTs and GWs. If false, only moving UTs can perform handovers.
+     */
+    bool m_handoversEnabled;
 
     /**
      * flag to check if scenario is already created.
@@ -502,11 +457,6 @@ class SatHelper : public Object
     std::map<uint32_t, uint32_t> m_gwSats;
 
     /**
-     * Map indicating the GW node associated to each UT node.
-     */
-    std::map<Ptr<Node>, Ptr<Node>> m_gwDistribution;
-
-    /**
      * Map indicating all UT NetDevices associated to each GW NetDevice
      */
     std::map<Ptr<NetDevice>, NetDeviceContainer> m_utsDistribution;
@@ -528,12 +478,10 @@ class SatHelper : public Object
 
     /**
      * Load a constellation topology.
-     * \param path Folder where configuration files are located
      * \param tles vector to store read TLEs
      * \param isls vector to store read ISLs
      */
-    void LoadConstellationTopology(std::string path,
-                                   std::vector<std::string>& tles,
+    void LoadConstellationTopology(std::vector<std::string>& tles,
                                    std::vector<std::pair<uint32_t, uint32_t>>& isls);
 
     /**
@@ -580,25 +528,24 @@ class SatHelper : public Object
     /**
      * Sets mobilities to created GW nodes.
      *
-     * \param satId ID of the satellite link to this GW
-     * \param gw GW to set mobility
-     * \param gwIndex Index of GW in SatConf
+     * \param gwNodes node container of UTs to set mobility
      */
-    void SetGwMobility(uint32_t satId, Ptr<Node> gw, uint32_t gwIndex);
+    void SetGwMobility(NodeContainer gwNodes);
 
     /**
-     * Sets mobility to created Sat Geo node.
+     * Sets mobility to created Sat node.
      *
-     * \param node node pointer of Geo Satellite to set mobility
+     * \param node node pointer of Satellite to set mobility
      */
-    void SetGeoSatMobility(Ptr<Node> node);
+    void SetSatMobility(Ptr<Node> node);
 
     /**
      * Sets SGP4 mobility to created Sat node.
      *
      * \param node node pointer of Satellite to set mobility
+     * \param tle the TLE linked to this satellite
      */
-    void SetSatMobility(Ptr<Node> node, std::string tle = "");
+    void SetSatMobility(Ptr<Node> node, std::string tle);
 
     /**
      * Sets mobility to created UT nodes.
@@ -704,6 +651,13 @@ class SatHelper : public Object
                       const std::set<uint32_t>& networkAddresses,
                       uint32_t networkCount,
                       uint32_t hostCount) const;
+
+    /**
+     * Read to standard use from file given in path
+     *
+     * \param pathName Path of file containing the standard used
+     */
+    void ReadStandard(std::string pathName);
 };
 
 } // namespace ns3

@@ -24,6 +24,8 @@
 #include <ns3/object.h>
 
 #include <map>
+#include <stdint.h>
+#include <string>
 
 namespace ns3
 {
@@ -139,6 +141,20 @@ class SatIdMapper : public Object
      * \param mac MAC address
      */
     void RemoveMacToSatIdIsl(Mac48Address mac);
+
+    /**
+     * \brief Update MAC address to the SAT ID maps
+     * \param mac MAC address
+     * \param satId satellite ID
+     */
+    void UpdateMacToSatId(Address mac, uint32_t satId);
+
+    /**
+     * \brief Update MAC address to the beam ID maps
+     * \param mac MAC address
+     * \param beamId beam ID
+     */
+    void UpdateMacToBeamId(Address mac, uint32_t beamId);
 
     /* ID GETTERS */
 
@@ -326,6 +342,11 @@ class SatIdMapper : public Object
      * \brief Map for MAC to GW user ID conversion
      */
     std::map<Address, uint32_t> m_macToGwUserIdMap;
+
+    /**
+     * \brief Map between UT nodes and GW address
+     */
+    std::map<Ptr<Node>, Address> m_utNodeToGwAddressMap;
 
     /**
      * \brief Is map printing enabled or not

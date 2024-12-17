@@ -25,10 +25,17 @@
 #include "ns3/log.h"
 #include "ns3/satellite-const-variables.h"
 #include "ns3/satellite-env-variables.h"
+#include "ns3/satellite-topology.h"
 #include "ns3/satellite-wave-form-conf.h"
 #include "ns3/simulator.h"
 #include "ns3/singleton.h"
 #include "ns3/string.h"
+
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <utility>
+#include <vector>
 
 NS_LOG_COMPONENT_DEFINE("SatConf");
 
@@ -107,7 +114,8 @@ SatConf::GetTypeId(void)
             .AddAttribute("SuperFrameConfForSeq0",
                           "Super frame configuration used for super frame sequence 0.",
                           EnumValue(SatSuperframeConf::SUPER_FRAME_CONFIG_0),
-                          MakeEnumAccessor(&SatConf::m_SuperFrameConfForSeq0),
+                          MakeEnumAccessor<SatSuperframeConf::SuperFrameConfiguration_t>(
+                              &SatConf::m_SuperFrameConfForSeq0),
                           MakeEnumChecker(SatSuperframeConf::SUPER_FRAME_CONFIG_0,
                                           "Configuration_0",
                                           SatSuperframeConf::SUPER_FRAME_CONFIG_1,
@@ -148,15 +156,11 @@ SatConf::GetTypeId(void)
                           DoubleValue(0.00),
                           MakeDoubleAccessor(&SatConf::m_rtnCarrierSpacingFactor),
                           MakeDoubleChecker<double>(0.00, 1.00))
-            .AddAttribute("UtPositionInputFileName",
-                          "File defining user defined UT positions for user defined scenarios.",
-                          StringValue("UtPos.txt"),
-                          MakeStringAccessor(&SatConf::m_utPositionInputFileName),
-                          MakeStringChecker())
             .AddAttribute("ForwardLinkRegenerationMode",
                           "The regeneration mode used in satellites for forward link.",
                           EnumValue(SatEnums::TRANSPARENT),
-                          MakeEnumAccessor(&SatConf::m_forwardLinkRegenerationMode),
+                          MakeEnumAccessor<SatEnums::RegenerationMode_t>(
+                              &SatConf::m_forwardLinkRegenerationMode),
                           MakeEnumChecker(SatEnums::TRANSPARENT,
                                           "TRANSPARENT",
                                           SatEnums::REGENERATION_PHY,
@@ -166,7 +170,8 @@ SatConf::GetTypeId(void)
             .AddAttribute("ReturnLinkRegenerationMode",
                           "The regeneration mode used in satellites for return link.",
                           EnumValue(SatEnums::TRANSPARENT),
-                          MakeEnumAccessor(&SatConf::m_returnLinkRegenerationMode),
+                          MakeEnumAccessor<SatEnums::RegenerationMode_t>(
+                              &SatConf::m_returnLinkRegenerationMode),
                           MakeEnumChecker(SatEnums::TRANSPARENT,
                                           "TRANSPARENT",
                                           SatEnums::REGENERATION_PHY,
@@ -222,20 +227,21 @@ SatConf::Initialize(std::string rtnConf,
                     std::string fwdConf,
                     std::string gwPos,
                     std::string satPos,
+                    std::string utPos,
                     std::string wfConf,
-                    std::string tle,
                     bool isConstellation)
 {
-    NS_LOG_FUNCTION(this);
+    NS_LOG_FUNCTION(this << rtnConf << fwdConf << gwPos << satPos << utPos << wfConf
+                         << isConstellation);
+
+    Singleton<SatTopology>::Get()->SetForwardLinkRegenerationMode(m_forwardLinkRegenerationMode);
+    Singleton<SatTopology>::Get()->SetReturnLinkRegenerationMode(m_returnLinkRegenerationMode);
 
     m_isConstellation = isConstellation;
 
-    std::string dataPath = Singleton<SatEnvVariables>::Get()->LocateDataDirectory() + "/";
-    std::string dataPathTle = Singleton<SatEnvVariables>::Get()->LocateDataDirectory() + "/tle/";
-
     // Load satellite configuration file
-    m_rtnConf = LoadSatConf(dataPath + rtnConf);
-    m_fwdConf = LoadSatConf(dataPath + fwdConf);
+    m_rtnConf = LoadSatConf(rtnConf);
+    m_fwdConf = LoadSatConf(fwdConf);
 
     NS_ASSERT(m_rtnConf.size() == m_fwdConf.size());
     m_beamCount = m_rtnConf.size();
@@ -243,16 +249,16 @@ SatConf::Initialize(std::string rtnConf,
     NS_ASSERT(m_beamCount < SatConstVariables::MAX_BEAMS_PER_SATELLITE);
 
     // Load GW positions
-    LoadPositions(dataPath + gwPos, m_gwPositions);
-
-    // Load UT positions
-    LoadPositions(dataPath + m_utPositionInputFileName, m_utPositions);
+    LoadPositions(gwPos, m_gwPositions);
 
     // Load satellite position
-    LoadPositions(dataPath + satPos, m_geoSatPosition);
+    if (!isConstellation)
+    {
+        LoadPositions(satPos, m_satPosition);
+    }
 
-    // Load TLE information if case of only one satellite
-    LoadTle(dataPathTle + tle, m_tleSat);
+    // Load UT positions
+    LoadPositions(utPos, m_utPositions);
 
     // Update fwdConf & rtnConf with correct nb of GWs
     if (m_isConstellation)
@@ -267,7 +273,7 @@ SatConf::Initialize(std::string rtnConf,
         }
     }
 
-    Configure(dataPath + wfConf);
+    Configure(wfConf);
 }
 
 void
@@ -502,6 +508,15 @@ SatConf::LoadSatConf(std::string filePathName) const
 }
 
 void
+SatConf::SetUtPositionsPath(std::string inputFileUtListPositions)
+{
+    NS_LOG_FUNCTION(this << inputFileUtListPositions);
+
+    // Load UT positions
+    LoadPositions(inputFileUtListPositions, m_utPositions);
+}
+
+void
 SatConf::LoadPositions(std::string filePathName, PositionContainer_t& container)
 {
     NS_LOG_FUNCTION(this << filePathName);
@@ -529,31 +544,22 @@ SatConf::LoadPositions(std::string filePathName, PositionContainer_t& container)
     delete ifs;
 }
 
-void
-SatConf::LoadTle(std::string filePathName, std::string& tleInfo)
+std::vector<std::string>
+SatConf::LoadTles(std::string filePathName, std::string startDatePathName)
 {
     NS_LOG_FUNCTION(this << filePathName);
 
-    // READ FROM THE SPECIFIED INPUT FILE
-    std::ifstream* ifs = OpenFile(filePathName);
+    // READ START TIME
+    std::ifstream* ifs = OpenFile(startDatePathName);
 
-    std::stringstream buffer;
-    buffer << ifs->rdbuf();
-    tleInfo = buffer.str();
+    std::getline(*ifs, m_startTimeStr);
 
     ifs->close();
-    delete ifs;
-}
 
-std::vector<std::string>
-SatConf::LoadTles(std::string filePathName)
-{
-    NS_LOG_FUNCTION(this << filePathName);
-
+    // READ TLE
     std::vector<std::string> tles;
 
-    // READ FROM THE SPECIFIED INPUT FILE
-    std::ifstream* ifs = OpenFile(filePathName);
+    ifs = OpenFile(filePathName);
 
     double size;
     uint32_t i = 0;
@@ -668,7 +674,7 @@ SatConf::GetSatCount() const
     }
     else
     {
-        return m_geoSatPosition.size();
+        return m_satPosition.size();
     }
 }
 
@@ -695,22 +701,6 @@ SatConf::GetFwdLinkCarrierCount() const
     NS_LOG_FUNCTION(this);
 
     return m_forwardLinkCarrierConf.size();
-}
-
-SatEnums::RegenerationMode_t
-SatConf::GetForwardLinkRegenerationMode() const
-{
-    NS_LOG_FUNCTION(this);
-
-    return m_forwardLinkRegenerationMode;
-}
-
-SatEnums::RegenerationMode_t
-SatConf::GetReturnLinkRegenerationMode() const
-{
-    NS_LOG_FUNCTION(this);
-
-    return m_returnLinkRegenerationMode;
 }
 
 double
@@ -802,27 +792,20 @@ SatConf::GetUtPosition(uint32_t utId) const
 }
 
 GeoCoordinate
-SatConf::GetGeoSatPosition() const
+SatConf::GetSatPosition() const
 {
     NS_LOG_FUNCTION(this);
-    NS_ASSERT(m_geoSatPosition.size() == 1);
+    NS_ASSERT(m_satPosition.size() == 1);
 
-    return m_geoSatPosition[0];
+    return m_satPosition[0];
 }
 
 std::string
-SatConf::GetSatTle() const
+SatConf::GetStartTimeStr() const
 {
     NS_LOG_FUNCTION(this);
-    NS_ASSERT(m_tleSat.size() != 0);
 
-    return m_tleSat;
-}
-
-void
-SatConf::SetUtPositionInputFileName(std::string utPositionInputFileName)
-{
-    m_utPositionInputFileName = utPositionInputFileName;
+    return m_startTimeStr;
 }
 
 } // namespace ns3

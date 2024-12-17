@@ -25,15 +25,17 @@
 #include <ns3/geo-coordinate.h>
 #include <ns3/mobility-helper.h>
 #include <ns3/node-container.h>
+#include <ns3/satellite-handover-module.h>
 #include <ns3/satellite-mobility-model.h>
 #include <ns3/satellite-position-allocator.h>
-#include <ns3/satellite-ut-handover-module.h>
 #include <ns3/vector.h>
 
 #include <algorithm>
 #include <list>
 #include <map>
 #include <set>
+#include <stdint.h>
+#include <utility>
 #include <vector>
 
 namespace ns3
@@ -73,9 +75,8 @@ class SatGroupHelper : public Object
 
     /**
      * \brief Initialize the helper. Should be call only by SatHelper internally
-     * \param uts The list of all UTs in the simulation
      */
-    void Init(NodeContainer uts);
+    void Init();
 
     /**
      * \brief Add a node to a group
@@ -181,11 +182,6 @@ class SatGroupHelper : public Object
      * \return The list of nodes not created from position by group helper
      */
     NodeContainer GetNodesNotAddedFromPosition(NodeContainer nodes);
-
-    /**
-     * The list of all the UTs in the simulation
-     */
-    NodeContainer m_uts;
 
     /**
      * Container to associate nodes to the groups

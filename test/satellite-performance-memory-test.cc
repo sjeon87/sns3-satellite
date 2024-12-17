@@ -28,9 +28,6 @@
  *
  */
 
-#include "../helper/satellite-helper.h"
-#include "../utils/satellite-env-variables.h"
-
 #include "ns3/cbr-application.h"
 #include "ns3/cbr-helper.h"
 #include "ns3/config.h"
@@ -38,6 +35,9 @@
 #include "ns3/log.h"
 #include "ns3/packet-sink-helper.h"
 #include "ns3/packet-sink.h"
+#include "ns3/satellite-env-variables.h"
+#include "ns3/satellite-helper.h"
+#include "ns3/satellite-topology.h"
 #include "ns3/simulator.h"
 #include "ns3/singleton.h"
 #include "ns3/string.h"
@@ -106,11 +106,12 @@ Pm1::DoRun(void)
     Config::SetDefault("ns3::SatGwHelper::RtnLinkErrorModel", EnumValue(em));
 
     // Creating the reference system.
-    Ptr<SatHelper> helper = CreateObject<SatHelper>();
+    Ptr<SatHelper> helper = CreateObject<SatHelper>(
+        Singleton<SatEnvVariables>::Get()->LocateDataDirectory() + "/scenarios/geo-33E");
     helper->CreatePredefinedScenario(SatHelper::FULL);
 
-    NodeContainer gwUsers = helper->GetGwUsers();
-    NodeContainer utUsers = helper->GetUtUsers();
+    NodeContainer gwUsers = Singleton<SatTopology>::Get()->GetGwUserNodes();
+    NodeContainer utUsers = Singleton<SatTopology>::Get()->GetUtUserNodes();
 
     uint16_t port = 9; // Discard port (RFC 863)
     CbrHelper cbr("ns3::UdpSocketFactory",
@@ -169,8 +170,8 @@ Pm1::DoRun(void)
 }
 
 // The TestSuite class names the TestSuite as sat-perf-mem, identifies what type of TestSuite
-// (SYSTEM), and enables the TestCases to be run.  Typically, only the constructor for this class
-// must be defined
+// (Type::SYSTEM), and enables the TestCases to be run.  Typically, only the constructor for this
+// class must be defined
 //
 class PerfMemTestSuite : public TestSuite
 {
@@ -179,10 +180,10 @@ class PerfMemTestSuite : public TestSuite
 };
 
 PerfMemTestSuite::PerfMemTestSuite()
-    : TestSuite("sat-perf-mem", SYSTEM)
+    : TestSuite("sat-perf-mem", Type::SYSTEM)
 {
     // add pm-1 case to suite sat-perf-mem
-    AddTestCase(new Pm1, TestCase::QUICK);
+    AddTestCase(new Pm1, TestCase::Duration::QUICK);
 }
 
 // Allocate an instance of this TestSuite

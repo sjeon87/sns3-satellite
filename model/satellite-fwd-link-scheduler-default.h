@@ -25,6 +25,10 @@
 
 #include <ns3/pointer.h>
 
+#include <stdint.h>
+#include <utility>
+#include <vector>
+
 namespace ns3
 {
 
@@ -88,6 +92,11 @@ class SatFwdLinkSchedulerDefault : public SatFwdLinkScheduler
      * \return Pointer to frame
      */
     virtual std::pair<Ptr<SatBbFrame>, const Time> GetNextFrame();
+
+    /**
+     * Remove all packets being treated.
+     */
+    virtual void ClearAllPackets();
 
   private:
     /**

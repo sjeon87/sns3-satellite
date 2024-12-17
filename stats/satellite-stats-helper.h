@@ -28,6 +28,7 @@
 #include <ns3/ptr.h>
 
 #include <map>
+#include <string>
 
 namespace ns3
 {
@@ -211,6 +212,21 @@ class SatStatsHelper : public Object
      */
     Ptr<const SatHelper> GetSatHelper() const;
 
+    /**
+     * \brief Update the address and the proper identifier from the given UT node.
+     * \param utNode a UT node.
+     *
+     * Used for UT handovers.
+     */
+    virtual void UpdateAddressAndIdentifier(Ptr<Node> utNode);
+
+    /**
+     * Change identifier used on probes, when handovers occur.
+     * Default implementation does nothing, and only classes using probes must have a custom
+     * implementation
+     */
+    virtual void UpdateIdentifierOnProbes();
+
   protected:
     /**
      * \brief Install the probes, collectors, and aggregators necessary to
@@ -391,7 +407,19 @@ class SatStatsHelper : public Object
     /**
      * \return
      */
-    static Ptr<NetDevice> GetSatSatGeoNetDevice(Ptr<Node> satNode);
+    static Ptr<NetDevice> GetSatSatOrbiterNetDevice(Ptr<Node> satNode);
+
+    /**
+     * \brief Save the address and the proper identifier from the given UT node.
+     * \param utNode a UT node.
+     *
+     * The address of the given node will be saved in the #m_identifierMap
+     * member variable.
+     */
+    virtual void SaveAddressAndIdentifier(Ptr<Node> utNode);
+
+    /// Map of address and the identifier associated with it.
+    std::map<const Address, uint32_t> m_identifierMap;
 
   private:
     std::string m_name;                ///<

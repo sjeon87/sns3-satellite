@@ -32,18 +32,21 @@
 #include <ns3/multi-file-aggregator.h>
 #include <ns3/node-container.h>
 #include <ns3/object-vector.h>
-#include <ns3/satellite-geo-net-device.h>
 #include <ns3/satellite-helper.h>
 #include <ns3/satellite-id-mapper.h>
 #include <ns3/satellite-net-device.h>
+#include <ns3/satellite-orbiter-net-device.h>
 #include <ns3/satellite-phy-rx-carrier.h>
 #include <ns3/satellite-phy-rx.h>
 #include <ns3/satellite-phy.h>
+#include <ns3/satellite-topology.h>
 #include <ns3/scalar-collector.h>
 #include <ns3/singleton.h>
 #include <ns3/string.h>
 
+#include <map>
 #include <sstream>
+#include <string>
 
 NS_LOG_COMPONENT_DEFINE("SatStatsPacketCollisionHelper");
 
@@ -146,26 +149,6 @@ SatStatsPacketCollisionHelper::CollisionRxCallback(uint32_t nPackets,
     } // end of else of `if (from.IsInvalid ())`
 
 } // end of `void CollisionRxCallback (uint32_t, const Address &, bool);`
-
-void
-SatStatsPacketCollisionHelper::SaveAddressAndIdentifier(Ptr<Node> utNode)
-{
-    NS_LOG_FUNCTION(this << utNode->GetId());
-
-    const SatIdMapper* satIdMapper = Singleton<SatIdMapper>::Get();
-    const Address addr = satIdMapper->GetUtMacWithNode(utNode);
-
-    if (addr.IsInvalid())
-    {
-        NS_LOG_WARN(this << " Node " << utNode->GetId() << " is not a valid UT");
-    }
-    else
-    {
-        const uint32_t identifier = GetIdentifierForUt(utNode);
-        m_identifierMap[addr] = identifier;
-        NS_LOG_INFO(this << " associated address " << addr << " with identifier " << identifier);
-    }
-}
 
 // BASE CLASS FEEDER /////////////////////////////////////////////////////////////////
 
@@ -317,7 +300,7 @@ SatStatsFeederPacketCollisionHelper::DoInstall()
     }
 
     // Create a map of UT addresses and identifiers.
-    NodeContainer uts = GetSatHelper()->GetBeamHelper()->GetUtNodes();
+    NodeContainer uts = Singleton<SatTopology>::Get()->GetUtNodes();
     for (NodeContainer::Iterator it = uts.Begin(); it != uts.End(); ++it)
     {
         SaveAddressAndIdentifier(*it);
@@ -325,7 +308,7 @@ SatStatsFeederPacketCollisionHelper::DoInstall()
 
     // Connect to trace sources at GW nodes.
 
-    NodeContainer gws = GetSatHelper()->GetBeamHelper()->GetGwNodes();
+    NodeContainer gws = Singleton<SatTopology>::Get()->GetGwNodes();
     Callback<void, uint32_t, const Address&, bool> callback =
         MakeCallback(&SatStatsFeederPacketCollisionHelper::CollisionRxCallback, this);
 
@@ -532,7 +515,7 @@ SatStatsUserPacketCollisionHelper::DoInstall()
     }
 
     // Create a map of UT addresses and identifiers.
-    NodeContainer uts = GetSatHelper()->GetBeamHelper()->GetUtNodes();
+    NodeContainer uts = Singleton<SatTopology>::Get()->GetUtNodes();
     for (NodeContainer::Iterator it = uts.Begin(); it != uts.End(); ++it)
     {
         SaveAddressAndIdentifier(*it);
@@ -540,20 +523,20 @@ SatStatsUserPacketCollisionHelper::DoInstall()
 
     // Connect to trace sources at SAT nodes.
 
-    NodeContainer sats = GetSatHelper()->GetBeamHelper()->GetGeoSatNodes();
+    NodeContainer sats = Singleton<SatTopology>::Get()->GetOrbiterNodes();
     Callback<void, uint32_t, const Address&, bool> callback =
         MakeCallback(&SatStatsUserPacketCollisionHelper::CollisionRxCallback, this);
 
     for (NodeContainer::Iterator it = sats.Begin(); it != sats.End(); ++it)
     {
-        Ptr<NetDevice> dev = GetSatSatGeoNetDevice(*it);
+        Ptr<NetDevice> dev = GetSatSatOrbiterNetDevice(*it);
 
         Ptr<SatPhy> satPhy;
-        Ptr<SatGeoNetDevice> satGeoDev = dev->GetObject<SatGeoNetDevice>();
-        NS_ASSERT(satGeoDev != nullptr);
-        std::map<uint32_t, Ptr<SatPhy>> satGeoUserPhys = satGeoDev->GetUserPhy();
-        for (std::map<uint32_t, Ptr<SatPhy>>::iterator itPhy = satGeoUserPhys.begin();
-             itPhy != satGeoUserPhys.end();
+        Ptr<SatOrbiterNetDevice> satOrbiterDev = dev->GetObject<SatOrbiterNetDevice>();
+        NS_ASSERT(satOrbiterDev != nullptr);
+        std::map<uint32_t, Ptr<SatPhy>> satOrbiterUserPhys = satOrbiterDev->GetUserPhy();
+        for (std::map<uint32_t, Ptr<SatPhy>>::iterator itPhy = satOrbiterUserPhys.begin();
+             itPhy != satOrbiterUserPhys.end();
              ++itPhy)
         {
             satPhy = itPhy->second;
@@ -596,7 +579,7 @@ SatStatsUserPacketCollisionHelper::DoInstall()
 
             } // end of `for (ObjectVectorValue::Iterator itCarrier = carriers)`
 
-        } // end of `for (std::map<uint32_t, Ptr<SatPhy>>::iterator itPhy = satGeoUserPhys)`
+        } // end of `for (std::map<uint32_t, Ptr<SatPhy>>::iterator itPhy = satOrbiterUserPhys)`
 
     } // end of `for (NodeContainer::Iterator it = sats)`
 

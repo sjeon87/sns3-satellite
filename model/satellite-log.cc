@@ -26,6 +26,12 @@
 #include <ns3/singleton.h>
 #include <ns3/string.h>
 
+#include <ios>
+#include <sstream>
+#include <stdint.h>
+#include <string>
+#include <utility>
+
 NS_LOG_COMPONENT_DEFINE("SatLog");
 
 namespace ns3
@@ -153,7 +159,7 @@ SatLog::AddToLog(LogType_t logType, std::string fileTag, std::string message)
 
     NS_LOG_INFO("Type: " << logType << ", file tag: " << fileTag << ", message: " << message);
 
-    if (log != NULL)
+    if (log != nullptr)
     {
         log->AddToContainer(message);
     }

@@ -133,9 +133,9 @@ main(int argc, char* argv[])
     // Per-packet interference
     Config::SetDefault("ns3::SatUtHelper::DaFwdLinkInterferenceModel",
                        EnumValue(SatPhyRxCarrierConf::IF_PER_PACKET));
-    Config::SetDefault("ns3::SatGeoHelper::DaFwdLinkInterferenceModel",
+    Config::SetDefault("ns3::SatOrbiterHelper::DaFwdLinkInterferenceModel",
                        EnumValue(SatPhyRxCarrierConf::IF_PER_PACKET));
-    Config::SetDefault("ns3::SatGeoHelper::DaRtnLinkInterferenceModel",
+    Config::SetDefault("ns3::SatOrbiterHelper::DaRtnLinkInterferenceModel",
                        EnumValue(SatPhyRxCarrierConf::IF_PER_PACKET));
     Config::SetDefault("ns3::SatGwHelper::DaRtnLinkInterferenceModel",
                        EnumValue(SatPhyRxCarrierConf::IF_PER_PACKET));
@@ -190,26 +190,28 @@ main(int argc, char* argv[])
     }
     }
 
-    // Creating the reference system. Note, currently the satellite module supports
-    // only one reference system, which is named as "Scenario72". The string is utilized
-    // in mapping the scenario to the needed reference system configuration files. Arbitrary
-    // scenario name results in fatal error.
-    Ptr<SatHelper> helper = simulationHelper->CreateSatScenario();
+    simulationHelper->LoadScenario("geo-33E");
 
-    /**
-     * Set-up CBR traffic
-     */
-    simulationHelper->InstallTrafficModel(SimulationHelper::ONOFF,
-                                          SimulationHelper::UDP,
-                                          SimulationHelper::RTN_LINK,
-                                          appStartTime,
-                                          Seconds(simLength + 1),
-                                          MilliSeconds(50));
+    // Creating the reference system.
+    simulationHelper->CreateSatScenario();
+
+    simulationHelper->GetTrafficHelper()->AddOnOffTraffic(
+        SatTrafficHelper::RTN_LINK,
+        SatTrafficHelper::UDP,
+        dataRate,
+        packetSize,
+        NodeContainer(Singleton<SatTopology>::Get()->GetGwUserNode(0)),
+        Singleton<SatTopology>::Get()->GetUtUserNodes(),
+        "ns3::ConstantRandomVariable[Constant=1000]",
+        "ns3::ConstantRandomVariable[Constant=0]",
+        appStartTime,
+        Seconds(simLength + 1),
+        MilliSeconds(50));
 
     /**
      * Set-up statistics
      */
-    Ptr<SatStatsHelperContainer> s = CreateObject<SatStatsHelperContainer>(helper);
+    Ptr<SatStatsHelperContainer> s = simulationHelper->GetStatisticsContainer();
 
     s->AddGlobalFwdCompositeSinr(SatStatsHelper::OUTPUT_CDF_FILE);
     s->AddGlobalRtnCompositeSinr(SatStatsHelper::OUTPUT_CDF_FILE);

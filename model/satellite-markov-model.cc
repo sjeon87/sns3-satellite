@@ -24,6 +24,7 @@
 #include <ns3/simulator.h>
 
 #include <cstdlib>
+#include <limits>
 
 namespace ns3
 {
@@ -89,10 +90,10 @@ SatMarkovModel::Reset()
 {
     NS_LOG_FUNCTION(this);
 
-    if (m_probabilities != NULL)
+    if (m_probabilities != nullptr)
     {
         delete[] m_probabilities;
-        m_probabilities = NULL;
+        m_probabilities = nullptr;
     }
 }
 

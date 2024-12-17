@@ -27,6 +27,7 @@
 
 #include <sstream>
 #include <string>
+#include <utility>
 
 NS_LOG_COMPONENT_DEFINE("SatFwdLinkChannelEstimationErrorContainer");
 
@@ -88,7 +89,8 @@ SatFwdLinkChannelEstimationErrorContainer::SatFwdLinkChannelEstimationErrorConta
      * for forward link are created.
      */
     std::string dataPath = Singleton<SatEnvVariables>::Get()->LocateDataDirectory();
-    std::string filePathName = dataPath + "/sinrmeaserror/ChannelEstimationErrorFwdLink.txt";
+    std::string filePathName =
+        dataPath + "/additional-input/sinrmeaserror/ChannelEstimationErrorFwdLink.txt";
     m_channelEstimationError = CreateObject<SatChannelEstimationError>(filePathName);
 }
 
@@ -126,8 +128,9 @@ SatRtnLinkChannelEstimationErrorContainer::SatRtnLinkChannelEstimationErrorConta
     {
         std::ostringstream ss;
         ss << i;
-        filePathName =
-            dataPath + "/sinrmeaserror/ChannelEstimationErrorRtnLinkWf_" + ss.str() + ".txt";
+        filePathName = dataPath +
+                       "/additional-input/sinrmeaserror/ChannelEstimationErrorRtnLinkWf_" +
+                       ss.str() + ".txt";
         ce = CreateObject<SatChannelEstimationError>(filePathName);
         m_channelEstimationErrors.insert(std::make_pair(i, ce));
     }
