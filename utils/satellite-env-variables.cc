@@ -26,14 +26,10 @@
 #include "ns3/fatal-error.h"
 #include "ns3/string.h"
 
-#include <stdio.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
+#include "ns3/system-path.h"
 
-#ifdef __APPLE__
-#include <mach-o/dyld.h>
-#endif
+#include <cstdio>
+#include <filesystem>
 
 NS_LOG_COMPONENT_DEFINE("SatEnvVariables");
 
@@ -148,34 +144,8 @@ SatEnvVariables::DoInitialize()
 
     if (!m_isInitialized)
     {
-        char currentWorkingDirectory[FILENAME_MAX] = "";
-
-        if (!getcwd(currentWorkingDirectory, sizeof(currentWorkingDirectory)))
-        {
-            NS_FATAL_ERROR("SatEnvVariables::SatEnvVariables - Could not determine current working "
-                           "directory.");
-        }
-        currentWorkingDirectory[sizeof(currentWorkingDirectory) - 1] = '\0';
-        m_currentWorkingDirectory = std::string(currentWorkingDirectory);
-
-        char pathToExecutable[FILENAME_MAX] = "";
-
-        int res;
-#ifdef __linux__
-        res = readlink("/proc/self/exe", pathToExecutable, sizeof(pathToExecutable));
-#elif __APPLE__
-        uint32_t size = sizeof(pathToExecutable);
-        res = _NSGetExecutablePath(pathToExecutable, &size);
-#else
-        NS_FATAL_ERROR("SatEnvVariables::SatEnvVariables - Unknown compiler.");
-#endif
-        if (res < 0)
-        {
-            NS_FATAL_ERROR(
-                "SatEnvVariables::SatEnvVariables - Could not determine the path to executable.");
-        }
-        pathToExecutable[sizeof(pathToExecutable) - 1] = '\0';
-        m_pathToExecutable = std::string(pathToExecutable);
+        m_currentWorkingDirectory = std::filesystem::current_path().generic_string();
+        m_pathToExecutable = std::filesystem::path(SystemPath::FindSelf()).generic_string();
 
         if (!IsValidDirectory(LocateDataDirectory() + "/additional-input"))
         {
@@ -331,16 +301,8 @@ SatEnvVariables::IsValidDirectory(std::string path)
 {
     NS_LOG_FUNCTION(this);
 
-    struct stat st;
-    bool validDirectory = false;
-
-    if (stat(path.c_str(), &st) == 0)
-    {
-        if (S_ISDIR(st.st_mode))
-        {
-            validDirectory = true;
-        }
-    }
+    std::error_code error;
+    const bool validDirectory = std::filesystem::is_directory(path, error);
 
     NS_LOG_INFO("" << path << " validity: " << validDirectory);
 
@@ -352,8 +314,8 @@ SatEnvVariables::IsValidFile(std::string pathToFile)
 {
     NS_LOG_FUNCTION(this);
 
-    struct stat st;
-    bool validFile = (stat(pathToFile.c_str(), &st) == 0);
+    std::error_code error;
+    const bool validFile = std::filesystem::exists(pathToFile, error);
 
     NS_LOG_INFO("" << pathToFile << " validity: " << validFile);
 
@@ -567,7 +529,8 @@ SatEnvVariables::CreateDirectory(std::string path)
 
     NS_LOG_INFO("Creating directory " + path);
 
-    mkdir(path.c_str(), 0777);
+    std::error_code error;
+    std::filesystem::create_directory(path, error);
 }
 
 std::string
@@ -597,7 +560,11 @@ SatEnvVariables::ExecuteCommandAndReadOutput(
 {
     NS_LOG_FUNCTION(this);
 
+#ifdef _WIN32
+    FILE* pipe = _popen(command.c_str(), "r");
+#else
     FILE* pipe = popen(command.c_str(), "r");
+#endif
     if (pipe)
     {
         std::string data = "";
@@ -612,7 +579,11 @@ SatEnvVariables::ExecuteCommandAndReadOutput(
                 data = "";
             }
         }
+#ifdef _WIN32
+        _pclose(pipe);
+#else
         pclose(pipe);
+#endif
     }
 }
 

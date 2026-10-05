@@ -27,7 +27,6 @@
 #include "ns3/satellite-module.h"
 
 #include <sys/stat.h>
-#include <unistd.h>
 
 using namespace ns3;
 

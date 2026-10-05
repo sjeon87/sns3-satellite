@@ -26,11 +26,10 @@
 #include "ns3/satellite-env-variables.h"
 #include "ns3/singleton.h"
 #include "ns3/string.h"
+#include "ns3/system-path.h"
 
 #include <cmath>
 #include <cstddef>
-#include <dirent.h>
-#include <errno.h>
 #include <fstream>
 #include <limits>
 #include <map>
@@ -81,82 +80,66 @@ SatAntennaGainPatternContainer::SatAntennaGainPatternContainer(uint32_t nbSats,
                        << m_patternsFolder << " not found in antennapatterns folder");
     }
 
-    DIR* dir;
-    struct dirent* ent;
     std::string prefix;
-    if ((dir = opendir(m_patternsFolder.c_str())) != nullptr)
+    for (const auto& filename : SystemPath::ReadFiles(m_patternsFolder))
     {
-        /* process all the files and directories within m_patternsFolder */
-        while ((ent = readdir(dir)) != nullptr)
+        std::size_t pathLength = filename.length();
+        if (pathLength > 4)
         {
-            std::string filename{ent->d_name};
-            std::size_t pathLength = filename.length();
-            if (pathLength > 4)
+            pathLength -= 4; // Size of .txt extention
+            if (filename.substr(pathLength) == ".txt")
             {
-                pathLength -= 4; // Size of .txt extention
-                if (filename.substr(pathLength) == ".txt")
+                std::string num, stem = filename.substr(0, pathLength);
+                std::size_t found = stem.find_last_not_of(numbers);
+                if (found == std::string::npos)
                 {
-                    std::string num, stem = filename.substr(0, pathLength);
-                    std::size_t found = stem.find_last_not_of(numbers);
-                    if (found == std::string::npos)
-                    {
-                        num = stem;
-                        stem.erase(0);
-                    }
-                    else
-                    {
-                        num = stem.substr(found + 1);
-                        stem.erase(found + 1);
-                    }
+                    num = stem;
+                    stem.erase(0);
+                }
+                else
+                {
+                    num = stem.substr(found + 1);
+                    stem.erase(found + 1);
+                }
 
-                    if (prefix.empty())
-                    {
-                        prefix = stem;
-                    }
+                if (prefix.empty())
+                {
+                    prefix = stem;
+                }
 
-                    if (prefix != stem)
-                    {
-                        NS_FATAL_ERROR(
-                            "SatAntennaGainPatternContainer::SatAntennaGainPatternContainer mixing "
-                            "different prefix for antenna pattern names: "
-                            << prefix << " and " << stem);
-                    }
+                if (prefix != stem)
+                {
+                    NS_FATAL_ERROR(
+                        "SatAntennaGainPatternContainer::SatAntennaGainPatternContainer mixing "
+                        "different prefix for antenna pattern names: "
+                        << prefix << " and " << stem);
+                }
 
-                    std::string filePath = m_patternsFolder + "/" + filename;
-                    std::istringstream ss{num};
-                    uint32_t beamId;
-                    ss >> beamId;
-                    if (ss.bad())
-                    {
-                        NS_FATAL_ERROR(
-                            "SatAntennaGainPatternContainer::SatAntennaGainPatternContainer unable "
-                            "to find beam number in "
-                            << filePath << " file name");
-                    }
+                std::string filePath = m_patternsFolder + "/" + filename;
+                std::istringstream ss{num};
+                uint32_t beamId;
+                ss >> beamId;
+                if (ss.bad())
+                {
+                    NS_FATAL_ERROR(
+                        "SatAntennaGainPatternContainer::SatAntennaGainPatternContainer unable "
+                        "to find beam number in "
+                        << filePath << " file name");
+                }
 
-                    Ptr<SatAntennaGainPattern> gainPattern =
-                        CreateObject<SatAntennaGainPattern>(filePath, geoPos);
-                    std::pair<std::map<uint32_t, Ptr<SatAntennaGainPattern>>::iterator, bool> ret;
-                    ret = m_antennaPatternMap.insert(std::make_pair(beamId, gainPattern));
+                Ptr<SatAntennaGainPattern> gainPattern =
+                    CreateObject<SatAntennaGainPattern>(filePath, geoPos);
+                std::pair<std::map<uint32_t, Ptr<SatAntennaGainPattern>>::iterator, bool> ret;
+                ret = m_antennaPatternMap.insert(std::make_pair(beamId, gainPattern));
 
-                    if (ret.second == false)
-                    {
-                        NS_FATAL_ERROR("SatAntennaGainPatternContainer::"
-                                       "SatAntennaGainPatternContainer an antenna pattern for beam "
-                                       << beamId << " already exists!");
-                    }
+                if (ret.second == false)
+                {
+                    NS_FATAL_ERROR("SatAntennaGainPatternContainer::"
+                                   "SatAntennaGainPatternContainer an antenna pattern for beam "
+                                   << beamId << " already exists!");
                 }
             }
         }
-        closedir(dir);
-    }
-    else
-    {
-        /* could not open directory */
-        const char* error = strerror(errno);
-        NS_FATAL_ERROR("SatAntennaGainPatternContainer::SatAntennaGainPatternContainer unable to "
-                       "open directory "
-                       << m_patternsFolder << ": " << error);
     }
 }
 
