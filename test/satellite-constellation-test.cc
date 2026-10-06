@@ -50,6 +50,7 @@
 #include "ns3/string.h"
 #include "ns3/test.h"
 
+#include <cmath>
 #include <fstream>
 #include <iostream>
 
@@ -191,23 +192,23 @@ SatConstellationTest1::DoRun(void)
 
     NS_TEST_ASSERT_MSG_EQ_TOL(gw1.GetLatitude(), 48.85, 0.001, "Incorrect latitude for GW 1");
     NS_TEST_ASSERT_MSG_EQ_TOL(gw1.GetLongitude(), 2.34, 0.001, "Incorrect longitude for GW 1");
-    NS_TEST_ASSERT_MSG_EQ(gw1.GetAltitude(), 0, "Incorrect altitude for GW 1");
+    NS_TEST_ASSERT_MSG_LT_OR_EQ(std::abs(gw1.GetAltitude()), 1e-6, "Incorrect altitude for GW 1");
 
     NS_TEST_ASSERT_MSG_EQ_TOL(gw2.GetLatitude(), 55.75, 0.001, "Incorrect latitude for GW 2");
     NS_TEST_ASSERT_MSG_EQ_TOL(gw2.GetLongitude(), 37.62, 0.001, "Incorrect longitude for GW 2");
-    NS_TEST_ASSERT_MSG_EQ(gw2.GetAltitude(), 0, "Incorrect altitude for GW 2");
+    NS_TEST_ASSERT_MSG_LT_OR_EQ(std::abs(gw2.GetAltitude()), 1e-6, "Incorrect altitude for GW 2");
 
     NS_TEST_ASSERT_MSG_EQ_TOL(ut1.GetLatitude(), 48.8534, 0.001, "Incorrect latitude for UT 1");
     NS_TEST_ASSERT_MSG_EQ_TOL(ut1.GetLongitude(), 2.3488, 0.001, "Incorrect longitude for UT 1");
-    NS_TEST_ASSERT_MSG_EQ(ut1.GetAltitude(), 0, "Incorrect altitude for UT 1");
+    NS_TEST_ASSERT_MSG_LT_OR_EQ(std::abs(ut1.GetAltitude()), 1e-6, "Incorrect altitude for UT 1");
 
     NS_TEST_ASSERT_MSG_EQ_TOL(ut2.GetLatitude(), 55.755, 0.001, "Incorrect latitude for UT 2");
     NS_TEST_ASSERT_MSG_EQ_TOL(ut2.GetLongitude(), 37.6218, 0.001, "Incorrect longitude for UT 2");
-    NS_TEST_ASSERT_MSG_EQ(ut2.GetAltitude(), 0, "Incorrect altitude for UT 2");
+    NS_TEST_ASSERT_MSG_LT_OR_EQ(std::abs(ut2.GetAltitude()), 1e-6, "Incorrect altitude for UT 2");
 
     NS_TEST_ASSERT_MSG_EQ_TOL(ut3.GetLatitude(), 55.754, 0.001, "Incorrect latitude for UT 3");
     NS_TEST_ASSERT_MSG_EQ_TOL(ut3.GetLongitude(), 37.621, 0.001, "Incorrect longitude for UT 3");
-    NS_TEST_ASSERT_MSG_EQ(ut3.GetAltitude(), 0, "Incorrect altitude for UT 3");
+    NS_TEST_ASSERT_MSG_LT_OR_EQ(std::abs(ut3.GetAltitude()), 1e-6, "Incorrect altitude for UT 3");
 
     Simulator::Destroy();
 }

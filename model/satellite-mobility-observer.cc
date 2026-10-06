@@ -28,7 +28,9 @@
 #include "ns3/pointer.h"
 #include "ns3/trace-source-accessor.h"
 
+#include <algorithm>
 #include <cmath>
+#include <limits>
 #include <stdint.h>
 #include <string>
 
@@ -294,8 +296,9 @@ SatMobilityObserver::UpdateElevationAngle()
     double distanceToSatellite =
         CalculateDistance(ownPosition.ToVector(), satellitePosition.ToVector());
 
-    // calculate elevation angle only, if satellite can be seen from own position
-    if (distanceToSatellite <= m_maxDistanceToSatellite)
+    // Allow floating-point roundoff at the tangent boundary.
+    constexpr double roundoffTolerance = 8 * std::numeric_limits<double>::epsilon();
+    if (distanceToSatellite <= m_maxDistanceToSatellite * (1 + roundoffTolerance))
     {
         double earthLatitude = SatUtils::DegreesToRadians(ownPosition.GetLatitude());
         double satLatitude = SatUtils::DegreesToRadians(satellitePosition.GetLatitude());
@@ -310,16 +313,22 @@ SatMobilityObserver::UpdateElevationAngle()
         // This should be accurate enough for elevation angle calculation with also other
         // reference ellipsoides. But, if more accurate calculation is needed, then the used
         // reference ellipsoide is needed to be take into account.
-        double centralAngleCos =
+        double centralAngleCos = std::clamp(
             (std::cos(earthLatitude) * std::cos(satLatitude) * std::cos(longitudeDelta)) +
-            (std::sin(earthLatitude) * std::sin(satLatitude));
+                (std::sin(earthLatitude) * std::sin(satLatitude)),
+            -1.0,
+            1.0);
 
-        // Calculate cosini of the elavation angle
-        double elCos =
-            std::sin(std::acos(centralAngleCos)) /
-            std::sqrt(1 + std::pow(m_radiusRatio, 2) - 2 * m_radiusRatio * centralAngleCos);
-
-        m_elevationAngle = SatUtils::RadiansToDegrees(std::acos(elCos));
+        if (centralAngleCos <= m_radiusRatio + roundoffTolerance)
+        {
+            m_elevationAngle = 0;
+        }
+        else
+        {
+            m_elevationAngle = SatUtils::RadiansToDegrees(
+                std::atan2(centralAngleCos - m_radiusRatio,
+                           std::sqrt(1 - centralAngleCos * centralAngleCos)));
+        }
     }
 }
 
