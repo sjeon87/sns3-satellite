@@ -30,38 +30,6 @@
 namespace ns3
 {
 
-Vector3D
-operator+(const Vector3D& v1, const Vector3D& v2)
-{
-    return Vector3D(v1.x + v2.x, v1.y + v2.y, v1.z + v2.z);
-}
-
-Vector3D
-operator-(const Vector3D& v1, const Vector3D& v2)
-{
-    return Vector3D(v1.x - v2.x, v1.y - v2.y, v1.z - v2.z);
-}
-
-Vector3D
-operator*(const Vector3D& vector, double scalar)
-{
-    return Vector3D(vector.x * scalar, vector.y * scalar, vector.z * scalar);
-}
-
-Vector3D
-operator*(double scalar, const Vector3D& vector)
-{
-    return vector * scalar;
-}
-
-Vector3D
-CrossProduct(const Vector3D& v1, const Vector3D& v2)
-{
-    return Vector3D(v1.y * v2.z - v1.z * v2.y,
-                    v1.z * v2.x - v1.x * v2.z,
-                    v1.x * v2.y - v1.y * v2.x);
-}
-
 double
 DotProduct(const Vector3D& v1, const Vector3D& v2)
 {
