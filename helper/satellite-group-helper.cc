@@ -102,7 +102,10 @@ SatGroupHelper::AddUtNodeToGroup(uint32_t groupId, Ptr<Node> node)
 
     if (IsGroupExisting(groupId) == false)
     {
-        m_groupsList.push_back(groupId);
+        if (std::find(m_groupsList.begin(), m_groupsList.end(), groupId) == m_groupsList.end())
+        {
+            m_groupsList.push_back(groupId);
+        }
         m_groupsMap[groupId] = std::set<Ptr<Node>>();
     }
     m_groupsMap[groupId].insert(node);
