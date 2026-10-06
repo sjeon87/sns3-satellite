@@ -56,6 +56,16 @@ LoraLogicalChannelHelper::~LoraLogicalChannelHelper()
     NS_LOG_FUNCTION(this);
 }
 
+LoraLogicalChannelHelper&
+LoraLogicalChannelHelper::operator=(const LoraLogicalChannelHelper& other)
+{
+    m_subBandList = other.m_subBandList;
+    m_channelList = other.m_channelList;
+    m_nextAggregatedTransmissionTime = other.m_nextAggregatedTransmissionTime;
+    m_aggregatedDutyCycle = other.m_aggregatedDutyCycle;
+    return *this;
+}
+
 std::vector<Ptr<LoraLogicalChannel>>
 LoraLogicalChannelHelper::GetChannelList(void)
 {

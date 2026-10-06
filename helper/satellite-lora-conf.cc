@@ -231,7 +231,7 @@ SatLoraConf::SetSatelliteConf(Ptr<LorawanMacGateway> gatewayMac)
     // maxTxPowerDbm) LoraLogicalChannel::LoraLogicalChannel (double frequency, uint8_t minDataRate,
     // uint8_t maxDataRate)
 
-    channelHelper.AddLoraSubBand(1500, 1500.25, 0.0, 14);
+    channelHelper.AddLoraSubBand(1500, 1500.25, 1.0, 14);
 
     Ptr<LoraLogicalChannel> lc1 = CreateObject<LoraLogicalChannel>(1500.125, 0, 5);
     channelHelper.AddChannel(lc1);
@@ -254,7 +254,7 @@ SatLoraConf::SetSatelliteConf(Ptr<LorawanMacEndDeviceClassA> endDeviceMac)
 
     // TODO check values
 
-    channelHelper.AddLoraSubBand(1500, 1500.25, 0.0, 14);
+    channelHelper.AddLoraSubBand(1500, 1500.25, 1.0, 14);
 
     Ptr<LoraLogicalChannel> lc1 = CreateObject<LoraLogicalChannel>(1500.125, 0, 5);
     channelHelper.AddChannel(lc1);

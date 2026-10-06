@@ -56,6 +56,21 @@ class LoraLogicalChannelHelper : public Object
     virtual ~LoraLogicalChannelHelper();
 
     /**
+     * Copy a channel helper with independent Object ownership.
+     *
+     * @param other The channel helper to copy.
+     */
+    LoraLogicalChannelHelper(const LoraLogicalChannelHelper& other) = default;
+
+    /**
+     * Copy channel and duty-cycle state while retaining Object ownership.
+     *
+     * @param other The channel helper to copy.
+     * @return This channel helper.
+     */
+    LoraLogicalChannelHelper& operator=(const LoraLogicalChannelHelper& other);
+
+    /**
      * Get the time it is necessary to wait before transmitting again, according
      * to the aggregate duty cycle timer.
      *
